@@ -1,0 +1,46 @@
+{
+  "version": "0.1.3",
+  "tag": "v0.1.3",
+  "commit": "9f6f5bbd7f6dc4304ae742b5cfb2672204b174d9",
+  "clean": true,
+  "publication": "IMMUTABLE_MAVEN_ARTIFACT",
+  "buildLog": "core-013-clean.log",
+  "artifacts": [
+    {
+      "file": "miaokatzecore-v0.1.3.jar",
+      "mavenFile": "miaokatzecore-0.1.3.jar",
+      "sha256": "23efaf31ca5ff3ac0869f3e13f6497b8fd3e8fc5987473b96e2ed89ea3e131dc",
+      "bytes": 82932,
+      "classCount": 55,
+      "commit": "9f6f5bbd7f6dc4304ae742b5cfb2672204b174d9",
+      "version": "0.1.3",
+      "clean": true,
+      "tag": "v0.1.3",
+      "mod": "miaokatzecore"
+    },
+    {
+      "file": "miaokatzecore-v0.1.3-dev.jar",
+      "mavenFile": "miaokatzecore-0.1.3-dev.jar",
+      "sha256": "c8c12f5a659b8bbd5a83fb6d7471c0b24a97d030d3686ddb63390186fa78ad3d",
+      "bytes": 81394,
+      "classCount": 55,
+      "commit": "9f6f5bbd7f6dc4304ae742b5cfb2672204b174d9",
+      "version": "0.1.3",
+      "clean": true,
+      "tag": "v0.1.3",
+      "mod": "miaokatzecore"
+    },
+    {
+      "file": "miaokatzecore-v0.1.3-sources.jar",
+      "mavenFile": "miaokatzecore-0.1.3-sources.jar",
+      "sha256": "329f5d7bd51b449a1bfa075f504c51f96e6a469353270279dcf4765b97e5b8c1",
+      "bytes": 45599,
+      "classCount": 0,
+      "commit": "9f6f5bbd7f6dc4304ae742b5cfb2672204b174d9",
+      "version": "0.1.3",
+      "clean": true,
+      "tag": "v0.1.3",
+      "mod": "miaokatzecore"
+    }
+  ]
+}

@@ -129,7 +129,8 @@ public final class SliceBackend {
                 0,
                 0,
                 frame.displayWidth(),
-                frame.displayHeight());
+                frame.displayHeight(),
+                slice.featheredCaps());
             renderEpoch = frame.ownerEpoch();
             renderTransformRevision = frame.transformRevision();
             renderSliceRevision = frame.sliceRevision();

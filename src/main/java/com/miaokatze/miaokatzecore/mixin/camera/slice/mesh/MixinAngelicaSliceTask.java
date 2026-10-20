@@ -2,6 +2,7 @@ package com.miaokatze.miaokatzecore.mixin.camera.slice.mesh;
 
 import net.minecraft.block.Block;
 import net.minecraft.client.renderer.RenderBlocks;
+import net.minecraft.world.IBlockAccess;
 
 import org.embeddedt.embeddium.impl.render.chunk.compile.ChunkBuildOutput;
 import org.spongepowered.asm.mixin.Mixin;
@@ -36,8 +37,12 @@ public abstract class MixinAngelicaSliceTask implements SliceMeshTask {
         remap = false)
     private boolean core$nativeBoundaryScope(RenderBlocks renderer, Block block, int x, int y, int z,
         Operation<Boolean> original) {
+        IBlockAccess originalAccess = renderer.blockAccess;
+        renderer.blockAccess = SliceMeshes.renderAccess(core$sliceSnapshot, originalAccess, y);
         try (SliceMeshes.FaceScope ignored = SliceMeshes.enter(core$sliceSnapshot, renderer.blockAccess, x, y, z)) {
             return original.call(renderer, block, x, y, z);
+        } finally {
+            renderer.blockAccess = originalAccess;
         }
     }
 

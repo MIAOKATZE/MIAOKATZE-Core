@@ -111,6 +111,30 @@ public final class Camera014MathContracts {
         check(kept == 8, "half coverage keeps eight of sixteen pixels");
         near(.03125, SliceSurfaceRule.thresholdAt(0, 0), "Bayer origin threshold");
         near(.53125, SliceSurfaceRule.thresholdAt(1, 0), "Bayer adjacent threshold");
+        HeightSlice fading = HeightSlice.below(70, 1)
+            .withFeatheredCaps(true);
+        near(.5, SliceSurfaceRule.coverageAt(fading, 70, 1), "one-block feather fades exposed top");
+        near(.5, SliceSurfaceRule.coverageAt(fading, 69.999, 1), "liquid top belongs to outer layer");
+        near(.5, SliceSurfaceRule.coverageAt(fading, 69.1, 0), "outer block side has consistent coverage");
+        near(1, SliceSurfaceRule.coverageAt(fading, 69, 1), "native face behind fading layer is opaque");
+        near(0, SliceSurfaceRule.coverageAt(fading, 70.1, 0), "excluded layer remains invisible");
+        HeightSlice lower = HeightSlice.above(-17, 1)
+            .withFeatheredCaps(true);
+        near(.5, SliceSurfaceRule.coverageAt(lower, -17, -1), "negative-Y bottom cap fades symmetrically");
+        near(.5, SliceSurfaceRule.coverageAt(lower, -16.7, 0), "negative-Y side uses owning layer");
+        near(1, SliceSurfaceRule.coverageAt(lower, -16, -1), "bottom face beyond feather stays opaque");
+        near(
+            1,
+            SliceSurfaceRule.coverageAt(
+                HeightSlice.below(70, 0)
+                    .withFeatheredCaps(true),
+                70,
+                1),
+            "zero-width optional feather preserves solid cap");
+        kept = 0;
+        for (int y = 0; y < 4; y++) for (int x = 0; x < 4; x++) if (SliceSurfaceRule.keeps(fading, 70, 1, x, y)) kept++;
+        check(kept == 8, "optional cap actually exposes the geometry behind eight of sixteen pixels");
+        check(!fading.equals(HeightSlice.below(70, 1)), "appearance is part of immutable slice identity");
     }
 
     private static void validation() {

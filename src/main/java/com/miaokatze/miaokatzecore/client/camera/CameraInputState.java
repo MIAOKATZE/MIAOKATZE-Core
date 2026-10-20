@@ -1,6 +1,7 @@
 package com.miaokatze.miaokatzecore.client.camera;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.settings.KeyBinding;
 
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -11,11 +12,22 @@ import com.miaokatze.miaokatzecore.client.camera.hud.CameraHud;
 final class CameraInputState {
 
     private final CameraPointerState pointer = new CameraPointerState();
-    private boolean navigating;
+    private int navigating;
+    private long exclusiveEpoch = Long.MIN_VALUE;
     private int lastX, lastY;
     private boolean cursorSaved, cursorWasGrabbed;
 
     void maintain(Minecraft mc, CameraSession session, CameraFrame frame) {
+        if (session.interactive(mc) && session.settings()
+            .input()
+            .exclusiveKeyboard()) {
+            long epoch = session.owner().epoch;
+            if (exclusiveEpoch != epoch) {
+                // Presses predating ownership must not remain held after their releases are filtered.
+                KeyBinding.unPressAllKeys();
+                exclusiveEpoch = epoch;
+            }
+        } else exclusiveEpoch = Long.MIN_VALUE;
         if (pointer.button() >= 0 && (!session.interactive(mc) || frame == null
             || !session.matches(frame, mc)
             || !pointer.matches(frame.ownerEpoch(), mc.theWorld))) cancel();
@@ -41,29 +53,33 @@ final class CameraInputState {
         if (pointer.button() >= 0) {
             int capturedButton = pointer.button();
             if (eventButton >= 0 && eventButton != capturedButton && pressed) pointer.suppress(eventButton);
-            if (navigating) {
+            if (navigating != 0) {
                 if (eventButton < 0) {
-                    double dx = -2.0 * (eventX - lastX)
-                        * frame.projection()
-                            .halfWidth()
-                        / frame.displayWidth();
-                    double dy = -2.0 * (eventY - lastY)
-                        * frame.projection()
-                            .halfHeight()
-                        / frame.displayHeight();
-                    controls.panWorld(
-                        dx * frame.basis()
-                            .rightX() + dy
-                                * frame.basis()
-                                    .upX(),
-                        dx * frame.basis()
-                            .rightY() + dy
-                                * frame.basis()
-                                    .upY(),
-                        dx * frame.basis()
-                            .rightZ() + dy
-                                * frame.basis()
-                                    .upZ());
+                    if (navigating == 2) {
+                        rotate(frame, settings.navigation(), controls, eventX - lastX, eventY - lastY);
+                    } else {
+                        double dx = -2.0 * (eventX - lastX)
+                            * frame.projection()
+                                .halfWidth()
+                            / frame.displayWidth();
+                        double dy = -2.0 * (eventY - lastY)
+                            * frame.projection()
+                                .halfHeight()
+                            / frame.displayHeight();
+                        controls.panWorld(
+                            dx * frame.basis()
+                                .rightX() + dy
+                                    * frame.basis()
+                                        .upX(),
+                            dx * frame.basis()
+                                .rightY() + dy
+                                    * frame.basis()
+                                        .upY(),
+                            dx * frame.basis()
+                                .rightZ() + dy
+                                    * frame.basis()
+                                        .upZ());
+                    }
                 }
             } else CameraHud.pointer(frame, settings, controls, eventX, eventY, eventButton, pressed, wheel);
             lastX = eventX;
@@ -76,20 +92,28 @@ final class CameraInputState {
         }
         boolean hit = CameraHud.pointer(frame, settings, controls, eventX, eventY, eventButton, pressed, wheel);
         if (hit) {
-            if (eventButton >= 0 && pressed) capture(session, frame, mc, eventButton, false, eventX, eventY);
+            if (eventButton >= 0 && pressed) capture(session, frame, mc, eventButton, 0, eventX, eventY);
             return true;
         }
-        if (eventButton == 2 && pressed
+        CameraSettings.Navigation navigation = settings.navigation();
+        if (pressed && eventButton >= 0
+            && eventButton == navigation.rotateButton()
+            && (navigation.rotateKey() == 0 || Keyboard.isKeyDown(navigation.rotateKey()))
+            && (navigation.yaw() && controls.supports(CameraControl.YAW)
+                || navigation.pitch() && controls.supports(CameraControl.PITCH))) {
+            capture(session, frame, mc, eventButton, 2, eventX, eventY);
+            return true;
+        }
+        if (eventButton >= 0 && eventButton == navigation.panButton()
+            && pressed
             && settings.navigation()
                 .pan()
             && controls.supports(CameraControl.PAN)) {
-            capture(session, frame, mc, eventButton, true, eventX, eventY);
+            capture(session, frame, mc, eventButton, 1, eventX, eventY);
             return true;
         }
         if (wheel != 0 && settings.navigation()
-            .zoom()
-            && controls.supports(CameraControl.ZOOM)
-            && (Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL))) {
+            .zoom() && controls.supports(CameraControl.ZOOM) && wheelZoom(navigation.wheelZoom())) {
             double current = frame.scaledWidth() / (2 * frame.projection()
                 .halfWidth());
             double target = Math.max(
@@ -105,14 +129,39 @@ final class CameraInputState {
         return false;
     }
 
-    private void capture(CameraSession session, CameraFrame frame, Minecraft mc, int pressedButton, boolean pan, int x,
+    private static boolean wheelZoom(CameraSettings.Navigation.WheelZoom policy) {
+        switch (policy) {
+            case DIRECT:
+                return true;
+            case DIRECT_EXCEPT_ALT:
+                return !Keyboard.isKeyDown(Keyboard.KEY_LMENU) && !Keyboard.isKeyDown(Keyboard.KEY_RMENU);
+            default:
+                return Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL);
+        }
+    }
+
+    private static void rotate(CameraFrame frame, CameraSettings.Navigation navigation, CameraControls controls, int dx,
+        int dy) {
+        double sensitivity = navigation.rotationDegreesPerPixel() * frame.scaledWidth() / frame.displayWidth();
+        double yaw = navigation.yaw() && controls.supports(CameraControl.YAW) ? dx * sensitivity : 0;
+        double pitch = 0;
+        if (navigation.pitch() && controls.supports(CameraControl.PITCH)) {
+            double current = frame.pose()
+                .pitchDegrees();
+            pitch = Math.max(navigation.minPitch(), Math.min(navigation.maxPitch(), current - dy * sensitivity))
+                - current;
+        }
+        controls.rotate(yaw, pitch);
+    }
+
+    private void capture(CameraSession session, CameraFrame frame, Minecraft mc, int pressedButton, int mode, int x,
         int y) {
         if (!session.interactive(mc)) {
             pointer.suppress(pressedButton);
             return;
         }
         if (!pointer.capture(pressedButton, frame.ownerEpoch(), session.owner().epoch, mc.theWorld)) return;
-        navigating = pan;
+        navigating = mode;
         lastX = x;
         lastY = y;
     }
@@ -129,7 +178,7 @@ final class CameraInputState {
 
     private void finish() {
         pointer.finish();
-        navigating = false;
+        navigating = 0;
     }
 
     void endTick() {

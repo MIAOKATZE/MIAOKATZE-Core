@@ -164,7 +164,7 @@ public final class SliceMeshes {
             || !SliceMeshRules.sameGeometry(target.slice, requested)) {
             changeTarget(ownerEpoch, requested, revision, mc);
         } else {
-            // Feather is shader-only. Keep the exact geometry stamp, queues and in-flight tasks alive.
+            // Geometry-equivalent requests keep the exact stamp, queues and in-flight tasks alive.
             displayTarget = requested;
             displayRevision = revision;
         }
@@ -348,6 +348,14 @@ public final class SliceMeshes {
         FaceScope scope = new FaceScope(FACE.get(), snapshot, access, x, y, z);
         FACE.set(scope);
         return scope;
+    }
+
+    /** Only native rendering sees this view; no world state, light engine or block collision is changed. */
+    public static IBlockAccess renderAccess(Snapshot snapshot, IBlockAccess original, int y) {
+        return snapshot != null && snapshot.slice.enabled()
+            && snapshot.slice.containsBlockY(y)
+            && SliceMeshRules.affectsSection(snapshot.slice, y) ? new SliceBlockAccess(original, snapshot.slice, y)
+                : original;
     }
 
     public static boolean opensFace(IBlockAccess access, int x, int y, int z, int side) {

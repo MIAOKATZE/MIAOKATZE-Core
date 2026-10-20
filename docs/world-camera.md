@@ -1,6 +1,6 @@
-# 世界相机 API（0.1.4）
+# 世界相机 API（0.1.5）
 
-Core 提供可独立调用的世界等距引擎。消费者只提交锚点、角度、缩放和输入/显示策略；按键、权限、战斗、方块选点、网络和存档仍在消费者。所有相机与租约操作必须在客户端线程进行，不能从服务端类的静态字段引用客户端入口。0.1.3 的 Source、Options、View、Lease 和数学入口继续可用；新增功能通过默认方法桥接，不强迫旧调用方启用工具栏或改变准星。
+Core 提供可独立调用的世界等距引擎。消费者只提交锚点、角度、缩放和输入/显示策略；按键、权限、战斗、方块选点、网络和存档仍在消费者。所有相机与租约操作必须在客户端线程进行，不能从服务端类的静态字段引用客户端入口。0.1.3/0.1.4 的 Source、Options、View、Lease 和数学入口继续可用；新增功能通过默认方法桥接，不强迫旧调用方启用工具栏或改变准星。
 
 ## 最小接入
 
@@ -46,7 +46,7 @@ Core 在锚点驱动绘制期间临时调整 view entity 的渲染位置，在 W
 
 公共 hooks 随 Core 的 FML early loader 启动，专服返回空客户端 Mixin 列表。使用整合包已有 UniMixins，不注册 Core 自有 RFB 插件，不在 preInit 动态追加 Mixin。Angelica/Celeritas 的通用正交面/视锥门控位于 Core，业务可见性仍由消费者保留。
 
-FalsePatternLib 精确下载0.1.4，不覆盖已安装旧版本。普通 LaunchWrapper 首次下载带 early plugin 的 JAR 可能退出并要求重启；RFB 路径需在 FML 扫描前发现下载结果。安装器退出0不能单独证明相机 hooks 已生效，应以实际启动与画面/拾取验证为准。
+FalsePatternLib 精确下载0.1.5，不覆盖已安装旧版本。普通 LaunchWrapper 首次下载带 early plugin 的 JAR 可能退出并要求重启；RFB 路径需在 FML 扫描前发现下载结果。安装器退出0不能单独证明相机 hooks 已生效，应以实际启动与画面/拾取验证为准。
 
 ## 设置、操作与工具栏
 
@@ -54,7 +54,7 @@ FalsePatternLib 精确下载0.1.4，不覆盖已安装旧版本。普通 LaunchW
 
 `Hud.crosshair(HIDDEN)` 只取消 Forge 的 CROSSHAIRS 元素，手臂策略独立配置。`panelVisible(true)` 启用非模态工具栏，可拖动、折叠并配置位置、宽度及颜色；不会打开 GuiScreen。按钮同时要求导航策略允许和 `CameraControls.supports(...)` 返回 true。不支持俯仰的消费方可以只开放水平旋转、缩放和切层。回调只提交本地相机请求，不移动玩家、不代替网络权限检查。
 
-Core 在 Forge 鼠标事件分派前接管工具栏及中键平移、Ctrl+滚轮缩放。按下至释放的捕获绑定 owner epoch 和世界身份；GUI、失焦及抢占撤销捕获并隔离旧释放。`KEEP` 只保留画面，真实 GUI 中仍禁止世界操作。
+旧默认仍是中键平移、Ctrl+滚轮缩放，不启用拖动旋转。Core 在 Forge 鼠标事件分派前接管已配置手势和工具栏。按下至释放的捕获绑定 owner epoch 和世界身份；GUI、失焦及抢占撤销捕获并隔离旧释放。`KEEP` 只保留画面，真实 GUI 中仍禁止世界操作。
 
 ```java
 CameraSettings settings = CameraSettings.builder()
@@ -76,3 +76,34 @@ CameraSettings settings = CameraSettings.builder()
 `CameraFrame` 是只读历史快照，不包含 World/Source，也不是输入授权。它分开记录 requested、displayed、committed 切片及内容 revision。PREVIEW、APPLYING、RESTORING 期间禁止世界选点；READY 取决于匹配网格实际上传。消费方仍需使用当前 hooks 检验所有权、焦点、捕获和就绪状态。
 
 `rayInterval(...)` 保持原近裁面射线不变，返回可查询距离区间。查询只接受方块原生碰撞面的真实交点，并用 `SliceSurfaceRule.keeps(slice, y, normalY, displayX, displayY)` 对照同像素覆盖；不能把区间起点当成新碰撞面。区间、显示帧、真实侧面法线及像素必须来自同次查询，缓存键包含 owner epoch、变换、切片、网格 revision 与像素。
+
+## 可选的独占输入与紧凑切层条（0.1.5）
+
+以下设置不会改变旧消费者的默认操作；`pan`、`yaw`、`pitch`、`zoom` 仍分别要求 `CameraControls.supports` 和相应回调。鼠标编号遵循 LWJGL：左键0、右键1、中键2。`rotateDrag(button, requiredKey)` 的按键为 LWJGL 码，0表示无修饰键；-1鼠标编号关闭手势。`rotationDegreesPerPixel` 使用缩放GUI像素，默认0.35度；俯仰遵循 `pitchRange`。旋转按下时检查修饰键，完整捕获持续到鼠标释放。滚轮策略有 `CTRL`（旧默认）、`DIRECT`、`DIRECT_EXCEPT_ALT`。
+
+```java
+CameraSettings settings = CameraSettings.builder()
+    .input(CameraSettings.Input.builder()
+        .freeCursor(true).consumeHotbarScroll(true).blockDebugReloads(true)
+        .movement(WorldCameras.MovementPolicy.ALL).exclusiveKeyboard(true).build())
+    .hud(CameraSettings.Hud.builder()
+        .crosshair(CameraSettings.Hud.Crosshair.HIDDEN)
+        .panelVisible(false).sliceBarVisible(true)
+        .sliceDirectionVisible(true).sliceLabelVisible(true)
+        .panelPosition(12, 12).build())
+    .navigation(CameraSettings.Navigation.builder()
+        .pan(true).yaw(true).pitch(true).zoom(true)
+        .panButton(1).rotateDrag(0, Keyboard.KEY_R)
+        .wheelZoom(CameraSettings.Navigation.WheelZoom.DIRECT_EXCEPT_ALT)
+        .sliceRange(0, 256).build())
+    .slice(HeightSlice.below(80, 1).withFeatheredCaps(true))
+    .build();
+```
+
+`exclusiveKeyboard(true)` 仅在当前会话可交互、没有真实GUI时过滤Minecraft的原始键盘事件队列，早于硬编码原版快捷键、KeyBinding和FML KeyInputEvent。`Source.allowRawKey(int)` 决定哪些事件可进入原版/FML，默认桥接到旧 `allowKey(int)`。进入该模式时清除之前残留的KeyBinding按下状态。消费者可以将 `allowRawKey` 和 `allowKey` 都返回false，再在客户端tick使用raw按键边沿和按住轮询处理自己的白名单（含退出键），从而避免其他Mod在相同按键上收到事件。其他Mod直接调用 `Keyboard.isKeyDown` 的轮询无法由此隔离；放行某个原始键也会允许其他订阅者看到它。恢复GUI或退出相机即恢复原生事件；消费者仍需处理自身切换/退出按键的边沿与失焦复位。
+
+`sliceBarVisible(true)` 在大工具栏关闭且请求切层启用时显示72×220逻辑GUI像素的竖高度条；通过顶部拖动整体位置，拖动竖条选择整数Y，顶部对应最大高度。`sliceDirectionVisible` 控制“隐藏上方/隐藏下方”切换按钮，`sliceLabelVisible` 控制Y值，均默认true。大面板默认保持旧外观；两者同时开启时显示大面板。切层开关（例如X）仍由消费方拥有，Core不注册按键。紧凑条不会引入MUI2依赖。
+
+`HeightSlice.withFeatheredCaps(true)` 显式启用整层透明覆盖：按实际表面所属方块层的中心计算渐变，而不再将切面强制不透明。1格渐变使边缘一层覆盖率0.5、下一层完全不透明；多格宽度按smoothstep逐层变化。使用有序覆盖透明（discard），而非源alpha混合，以保留RC2地形原有深度写入和半透明方块排序；因此近看有4×4像素覆盖纹理。CPU拾取与GLSL采用相同的所属层、覆盖函数及像素门槛。GPU重建预览可能暂缺补面，READY仍须等待匹配网格实际上传。
+
+新模式补出羽化带内被邻层遮挡的原生上下表面，并将被移除或渐变邻层从局部AO遮挡查询中排除；不修改世界、碰撞或光照传播。原生天空/方块光仍可能因真实屋顶和洞穴而偏暗，自定义ISBRH自行查询世界/绕过标准面链时仍不能保证补面或AO一致性。旧 `HeightSlice` 工厂默认不启用此模式，保留实体边界盖面、原逐片元渐变与四分之一格工具栏默认；消费方需要1格默认时显式传入1。旧模式只有边界高度影响网格，新模式的 `ceil(featherWidth)` 也参与网格依赖，带宽改变所需面数时局部重建。

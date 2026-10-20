@@ -33,6 +33,7 @@ public final class CameraHud {
     private static String ownerId;
     private static long ownerEpoch = Long.MIN_VALUE;
     private static boolean collapsed, positioned, sliceInitialized, hideAbove = true;
+    private static boolean featheredCaps;
     private static double panelX, panelY, grabX, grabY, feather = DEFAULT_FEATHER;
     private static int configuredX, configuredY, selectedY;
     private static CameraFrame pendingFrame;
@@ -152,6 +153,7 @@ public final class CameraHud {
         sliceInitialized = false;
         feather = DEFAULT_FEATHER;
         hideAbove = true;
+        featheredCaps = false;
     }
 
     /** Draw from RenderGameOverlayEvent.Post(ALL); crosshair cancellation stays in the client hook. */
@@ -174,6 +176,10 @@ public final class CameraHud {
             GL11.glDisable(GL11.GL_LIGHTING);
             GL11.glEnable(GL11.GL_BLEND);
             GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+            if (layout.sliceBar) {
+                renderSliceBar(mc.fontRenderer, frame, settings, controls);
+                return;
+            }
             rect(0, 0, 192, collapsed ? 18 : 166, policy.backgroundArgb());
             rect(0, 0, 192, 18, shade(policy.accentArgb(), .45));
             double zoom = frame.scaledWidth() / (2 * frame.projection()
@@ -254,8 +260,12 @@ public final class CameraHud {
     private static boolean available(CameraFrame frame, CameraSettings settings, CameraControls controls) {
         if (frame == null || settings == null
             || controls == null
-            || !settings.hud()
-                .panelVisible())
+            || !(settings.hud()
+                .panelVisible()
+                || settings.hud()
+                    .sliceBarVisible()
+                    && frame.requestedSlice()
+                        .enabled()))
             return false;
         if (frame.ownerEpoch() != ownerEpoch || !frame.ownerId()
             .equals(ownerId)) {
@@ -274,7 +284,15 @@ public final class CameraHud {
             configuredY = policy.panelY();
             positioned = true;
         }
-        CameraHudLayout layout = new CameraHudLayout(width, height, panelX, panelY, policy.panelWidth(), collapsed);
+        CameraHudLayout layout = new CameraHudLayout(
+            width,
+            height,
+            panelX,
+            panelY,
+            policy.panelWidth(),
+            collapsed,
+            !policy.panelVisible() && policy.sliceBarVisible(),
+            policy.sliceDirectionVisible());
         panelX = layout.x;
         panelY = layout.y;
         return layout;
@@ -299,6 +317,7 @@ public final class CameraHud {
             hideAbove = slice.hasUpper();
             selectedY = clampLayer(slice.hasUpper() ? (long) slice.maximumY() - 1 : slice.minimumY(), navigation);
             feather = slice.featherWidth();
+            featheredCaps = slice.featheredCaps();
         }
         return slice;
     }
@@ -308,7 +327,8 @@ public final class CameraHud {
     }
 
     private static HeightSlice currentSlice() {
-        return hideAbove ? HeightSlice.below(selectedY + 1, feather) : HeightSlice.above(selectedY, feather);
+        return (hideAbove ? HeightSlice.below(selectedY + 1, feather) : HeightSlice.above(selectedY, feather))
+            .withFeatheredCaps(featheredCaps);
     }
 
     private static void request(CameraFrame frame, CameraControls controls, HeightSlice slice) {
@@ -328,7 +348,8 @@ public final class CameraHud {
                     .sliceMinimumY(),
                     max = (long) settings.navigation()
                         .sliceMaximumY() - 1;
-                selectedY = clampLayer(Math.round(min + (max - min) * layout.sliderFraction(x)), settings.navigation());
+                double fraction = layout.sliceBar ? layout.verticalFraction(y) : layout.sliderFraction(x);
+                selectedY = clampLayer(Math.round(min + (max - min) * fraction), settings.navigation());
                 request(frame, controls, currentSlice());
             } else if (dragging == Control.FEATHER) {
                 feather = Math.round(SLIDER_MAX_FEATHER * layout.sliderFraction(x) * 100) / 100.0;
@@ -342,6 +363,30 @@ public final class CameraHud {
         double current = frame.scaledWidth() / (2 * frame.projection()
             .halfWidth());
         controls.zoom(CameraHudLayout.clamp(current * factor, navigation.minScale(), navigation.maxScale()) / current);
+    }
+
+    private static void renderSliceBar(FontRenderer font, CameraFrame frame, CameraSettings settings,
+        CameraControls controls) {
+        CameraSettings.Hud policy = settings.hud();
+        rect(0, 0, 72, 220, policy.backgroundArgb());
+        rect(0, 0, 72, 18, shade(policy.accentArgb(), .45));
+        text(font, "X光", 8, 5, policy.textArgb());
+        if (policy.sliceDirectionVisible()) {
+            button(font, 4, 22, 64, hideAbove ? "隐藏上方" : "隐藏下方", Control.SLICE_DIRECTION, settings, controls, frame);
+        }
+        if (policy.sliceLabelVisible()) text(font, "Y " + selectedY, 8, 44, policy.textArgb());
+        double span = (double) settings.navigation()
+            .sliceMaximumY() - 1
+            - settings.navigation()
+                .sliceMinimumY();
+        double fraction = span <= 0 ? 0
+            : (selectedY - settings.navigation()
+                .sliceMinimumY()) / span;
+        boolean enabled = frame.sliceSupported() && controls.supports(CameraControl.SLICE);
+        int tint = enabled ? policy.accentArgb() : disabledColor(policy.accentArgb());
+        rect(34, 64, 4, 140, shade(tint, .35));
+        rect(34, 204 - 140 * fraction, 4, 140 * fraction, shade(tint, .7));
+        rect(26, 202 - 140 * fraction, 20, 4, tint);
     }
 
     private static boolean enabled(Control control, CameraSettings settings, CameraControls controls,

@@ -7,9 +7,15 @@ public final class HeightSlice {
     private final boolean enabled, hasLower, hasUpper;
     private final int minimumY, maximumY;
     private final double featherWidth;
+    private final boolean featheredCaps;
 
     private HeightSlice(boolean enabled, boolean hasLower, boolean hasUpper, int minimumY, int maximumY,
         double featherWidth) {
+        this(enabled, hasLower, hasUpper, minimumY, maximumY, featherWidth, false);
+    }
+
+    private HeightSlice(boolean enabled, boolean hasLower, boolean hasUpper, int minimumY, int maximumY,
+        double featherWidth, boolean featheredCaps) {
         CameraNumbers.finite(featherWidth, "featherWidth");
         if (featherWidth < 0) throw new IllegalArgumentException("featherWidth must not be negative");
         if (hasLower && hasUpper && minimumY >= maximumY) {
@@ -21,6 +27,7 @@ public final class HeightSlice {
         this.minimumY = minimumY;
         this.maximumY = maximumY;
         this.featherWidth = featherWidth == 0 ? 0 : featherWidth;
+        this.featheredCaps = featheredCaps;
     }
 
     public static HeightSlice disabled() {
@@ -65,6 +72,16 @@ public final class HeightSlice {
         return featherWidth;
     }
 
+    /** Opt in to fading native cut faces too, with native faces exposed behind the feather band. */
+    public HeightSlice withFeatheredCaps(boolean value) {
+        return featheredCaps == value ? this
+            : new HeightSlice(enabled, hasLower, hasUpper, minimumY, maximumY, featherWidth, value);
+    }
+
+    public boolean featheredCaps() {
+        return featheredCaps;
+    }
+
     public boolean containsBlockY(int blockY) {
         return !enabled || (!hasLower || blockY >= minimumY) && (!hasUpper || blockY < maximumY);
     }
@@ -78,6 +95,7 @@ public final class HeightSlice {
             && hasUpper == other.hasUpper
             && minimumY == other.minimumY
             && maximumY == other.maximumY
+            && featheredCaps == other.featheredCaps
             && Double.doubleToLongBits(featherWidth) == Double.doubleToLongBits(other.featherWidth);
     }
 
@@ -88,6 +106,7 @@ public final class HeightSlice {
         result = 31 * result + (hasUpper ? 1 : 0);
         result = 31 * result + minimumY;
         result = 31 * result + maximumY;
+        result = 31 * result + (featheredCaps ? 1 : 0);
         long bits = Double.doubleToLongBits(featherWidth);
         return 31 * result + (int) (bits ^ bits >>> 32);
     }

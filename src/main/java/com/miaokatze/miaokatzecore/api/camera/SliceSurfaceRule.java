@@ -14,6 +14,7 @@ public final class SliceSurfaceRule {
     /**
      * Real top (+Y) and bottom (-Y) boundary faces stay fully covered, including narrow native liquid offsets.
      * Other surfaces fade with smoothstep inside the kept band; exterior surfaces have zero coverage.
+     * The optional feathered-caps policy fades whole block layers, including native cut faces.
      * This function never creates geometry or a synthetic collision face.
      */
     public static double coverageAt(HeightSlice slice, double worldY, double normalY) {
@@ -22,10 +23,20 @@ public final class SliceSurfaceRule {
         CameraNumbers.finite(normalY, "normalY");
         if (normalY < -1 || normalY > 1) throw new IllegalArgumentException("normalY must be in [-1, 1]");
         if (!slice.enabled()) return 1;
-        if (slice.hasUpper() && normalY >= NORMAL_Y_THRESHOLD && Math.abs(worldY - slice.maximumY()) <= CAP_EPSILON)
-            return 1;
-        if (slice.hasLower() && normalY <= -NORMAL_Y_THRESHOLD && Math.abs(worldY - slice.minimumY()) <= CAP_EPSILON)
-            return 1;
+        if (slice.featheredCaps() && slice.featherWidth() > 0) {
+            // Evaluate the owning block layer, including native top/bottom surfaces at integer boundaries.
+            // All faces of the outermost block share 50% coverage with a one-block feather.
+            double insideY = worldY
+                + (normalY >= NORMAL_Y_THRESHOLD ? -CAP_EPSILON : normalY <= -NORMAL_Y_THRESHOLD ? CAP_EPSILON : 0);
+            worldY = Math.floor(insideY) + .5;
+        }
+        boolean solidCaps = !slice.featheredCaps() || slice.featherWidth() == 0;
+        if (solidCaps && slice.hasUpper()
+            && normalY >= NORMAL_Y_THRESHOLD
+            && Math.abs(worldY - slice.maximumY()) <= CAP_EPSILON) return 1;
+        if (solidCaps && slice.hasLower()
+            && normalY <= -NORMAL_Y_THRESHOLD
+            && Math.abs(worldY - slice.minimumY()) <= CAP_EPSILON) return 1;
         if (slice.hasLower() && worldY < slice.minimumY() || slice.hasUpper() && worldY >= slice.maximumY()) return 0;
         double feather = slice.featherWidth();
         if (feather == 0) return 1;

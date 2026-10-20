@@ -9,9 +9,10 @@ import net.minecraft.entity.player.InventoryPlayer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.miaokatze.miaokatzecore.client.camera.WorldCameraHooks;
 import com.miaokatze.miaokatzecore.client.camera.WorldCameras;
 
@@ -34,24 +35,25 @@ public abstract class MixinMinecraft {
         WorldCameras.worldChanged(world);
     }
 
-    @Redirect(
+    @WrapOperation(
         method = "runTick",
         at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/InventoryPlayer;changeCurrentItem(I)V"))
-    private void core$scroll(InventoryPlayer inventory, int direction) {
-        if (!WorldCameraHooks.consumeHotbarScroll()) inventory.changeCurrentItem(direction);
+    private void core$scroll(InventoryPlayer inventory, int direction, Operation<Void> original) {
+        // Preserve other mods' redirects/wrappers (e.g. Bogosorter's hotbar-swap cancellation).
+        if (!WorldCameraHooks.consumeHotbarScroll()) original.call(inventory, direction);
     }
 
-    @Redirect(
+    @WrapOperation(
         method = "runTick",
         at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/RenderGlobal;loadRenderers()V"))
-    private void core$debugChunks(RenderGlobal renderer) {
-        if (!WorldCameraHooks.blockDebugReloads()) renderer.loadRenderers();
+    private void core$debugChunks(RenderGlobal renderer, Operation<Void> original) {
+        if (!WorldCameraHooks.blockDebugReloads()) original.call(renderer);
     }
 
-    @Redirect(
+    @WrapOperation(
         method = "runTick",
         at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;refreshResources()V"))
-    private void core$debugResources(Minecraft mc) {
-        if (!WorldCameraHooks.blockDebugReloads()) mc.refreshResources();
+    private void core$debugResources(Minecraft mc, Operation<Void> original) {
+        if (!WorldCameraHooks.blockDebugReloads()) original.call(mc);
     }
 }

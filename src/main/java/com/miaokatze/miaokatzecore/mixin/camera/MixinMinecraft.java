@@ -6,6 +6,7 @@ import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.entity.player.InventoryPlayer;
 
+import org.lwjgl.input.Keyboard;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -48,6 +49,16 @@ public abstract class MixinMinecraft {
             remap = false))
     private boolean core$cameraPointer(Operation<Boolean> original) {
         return WorldCameraHooks.rawMouseEvent((Minecraft) (Object) this) || original.call();
+    }
+
+    @WrapOperation(
+        method = "runTick",
+        at = @At(value = "INVOKE", target = "Lorg/lwjgl/input/Keyboard;next()Z", remap = false))
+    private boolean core$cameraKeyboard(Operation<Boolean> original) {
+        while (original.call()) {
+            if (WorldCameraHooks.allowRawKey(Keyboard.getEventKey())) return true;
+        }
+        return false;
     }
 
     @WrapOperation(

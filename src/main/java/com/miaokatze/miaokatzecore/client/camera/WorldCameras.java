@@ -99,6 +99,11 @@ public final class WorldCameras {
         default boolean allowKey(int keyCode) {
             return true;
         }
+
+        /** Native/FML event whitelist when exclusiveKeyboard is enabled. Consumer raw polling is independent. */
+        default boolean allowRawKey(int keyCode) {
+            return allowKey(keyCode);
+        }
     }
 
     public interface Lease extends AutoCloseable {

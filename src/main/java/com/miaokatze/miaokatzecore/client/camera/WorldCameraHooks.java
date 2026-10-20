@@ -300,6 +300,14 @@ public final class WorldCameraHooks {
         return keyCode == 0 || !SESSION.interactive(mc) || SESSION.owner().source.allowKey(keyCode);
     }
 
+    /** Raw queue filtering also suppresses FML KeyInputEvent and vanilla hard-coded shortcuts. */
+    public static boolean allowRawKey(int keyCode) {
+        Minecraft mc = Minecraft.getMinecraft();
+        CameraSettings settings = inputSettings(mc);
+        return settings == null || !settings.input()
+            .exclusiveKeyboard() || SESSION.owner().source.allowRawKey(keyCode);
+    }
+
     private static CameraFrame pickingFrame(String ownerId, Object worldToken) {
         Minecraft mc = Minecraft.getMinecraft();
         CameraFrame f = frame(ownerId, worldToken);

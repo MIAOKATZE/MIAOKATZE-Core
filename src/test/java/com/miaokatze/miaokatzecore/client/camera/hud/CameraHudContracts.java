@@ -37,6 +37,23 @@ public final class CameraHudContracts {
             "maximum feather endpoint is clickable");
         CameraHudLayout folded = new CameraHudLayout(640, 360, 12, 14, 192, true);
         require(folded.hit(20, 50) == CameraHudLayout.Control.NONE, "folded body does not capture world input");
+        CameraHudLayout bar = new CameraHudLayout(640, 360, 12, 14, 192, false, true, true);
+        near(bar.width, 72, "compact bar leaves room for world");
+        require(bar.hit(48, 84) == CameraHudLayout.Control.HEIGHT, "vertical height track hit");
+        require(bar.hit(20, 40) == CameraHudLayout.Control.SLICE_DIRECTION, "direction button hit");
+        near(bar.verticalFraction(14 + 64), 1, "vertical top is maximum Y");
+        near(bar.verticalFraction(14 + 204), 0, "vertical bottom is minimum Y");
+        near(bar.verticalFraction(-1000), 1, "vertical drag clamps above canvas");
+        near(bar.verticalFraction(1000), 0, "vertical drag clamps below canvas");
+        require(bar.hit(90, 84) == CameraHudLayout.Control.NONE, "compact bar does not capture old panel area");
+        for (int width : sizes) for (int height : sizes) {
+            CameraHudLayout tiny = new CameraHudLayout(width, height, 5000, -100, 192, true, true, false);
+            require(
+                tiny.x >= 0 && tiny.y >= 0
+                    && tiny.x + tiny.width <= width + 1e-9
+                    && tiny.y + tiny.height <= height + 1e-9,
+                "compact bar fits resized/tiny viewport");
+        }
         System.out.println("PASS " + checks + " production HUD geometry/conversion assertions");
     }
 

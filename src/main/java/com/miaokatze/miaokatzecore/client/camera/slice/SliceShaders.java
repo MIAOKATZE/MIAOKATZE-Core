@@ -34,10 +34,29 @@ public final class SliceShaders {
 
         public final boolean enabled;
         final float lower, upper, band, upY, upZ, eyeOffset, inverseX, inverseY, inverseZ, inverseOffsetZ;
+        final boolean featheredCaps;
+        final float layerOffset;
         public final int viewportX, viewportY, viewportWidth, viewportHeight;
 
         public FrameData(boolean enabled, double lowerBound, double upperBound, double bandWidth, CameraPose pose,
             OrthographicProjection projection, int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
+            this(
+                enabled,
+                lowerBound,
+                upperBound,
+                bandWidth,
+                pose,
+                projection,
+                viewportX,
+                viewportY,
+                viewportWidth,
+                viewportHeight,
+                false);
+        }
+
+        public FrameData(boolean enabled, double lowerBound, double upperBound, double bandWidth, CameraPose pose,
+            OrthographicProjection projection, int viewportX, int viewportY, int viewportWidth, int viewportHeight,
+            boolean featheredCaps) {
             Objects.requireNonNull(pose, "pose");
             Objects.requireNonNull(projection, "projection");
             if (!Double.isFinite(lowerBound) || !Double.isFinite(upperBound)
@@ -49,6 +68,8 @@ public final class SliceShaders {
                 throw new IllegalArgumentException("Invalid slice shader frame");
             }
             this.enabled = enabled;
+            this.featheredCaps = featheredCaps;
+            layerOffset = (float) (pose.anchorY() - Math.floor(pose.anchorY()));
             // Retain precision at large world coordinates by making heights relative to the camera anchor.
             lower = (float) (lowerBound - pose.anchorY());
             upper = (float) (upperBound - pose.anchorY());
@@ -238,7 +259,7 @@ public final class SliceShaders {
 
     private static final class Locations {
 
-        final int enabled, bounds, worldUp, inverseProjection;
+        final int enabled, bounds, worldUp, inverseProjection, featheredCaps, layerOffset;
         boolean enabledValue;
         FrameData uploadedData;
 
@@ -247,6 +268,8 @@ public final class SliceShaders {
             bounds = Bridge.location(program, "u_CoreSliceBounds");
             worldUp = Bridge.location(program, "u_CoreSliceWorldUp");
             inverseProjection = Bridge.location(program, "u_CoreSliceInverseProjection");
+            featheredCaps = Bridge.location(program, "u_CoreSliceFeatheredCaps");
+            layerOffset = Bridge.location(program, "u_CoreSliceLayerOffset");
         }
     }
 
@@ -292,6 +315,8 @@ public final class SliceShaders {
             if (!enabled) return;
             if (locations.uploadedData == data) return;
             backend.uniform3f(locations.bounds, data.lower, data.upper, data.band);
+            if (locations.featheredCaps >= 0) backend.uniform1i(locations.featheredCaps, data.featheredCaps ? 1 : 0);
+            if (locations.layerOffset >= 0) backend.uniform1f(locations.layerOffset, data.layerOffset);
             backend.uniform4f(locations.worldUp, 0, data.upY, data.upZ, data.eyeOffset);
             if (locations.inverseProjection >= 0) backend.uniform4f(
                 locations.inverseProjection,

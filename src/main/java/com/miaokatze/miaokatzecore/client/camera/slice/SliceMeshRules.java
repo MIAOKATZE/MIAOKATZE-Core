@@ -7,10 +7,12 @@ public final class SliceMeshRules {
 
     private SliceMeshRules() {}
 
-    /** Only integer membership affects native face emission; feather width belongs exclusively to the shader. */
+    /** Legacy feather is shader-only; layer-fading caps also need native faces across ceil(featherWidth). */
     public static boolean sameGeometry(HeightSlice first, HeightSlice second) {
         return first.enabled() == second.enabled() && first.hasLower() == second.hasLower()
             && first.hasUpper() == second.hasUpper()
+            && first.featheredCaps() == second.featheredCaps()
+            && (!first.featheredCaps() || Math.ceil(first.featherWidth()) == Math.ceil(second.featherWidth()))
             && (!first.hasLower() || first.minimumY() == second.minimumY())
             && (!first.hasUpper() || first.maximumY() == second.maximumY());
     }
@@ -20,7 +22,22 @@ public final class SliceMeshRules {
             && (side == 0 && (long) neighborY == (long) blockY - 1
                 || side == 1 && (long) neighborY == (long) blockY + 1)
             && slice.containsBlockY(blockY)
-            && !slice.containsBlockY(neighborY);
+            && (!slice.containsBlockY(neighborY) || slice.featheredCaps() && slice.featherWidth() > 0
+                && (side == 1 && slice.hasUpper()
+                    && (double) neighborY >= slice.maximumY() - Math.ceil(slice.featherWidth())
+                    || side == 0 && slice.hasLower()
+                        && (double) blockY <= slice.minimumY() + Math.ceil(slice.featherWidth())));
+    }
+
+    /** Exclude removed/fading layers from neighboring AO tests while preserving the rendered block itself. */
+    public static boolean hidesNeighbor(HeightSlice slice, int renderedY, int queriedY) {
+        if (!slice.enabled() || queriedY == renderedY) return false;
+        if (!slice.containsBlockY(queriedY)) return true;
+        return slice.featheredCaps() && slice.featherWidth() > 0
+            && (queriedY > renderedY && slice.hasUpper()
+                && queriedY >= slice.maximumY() - Math.ceil(slice.featherWidth())
+                || queriedY < renderedY && slice.hasLower()
+                    && queriedY < slice.minimumY() + Math.ceil(slice.featherWidth()));
     }
 
     public static boolean affectsSection(HeightSlice slice, int originY) {

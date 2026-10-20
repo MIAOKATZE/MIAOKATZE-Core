@@ -183,13 +183,14 @@ public final class CameraSettings {
 
     public static final class Input {
 
-        private final boolean consumeHotbarScroll, blockDebugReloads, freeCursor;
+        private final boolean consumeHotbarScroll, blockDebugReloads, freeCursor, exclusiveKeyboard;
         private final WorldCameras.MovementPolicy movement;
 
         private Input(Builder builder) {
             consumeHotbarScroll = builder.consumeHotbarScroll;
             blockDebugReloads = builder.blockDebugReloads;
             freeCursor = builder.freeCursor;
+            exclusiveKeyboard = builder.exclusiveKeyboard;
             movement = builder.movement;
         }
 
@@ -209,13 +210,18 @@ public final class CameraSettings {
             return freeCursor;
         }
 
+        /** Filter the raw keyboard queue through Source.allowKey before vanilla and FML see an event. */
+        public boolean exclusiveKeyboard() {
+            return exclusiveKeyboard;
+        }
+
         public WorldCameras.MovementPolicy movement() {
             return movement;
         }
 
         public static final class Builder {
 
-            private boolean consumeHotbarScroll, blockDebugReloads, freeCursor;
+            private boolean consumeHotbarScroll, blockDebugReloads, freeCursor, exclusiveKeyboard;
             private WorldCameras.MovementPolicy movement = WorldCameras.MovementPolicy.NONE;
 
             public Builder consumeHotbarScroll(boolean value) {
@@ -230,6 +236,11 @@ public final class CameraSettings {
 
             public Builder freeCursor(boolean value) {
                 freeCursor = value;
+                return this;
+            }
+
+            public Builder exclusiveKeyboard(boolean value) {
+                exclusiveKeyboard = value;
                 return this;
             }
 
@@ -252,12 +263,15 @@ public final class CameraSettings {
         }
 
         private final Crosshair crosshair;
-        private final boolean panelVisible;
+        private final boolean panelVisible, sliceBarVisible, sliceDirectionVisible, sliceLabelVisible;
         private final int panelX, panelY, panelWidth, backgroundArgb, accentArgb, textArgb;
 
         private Hud(Builder builder) {
             crosshair = builder.crosshair;
             panelVisible = builder.panelVisible;
+            sliceBarVisible = builder.sliceBarVisible;
+            sliceDirectionVisible = builder.sliceDirectionVisible;
+            sliceLabelVisible = builder.sliceLabelVisible;
             panelX = builder.panelX;
             panelY = builder.panelY;
             panelWidth = builder.panelWidth;
@@ -276,6 +290,19 @@ public final class CameraSettings {
 
         public boolean panelVisible() {
             return panelVisible;
+        }
+
+        /** Compact vertical slice control; only visible while the requested slice is enabled. */
+        public boolean sliceBarVisible() {
+            return sliceBarVisible;
+        }
+
+        public boolean sliceDirectionVisible() {
+            return sliceDirectionVisible;
+        }
+
+        public boolean sliceLabelVisible() {
+            return sliceLabelVisible;
         }
 
         /** Preferred GUI-pixel position; the nonmodal panel constrains its actual position to the viewport. */
@@ -307,6 +334,7 @@ public final class CameraSettings {
 
             private Crosshair crosshair = Crosshair.KEEP;
             private boolean panelVisible;
+            private boolean sliceBarVisible, sliceDirectionVisible = true, sliceLabelVisible = true;
             private int panelX = 12, panelY = 12, panelWidth = 192;
             private int backgroundArgb = 0xE81B2029, accentArgb = 0xFF65C6C2, textArgb = 0xFFF1F4F8;
 
@@ -317,6 +345,21 @@ public final class CameraSettings {
 
             public Builder panelVisible(boolean value) {
                 panelVisible = value;
+                return this;
+            }
+
+            public Builder sliceBarVisible(boolean value) {
+                sliceBarVisible = value;
+                return this;
+            }
+
+            public Builder sliceDirectionVisible(boolean value) {
+                sliceDirectionVisible = value;
+                return this;
+            }
+
+            public Builder sliceLabelVisible(boolean value) {
+                sliceLabelVisible = value;
                 return this;
             }
 
@@ -355,7 +398,16 @@ public final class CameraSettings {
 
     public static final class Navigation {
 
+        public enum WheelZoom {
+            CTRL,
+            DIRECT,
+            DIRECT_EXCEPT_ALT
+        }
+
         private final boolean pan, yaw, pitch, zoom, reset;
+        private final int panButton, rotateButton, rotateKey;
+        private final double rotationDegreesPerPixel;
+        private final WheelZoom wheelZoom;
         private final double minPitch, maxPitch, minScale, maxScale, basePixelsPerWorldUnit;
         private final int sliceMinimumY, sliceMaximumY;
 
@@ -365,6 +417,11 @@ public final class CameraSettings {
             pitch = builder.pitch;
             zoom = builder.zoom;
             reset = builder.reset;
+            panButton = builder.panButton;
+            rotateButton = builder.rotateButton;
+            rotateKey = builder.rotateKey;
+            rotationDegreesPerPixel = builder.rotationDegreesPerPixel;
+            wheelZoom = builder.wheelZoom;
             minPitch = builder.minPitch;
             maxPitch = builder.maxPitch;
             minScale = builder.minScale;
@@ -396,6 +453,28 @@ public final class CameraSettings {
 
         public boolean reset() {
             return reset;
+        }
+
+        public int panButton() {
+            return panButton;
+        }
+
+        public int rotateButton() {
+            return rotateButton;
+        }
+
+        /** LWJGL key code, or zero for no required modifier. */
+        public int rotateKey() {
+            return rotateKey;
+        }
+
+        /** Sensitivity is measured in scaled GUI pixels, independent of the display scale. */
+        public double rotationDegreesPerPixel() {
+            return rotationDegreesPerPixel;
+        }
+
+        public WheelZoom wheelZoom() {
+            return wheelZoom;
         }
 
         public double minPitch() {
@@ -430,6 +509,9 @@ public final class CameraSettings {
         public static final class Builder {
 
             private boolean pan, yaw, pitch, zoom, reset;
+            private int panButton = 2, rotateButton = -1, rotateKey;
+            private double rotationDegreesPerPixel = .35;
+            private WheelZoom wheelZoom = WheelZoom.CTRL;
             private double minPitch = -89, maxPitch = 89, minScale = 2, maxScale = 128, basePixelsPerWorldUnit = 16;
             private int sliceMinimumY = 0, sliceMaximumY = 256;
 
@@ -455,6 +537,32 @@ public final class CameraSettings {
 
             public Builder reset(boolean value) {
                 reset = value;
+                return this;
+            }
+
+            public Builder panButton(int button) {
+                if (button < -1 || button >= 16) throw new IllegalArgumentException("Invalid pan button");
+                panButton = button;
+                return this;
+            }
+
+            /** Use -1 to disable rotation dragging; requiredKey=0 means no modifier. */
+            public Builder rotateDrag(int button, int requiredKey) {
+                if (button < -1 || button >= 16 || requiredKey < 0 || requiredKey >= 256)
+                    throw new IllegalArgumentException("Invalid rotation binding");
+                rotateButton = button;
+                rotateKey = requiredKey;
+                return this;
+            }
+
+            public Builder rotationDegreesPerPixel(double value) {
+                positive(value, "rotationDegreesPerPixel");
+                rotationDegreesPerPixel = value;
+                return this;
+            }
+
+            public Builder wheelZoom(WheelZoom value) {
+                wheelZoom = Objects.requireNonNull(value, "wheelZoom");
                 return this;
             }
 

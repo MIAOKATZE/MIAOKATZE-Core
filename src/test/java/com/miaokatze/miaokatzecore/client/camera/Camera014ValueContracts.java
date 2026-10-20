@@ -53,6 +53,34 @@ public final class Camera014ValueContracts {
             "legacy input bridge");
         check(legacy.guiPolicy() == WorldCameras.GuiPolicy.RELEASE, "legacy GUI bridge");
         check(
+            !legacy.input()
+                .exclusiveKeyboard()
+                && !legacy.hud()
+                    .sliceBarVisible()
+                && legacy.navigation()
+                    .panButton() == 2
+                && legacy.navigation()
+                    .rotateButton() == -1
+                && legacy.navigation()
+                    .wheelZoom() == CameraSettings.Navigation.WheelZoom.CTRL,
+            "legacy keyboard and mouse defaults unchanged");
+        CameraSettings.Navigation modern = CameraSettings.Navigation.builder()
+            .panButton(1)
+            .rotateDrag(0, 19)
+            .wheelZoom(CameraSettings.Navigation.WheelZoom.DIRECT_EXCEPT_ALT)
+            .build();
+        check(
+            modern.panButton() == 1 && modern.rotateButton() == 0
+                && modern.rotateKey() == 19
+                && modern.wheelZoom() == CameraSettings.Navigation.WheelZoom.DIRECT_EXCEPT_ALT,
+            "opt-in gestures configured independently of enabled controls");
+        check(
+            CameraSettings.Input.builder()
+                .exclusiveKeyboard(true)
+                .build()
+                .exclusiveKeyboard(),
+            "raw keyboard isolation explicitly enabled");
+        check(
             legacy.hud()
                 .crosshair() == CameraSettings.Hud.Crosshair.KEEP
                 && !legacy.hud()
@@ -125,6 +153,15 @@ public final class Camera014ValueContracts {
         expect(
             () -> CameraSettings.Hud.builder()
                 .panelWidth(0));
+        expect(
+            () -> CameraSettings.Navigation.builder()
+                .panButton(-2));
+        expect(
+            () -> CameraSettings.Navigation.builder()
+                .rotateDrag(0, 256));
+        expect(
+            () -> CameraSettings.Navigation.builder()
+                .rotationDegreesPerPixel(Double.NaN));
     }
 
     private static void frame() {

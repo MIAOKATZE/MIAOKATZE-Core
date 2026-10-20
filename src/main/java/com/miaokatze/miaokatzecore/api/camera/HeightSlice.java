@@ -8,14 +8,15 @@ public final class HeightSlice {
     private final int minimumY, maximumY;
     private final double featherWidth;
     private final boolean featheredCaps;
+    private final boolean lightCompensation;
 
     private HeightSlice(boolean enabled, boolean hasLower, boolean hasUpper, int minimumY, int maximumY,
         double featherWidth) {
-        this(enabled, hasLower, hasUpper, minimumY, maximumY, featherWidth, false);
+        this(enabled, hasLower, hasUpper, minimumY, maximumY, featherWidth, false, false);
     }
 
     private HeightSlice(boolean enabled, boolean hasLower, boolean hasUpper, int minimumY, int maximumY,
-        double featherWidth, boolean featheredCaps) {
+        double featherWidth, boolean featheredCaps, boolean lightCompensation) {
         CameraNumbers.finite(featherWidth, "featherWidth");
         if (featherWidth < 0) throw new IllegalArgumentException("featherWidth must not be negative");
         if (hasLower && hasUpper && minimumY >= maximumY) {
@@ -28,6 +29,7 @@ public final class HeightSlice {
         this.maximumY = maximumY;
         this.featherWidth = featherWidth == 0 ? 0 : featherWidth;
         this.featheredCaps = featheredCaps;
+        this.lightCompensation = lightCompensation;
     }
 
     public static HeightSlice disabled() {
@@ -75,11 +77,21 @@ public final class HeightSlice {
     /** Opt in to fading native cut faces too, with native faces exposed behind the feather band. */
     public HeightSlice withFeatheredCaps(boolean value) {
         return featheredCaps == value ? this
-            : new HeightSlice(enabled, hasLower, hasUpper, minimumY, maximumY, featherWidth, value);
+            : new HeightSlice(enabled, hasLower, hasUpper, minimumY, maximumY, featherWidth, value, lightCompensation);
     }
 
     public boolean featheredCaps() {
         return featheredCaps;
+    }
+
+    /** Render-only light compensation near native cut faces; never changes the world's stored light. */
+    public HeightSlice withLightCompensation(boolean value) {
+        return lightCompensation == value ? this
+            : new HeightSlice(enabled, hasLower, hasUpper, minimumY, maximumY, featherWidth, featheredCaps, value);
+    }
+
+    public boolean lightCompensation() {
+        return lightCompensation;
     }
 
     public boolean containsBlockY(int blockY) {
@@ -96,6 +108,7 @@ public final class HeightSlice {
             && minimumY == other.minimumY
             && maximumY == other.maximumY
             && featheredCaps == other.featheredCaps
+            && lightCompensation == other.lightCompensation
             && Double.doubleToLongBits(featherWidth) == Double.doubleToLongBits(other.featherWidth);
     }
 
@@ -107,6 +120,7 @@ public final class HeightSlice {
         result = 31 * result + minimumY;
         result = 31 * result + maximumY;
         result = 31 * result + (featheredCaps ? 1 : 0);
+        result = 31 * result + (lightCompensation ? 1 : 0);
         long bits = Double.doubleToLongBits(featherWidth);
         return 31 * result + (int) (bits ^ bits >>> 32);
     }

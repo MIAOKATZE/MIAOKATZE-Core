@@ -4,15 +4,19 @@ import net.minecraft.block.Block;
 import net.minecraft.client.renderer.RenderBlocks;
 import net.minecraft.world.IBlockAccess;
 
+import org.embeddedt.embeddium.impl.render.chunk.compile.ChunkBuildBuffers;
 import org.embeddedt.embeddium.impl.render.chunk.compile.ChunkBuildOutput;
+import org.embeddedt.embeddium.impl.render.chunk.terrain.material.Material;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
+import com.gtnewhorizons.angelica.rendering.celeritas.AngelicaChunkBuildContext;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
 import com.miaokatze.miaokatzecore.client.camera.slice.SliceMeshTask;
 import com.miaokatze.miaokatzecore.client.camera.slice.SliceMeshes;
 
@@ -43,6 +47,22 @@ public abstract class MixinAngelicaSliceTask implements SliceMeshTask {
             return original.call(renderer, block, x, y, z);
         } finally {
             renderer.blockAccess = originalAccess;
+        }
+    }
+
+    @WrapOperation(
+        method = "renderBlock",
+        at = @At(
+            value = "INVOKE",
+            target = "Lcom/gtnewhorizons/angelica/rendering/celeritas/AngelicaChunkBuildContext;copyRawBuffer([II[I[ILorg/embeddedt/embeddium/impl/render/chunk/compile/ChunkBuildBuffers;Lorg/embeddedt/embeddium/impl/render/chunk/terrain/material/Material;ZZ)V"),
+        remap = false)
+    private void core$nativeLightingScope(AngelicaChunkBuildContext context, int[] raw, int count, int[] states,
+        int[] ids, ChunkBuildBuffers buffers, Material material, boolean override, boolean smooth,
+        Operation<Void> original, @Local(argsOnly = true) RenderBlocks renderer,
+        @Local(argsOnly = true, ordinal = 1) int x, @Local(argsOnly = true, ordinal = 2) int y,
+        @Local(argsOnly = true, ordinal = 3) int z) {
+        try (SliceMeshes.FaceScope ignored = SliceMeshes.enter(core$sliceSnapshot, renderer.blockAccess, x, y, z)) {
+            original.call(context, raw, count, states, ids, buffers, material, override, smooth);
         }
     }
 

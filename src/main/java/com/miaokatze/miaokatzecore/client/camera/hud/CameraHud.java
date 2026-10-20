@@ -34,6 +34,7 @@ public final class CameraHud {
     private static long ownerEpoch = Long.MIN_VALUE;
     private static boolean collapsed, positioned, sliceInitialized, hideAbove = true;
     private static boolean featheredCaps;
+    private static boolean lightCompensation;
     private static double panelX, panelY, grabX, grabY, feather = DEFAULT_FEATHER;
     private static int configuredX, configuredY, selectedY;
     private static CameraFrame pendingFrame;
@@ -154,6 +155,7 @@ public final class CameraHud {
         feather = DEFAULT_FEATHER;
         hideAbove = true;
         featheredCaps = false;
+        lightCompensation = false;
     }
 
     /** Draw from RenderGameOverlayEvent.Post(ALL); crosshair cancellation stays in the client hook. */
@@ -318,6 +320,7 @@ public final class CameraHud {
             selectedY = clampLayer(slice.hasUpper() ? (long) slice.maximumY() - 1 : slice.minimumY(), navigation);
             feather = slice.featherWidth();
             featheredCaps = slice.featheredCaps();
+            lightCompensation = slice.lightCompensation();
         }
         return slice;
     }
@@ -328,7 +331,8 @@ public final class CameraHud {
 
     private static HeightSlice currentSlice() {
         return (hideAbove ? HeightSlice.below(selectedY + 1, feather) : HeightSlice.above(selectedY, feather))
-            .withFeatheredCaps(featheredCaps);
+            .withFeatheredCaps(featheredCaps)
+            .withLightCompensation(lightCompensation);
     }
 
     private static void request(CameraFrame frame, CameraControls controls, HeightSlice slice) {

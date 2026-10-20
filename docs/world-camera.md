@@ -1,6 +1,6 @@
-# 世界相机 API（0.1.5）
+# 世界相机 API（0.1.6）
 
-Core 提供可独立调用的世界等距引擎。消费者只提交锚点、角度、缩放和输入/显示策略；按键、权限、战斗、方块选点、网络和存档仍在消费者。所有相机与租约操作必须在客户端线程进行，不能从服务端类的静态字段引用客户端入口。0.1.3/0.1.4 的 Source、Options、View、Lease 和数学入口继续可用；新增功能通过默认方法桥接，不强迫旧调用方启用工具栏或改变准星。
+Core 提供可独立调用的世界等距引擎。消费者只提交锚点、角度、缩放和输入/显示策略；按键、权限、战斗、方块选点、网络和存档仍在消费者。所有相机与租约操作必须在客户端线程进行，不能从服务端类的静态字段引用客户端入口。0.1.3/0.1.4/0.1.5 的 Source、Options、View、Lease 和数学入口继续可用；新增功能通过默认方法桥接，不强迫旧调用方启用工具栏或改变准星。
 
 ## 最小接入
 
@@ -46,7 +46,7 @@ Core 在锚点驱动绘制期间临时调整 view entity 的渲染位置，在 W
 
 公共 hooks 随 Core 的 FML early loader 启动，专服返回空客户端 Mixin 列表。使用整合包已有 UniMixins，不注册 Core 自有 RFB 插件，不在 preInit 动态追加 Mixin。Angelica/Celeritas 的通用正交面/视锥门控位于 Core，业务可见性仍由消费者保留。
 
-FalsePatternLib 精确下载0.1.5，不覆盖已安装旧版本。普通 LaunchWrapper 首次下载带 early plugin 的 JAR 可能退出并要求重启；RFB 路径需在 FML 扫描前发现下载结果。安装器退出0不能单独证明相机 hooks 已生效，应以实际启动与画面/拾取验证为准。
+FalsePatternLib 精确下载0.1.6，不覆盖已安装旧版本。普通 LaunchWrapper 首次下载带 early plugin 的 JAR 可能退出并要求重启；RFB 路径需在 FML 扫描前发现下载结果。安装器退出0不能单独证明相机 hooks 已生效，应以实际启动与画面/拾取验证为准。
 
 ## 设置、操作与工具栏
 
@@ -107,3 +107,36 @@ CameraSettings settings = CameraSettings.builder()
 `HeightSlice.withFeatheredCaps(true)` 显式启用整层透明覆盖：按实际表面所属方块层的中心计算渐变，而不再将切面强制不透明。1格渐变使边缘一层覆盖率0.5、下一层完全不透明；多格宽度按smoothstep逐层变化。使用有序覆盖透明（discard），而非源alpha混合，以保留RC2地形原有深度写入和半透明方块排序；因此近看有4×4像素覆盖纹理。CPU拾取与GLSL采用相同的所属层、覆盖函数及像素门槛。GPU重建预览可能暂缺补面，READY仍须等待匹配网格实际上传。
 
 新模式补出羽化带内被邻层遮挡的原生上下表面，并将被移除或渐变邻层从局部AO遮挡查询中排除；不修改世界、碰撞或光照传播。原生天空/方块光仍可能因真实屋顶和洞穴而偏暗，自定义ISBRH自行查询世界/绕过标准面链时仍不能保证补面或AO一致性。旧 `HeightSlice` 工厂默认不启用此模式，保留实体边界盖面、原逐片元渐变与四分之一格工具栏默认；消费方需要1格默认时显式传入1。旧模式只有边界高度影响网格，新模式的 `ceil(featherWidth)` 也参与网格依赖，带宽改变所需面数时局部重建。
+
+## 滚轮单位、业务修饰键与切面光照（0.1.6）
+
+`Navigation.wheelDeltaUnit` 的默认值 `LEGACY_120` 保留旧入口行为。`NOTCH` 直接接受1为一格滚轮，`AUTO` 通过实际运行时的 `org.lwjglx.input.Mouse` 桥选择：RC2 lwjgl3ify 3.0.37 使用1为一格，经典LWJGL使用120为一格。`wheelSensitivity` 默认1；`wheelZoomLimit` 默认不额外限幅。新调用方可配置：
+
+```java
+CameraSettings.Navigation.builder()
+    .pan(true).yaw(true).zoom(true)
+    .panButton(1).rotateDrag(0, Keyboard.KEY_R)
+    .panExcludesControl(true).rotateExcludesControl(true)
+    .wheelZoom(CameraSettings.Navigation.WheelZoom.DIRECT_EXCEPT_ALT)
+    .wheelDeltaUnit(CameraSettings.Navigation.WheelDeltaUnit.AUTO)
+    .wheelSensitivity(50).wheelZoomLimit(1.5)
+    .build();
+HeightSlice slice = HeightSlice.below(80, 1)
+    .withFeatheredCaps(true).withLightCompensation(true);
+```
+
+该示例在RC2每格实际缩放约1.5倍，反向为2/3，随后仍受 `scaleRange` 约束；同样的经典120单位事件结果一致。旧版本在RC2将raw 1再次除120，步进约1.000794倍。修正单位并设置增益/限幅后，相对于该实际旧响应超过50倍；这不表示相对于规范旧120单位整格响应仍乘50。限幅防止直接 `pow(1.1, 50)` 一格跳到缩放端点。旧调用仍保留原单位、增益和无额外事件限幅。
+
+`panExcludesControl(true)` 和 `rotateExcludesControl(true)` 在按住任一Ctrl时不开始相应导航捕获，让该鼠标事件进入消费方Forge处理（例如Ctrl+左/右设置固定两个角点）。默认均false；已捕获的拖动仍持续到原按钮释放。业务操作优先级由消费方在鼠标监听器中决定，Core不拥有选角规则。
+
+`HeightSlice.withLightCompensation(true)` 是可选的局部渲染补偿，默认false。切面及羽化带邻域在普通RenderBlocks光照读取和RC2 Celeritas独立LightDataCache中使用完整环境光通道，并保留真实方块光；被裁掉或渐变邻层不再贡献遮挡/AO。环境光仍通过当前维度和昼夜的lightmap呈现，不修改World、区块存储、真实光照传播或碰撞。补偿标志及其带宽参与网格依赖，更改后必须等待对应顶点网格上传。自定义ISBRH自行读取世界或硬编码颜色/亮度时仍不保证补偿覆盖；远离切面邻域的真实暗部保留。
+
+0.1.5仅替换RenderBlocks的邻层访问；RC2会在随后 `copyRawBuffer` 中使用原WorldSlice重新计算平滑光照，覆盖先前AO结果。0.1.6将同一冻结切片作用域同时应用于该独立光缓存，避免这一覆盖路径。
+
+## 本地网格就绪与诊断（0.1.6）
+
+Core继续区分请求、显示预览和实际网格上传。当前切面可见的原生区段必须收到匹配切片与最新native提交帧的真实上传确认；仅提交队列、旧切片回执或同切片旧提交帧都不能解锁拾取。隐藏区段保留dirty并受预算重建，但不再使所有可见选点永久等待；当原生图将dirty区段变为可见时，点击处即时检查重新阻塞，直到对应上传完成。GUI、焦点、owner/world、requested/displayed/committed revision及geometry revision的校验保持有效。
+
+排队前已开始的当前切片任务不会再被Core自身取消。没有活任务token的dirty区段可以重试；RC2已经标为pending但丢失队列入口时会重新进入原生interim队列，仍保持每预算最多4个区段。不会使用超时强制READY。生产实际使用的 `SliceMeshProgress` 纯JVM回归覆盖提交/确认、取消重试、隐藏转可见、旧回执和恢复转换；它不能替代真实渲染上传验证。
+
+需要有限的本机排查时，客户端线程可显式调用 `SliceMeshes.diagnostics()` 获取只读状态、dirty/visiblePending/queued/building/installed/token/update/orphan计数、revision和区段样例。该入口不自动打印、不操作队列；正常游戏无诊断日志开销。RC2队列桥只在编译期引用fastutil 8.5.18（与Angelica RC2相同），不会把该库打进Core产物。

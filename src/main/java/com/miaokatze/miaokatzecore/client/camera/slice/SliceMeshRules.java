@@ -12,7 +12,9 @@ public final class SliceMeshRules {
         return first.enabled() == second.enabled() && first.hasLower() == second.hasLower()
             && first.hasUpper() == second.hasUpper()
             && first.featheredCaps() == second.featheredCaps()
-            && (!first.featheredCaps() || Math.ceil(first.featherWidth()) == Math.ceil(second.featherWidth()))
+            && first.lightCompensation() == second.lightCompensation()
+            && (!(first.featheredCaps() || first.lightCompensation())
+                || Math.ceil(first.featherWidth()) == Math.ceil(second.featherWidth()))
             && (!first.hasLower() || first.minimumY() == second.minimumY())
             && (!first.hasUpper() || first.maximumY() == second.maximumY());
     }

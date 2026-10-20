@@ -16,8 +16,47 @@ public final class Camera014ValueContracts {
 
     public static void main(String[] args) {
         settings();
+        wheel();
         frame();
         System.out.println("Camera014ValueContracts: PASS (settings bridge, builders, controls, frame values)");
+    }
+
+    private static void wheel() {
+        CameraSettings.Navigation legacy = CameraSettings.Navigation.builder()
+            .build();
+        check(Math.abs(CameraWheel.factor(120, legacy, true) - 1.1) < 1e-12, "legacy wheel retains 120-unit notch");
+        check(
+            Math.abs(CameraWheel.factor(1, legacy, true) - Math.pow(1.1, 1 / 120.0)) < 1e-12,
+            "legacy unit behavior does not silently change");
+        check(CameraWheel.factor(12000, legacy, true) > 100, "legacy wheel retains unbounded event response");
+        CameraSettings.Navigation fast = CameraSettings.Navigation.builder()
+            .wheelSensitivity(50)
+            .wheelDeltaUnit(CameraSettings.Navigation.WheelDeltaUnit.AUTO)
+            .wheelZoomLimit(1.5)
+            .panExcludesControl(true)
+            .rotateExcludesControl(true)
+            .build();
+        double factor = CameraWheel.factor(1, fast, true);
+        check(Math.abs(factor - 1.5) < 1e-12, "lwjgl3ify raw-one notch has controlled visible response");
+        check(
+            factor - 1 >= 50 * (CameraWheel.factor(1, legacy, true) - 1),
+            "actual raw-one delta response increases by at least fifty times");
+        check(
+            Math.abs(CameraWheel.factor(-1, fast, true) * factor - 1) < 1e-12,
+            "equal opposite wheel events restore scale");
+        check(
+            Math.abs(CameraWheel.factor(120, fast, false) - factor) < 1e-12,
+            "classic and lwjgl3ify notches have the same opt-in response");
+        check(Math.abs(CameraWheel.factor(0, fast, true) - 1) < 1e-12, "zero delta has no effect");
+        check(
+            fast.panExcludesControl() && fast.rotateExcludesControl(),
+            "consumer Ctrl gestures can bypass navigation");
+        expect(
+            () -> CameraSettings.Navigation.builder()
+                .wheelSensitivity(0));
+        expect(
+            () -> CameraSettings.Navigation.builder()
+                .wheelZoomLimit(1));
     }
 
     private static void settings() {

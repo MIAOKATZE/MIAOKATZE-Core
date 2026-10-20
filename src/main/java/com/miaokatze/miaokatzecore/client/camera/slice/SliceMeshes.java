@@ -27,12 +27,13 @@ public final class SliceMeshes {
 
     private static final int REBUILDS_PER_BUDGET = 4;
     private static final long BUDGET_INTERVAL_NANOS = 16_000_000L;
-    private static final Set<RenderSection> pending = identitySet();
+    private static final SliceMeshProgress<RenderSection, Snapshot> progress = new SliceMeshProgress<>();
+    private static final Set<RenderSection> pending = progress.pending;
     private static final Set<RenderSection> touched = identitySet();
     private static final Set<RenderSection> enqueued = identitySet();
     private static final ArrayDeque<RenderSection> queue = new ArrayDeque<>();
-    private static final IdentityHashMap<RenderSection, Snapshot> installed = new IdentityHashMap<>();
-    private static final IdentityHashMap<RenderSection, Snapshot> building = new IdentityHashMap<>();
+    private static final IdentityHashMap<RenderSection, Snapshot> installed = progress.installed;
+    private static final IdentityHashMap<RenderSection, Snapshot> building = progress.building;
     private static final ThreadLocal<FaceScope> FACE = new ThreadLocal<>();
     private static RenderSectionManager manager;
     private static World managerWorld;
@@ -183,6 +184,10 @@ public final class SliceMeshes {
             .removeIf(RenderSection::isDisposed);
         building.keySet()
             .removeIf(RenderSection::isDisposed);
+        // A cancelled native task can finish without an output. Its remembered stamp is not a live job token.
+        for (RenderSection section : pending) {
+            if (progress.shouldSchedule(section, liveToken(section), enqueued.contains(section))) enqueue(section);
+        }
         long now = System.nanoTime();
         if (now - lastBudget >= BUDGET_INTERVAL_NANOS) {
             lastBudget = now;
@@ -191,18 +196,76 @@ public final class SliceMeshes {
                 enqueued.remove(section);
                 if (!pending.contains(section) || section.isDisposed()) continue;
                 CancellationToken token = section.getBuildCancellationToken();
+                // Do not cancel a correct in-flight task merely because sectionAdded queued it earlier.
+                if (token != null && !token.isCancelled() && building.get(section) == target) continue;
                 if (token != null) {
                     token.setCancelled();
                     section.setBuildCancellationToken(null);
                 }
-                manager.scheduleRebuild(section.getChunkX(), section.getChunkY(), section.getChunkZ(), true);
+                ((SliceMeshScheduler) manager).core$scheduleSliceRebuild(section);
             }
         }
         return refreshStatus();
     }
 
     public static Status status() {
-        return lastStatus;
+        // Graph visibility can change between frame publication and a click, without a mesh callback.
+        return refreshStatus();
+    }
+
+    /** Read-only native probe; no logging, queue mutation or renderer loading is triggered by this call. */
+    public static String diagnostics() {
+        int visible = 0, token = 0, update = 0, orphan = 0;
+        StringBuilder sample = new StringBuilder();
+        for (RenderSection section : pending) {
+            if (manager != null
+                && manager.isSectionVisible(section.getChunkX(), section.getChunkY(), section.getChunkZ())) visible++;
+            if (section.getBuildCancellationToken() != null) token++;
+            if (section.getPendingUpdate() != null) update++;
+            if (section.getBuildCancellationToken() == null && section.getPendingUpdate() == null
+                && !enqueued.contains(section)) orphan++;
+            if (sample.length() < 320) sample.append(' ')
+                .append(section.getChunkX())
+                .append(',')
+                .append(section.getChunkY())
+                .append(',')
+                .append(section.getChunkZ())
+                .append(':')
+                .append(section.getPendingUpdate())
+                .append('/')
+                .append(section.getBuildCancellationToken() != null)
+                .append('/')
+                .append(installed.get(section) == target);
+        }
+        return "state=" + lastStatus.state()
+            + " pending="
+            + pending.size()
+            + " visiblePending="
+            + visible
+            + " queued="
+            + queue.size()
+            + " building="
+            + building.size()
+            + " installed="
+            + installed.size()
+            + " token="
+            + token
+            + " update="
+            + update
+            + " orphan="
+            + orphan
+            + " generation="
+            + managerGeneration
+            + " target="
+            + (target == null ? -1 : target.revision)
+            + " displayed="
+            + displayRevision
+            + " committed="
+            + committedRevision
+            + " geometry="
+            + geometryRevision
+            + " sample="
+            + sample;
     }
 
     public static long managerGeneration() {
@@ -332,11 +395,8 @@ public final class SliceMeshes {
             if (output.render.isDisposed()) continue;
             changed = true;
             Snapshot stamp = ((SliceMeshOutput) output).core$getSliceSnapshot();
-            if (building.get(output.render) == stamp) building.remove(output.render);
-            if (stamp == null) installed.remove(output.render);
-            else installed.put(output.render, stamp);
-            if (stamp == null || stamp != target) continue;
-            pending.remove(output.render);
+            if (!progress.acknowledge(output.render, stamp, output.buildTime >= output.render.getLastSubmittedFrame())
+                || stamp == null) continue;
             if (SliceMeshRules.affectsSection(stamp.slice, output.render.getOriginY())) touched.add(output.render);
             else touched.remove(output.render);
         }
@@ -348,6 +408,11 @@ public final class SliceMeshes {
         FaceScope scope = new FaceScope(FACE.get(), snapshot, access, x, y, z);
         FACE.set(scope);
         return scope;
+    }
+
+    public static HeightSlice lightingSlice() {
+        FaceScope scope = FACE.get();
+        return scope == null || scope.snapshot == null ? HeightSlice.disabled() : scope.snapshot.slice;
     }
 
     /** Only native rendering sees this view; no world state, light engine or block collision is changed. */
@@ -393,6 +458,7 @@ public final class SliceMeshes {
     private static void changeTarget(long epoch, HeightSlice slice, long revision, Minecraft mc) {
         HeightSlice old = target == null ? HeightSlice.disabled() : target.slice;
         target = new Snapshot(manager, managerWorld, epoch, revision, slice);
+        progress.target(target);
         displayTarget = slice;
         displayRevision = revision;
         failure = null;
@@ -427,10 +493,18 @@ public final class SliceMeshes {
         if (!section.isDisposed() && enqueued.add(section)) queue.addLast(section);
     }
 
+    private static boolean liveToken(RenderSection section) {
+        CancellationToken token = section.getBuildCancellationToken();
+        return token != null && !token.isCancelled();
+    }
+
     private static Status refreshStatus() {
         if (target == null) return publish(State.DISABLED, true, true, null);
         if (failure != null) return publish(State.UNSUPPORTED, pending.isEmpty() && touched.isEmpty(), false, failure);
-        if (!pending.isEmpty())
+        // Native graph/frontier sections without displayable geometry must not fence every visible click forever.
+        // Dirty hidden sections remain pending and immediately fence again if the renderer makes them visible.
+        if (progress.hasRequired(
+            section -> manager.isSectionVisible(section.getChunkX(), section.getChunkY(), section.getChunkZ())))
             return publish(target.slice.enabled() ? State.APPLYING : State.RESTORING, false, true, null);
         // A GPU-only update may advance presentation while geometry is pending, but commits only after upload ack.
         committed = displayTarget;
@@ -455,10 +529,8 @@ public final class SliceMeshes {
         target = null;
         displayTarget = HeightSlice.disabled();
         displayRevision = -1;
-        pending.clear();
+        progress.clear();
         touched.clear();
-        installed.clear();
-        building.clear();
         enqueued.clear();
         queue.clear();
         committed = HeightSlice.disabled();

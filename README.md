@@ -1,10 +1,10 @@
 # MIAOKATZE Core
 
-Minecraft 1.7.10 / Forge 10.13.4.1614 / Java 8 的模块化基础库。首个 API 基线为 **0.1.1**，将系列 Mod 已验证的底层实现抽出，原 Mod 继续拥有玩法、注册、配置、存档与测试维度。
+Minecraft 1.7.10 / Forge 10.13.4.1614 / Java 8 的模块化基础库。首个 API 基线为 **0.1.2**，将系列 Mod 已验证的底层实现抽出，原 Mod 继续拥有玩法、注册、配置、存档与测试维度。
 
 ## 安装与依赖
 
-[下载普通 JAR 0.1.1](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.1/miaokatzecore-0.1.1.jar) · [SHA-256](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.1/miaokatzecore-0.1.1.jar.sha256) · [dev JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.1/miaokatzecore-0.1.1-dev.jar) · [sources JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.1/miaokatzecore-0.1.1-sources.jar)
+[下载普通 JAR 0.1.2](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.2/miaokatzecore-0.1.2.jar) · [SHA-256](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.2/miaokatzecore-0.1.2.jar.sha256) · [dev JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.2/miaokatzecore-0.1.2-dev.jar) · [sources JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.2/miaokatzecore-0.1.2-sources.jar)
 
 客户端和服务端安装同一版 Core。普通 Forge Mod，无 coremod、早期 Mixin 或运行时扫描注册。通用 API 不引用客户端类型；client 包只能在客户端调用。MUI2 适配针对 **2.3.92-1.7.10**，使用相应适配功能的 Mod 负责提供该依赖。
 
@@ -12,12 +12,12 @@ Gradle 仓库：https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven
 
 ~~~groovy
 repositories { maven { url = "https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/" } }
-dependencies { api("com.miaokatze.miaokatzecore:miaokatzecore:0.1.1:dev") { transitive = false } }
+dependencies { api("com.miaokatze.miaokatzecore:miaokatzecore:0.1.2:dev") { transitive = false } }
 ~~~
 
-Forge 依赖声明：required-after:miaokatzecore@[0.1.1,0.2.0)
+Forge 依赖声明：required-after:miaokatzecore@[0.1.2,0.2.0)
 
-系列 Mod 的 META-INF JSON 使用 FalsePatternLib 1.12.0+ 的 modDependencies，首次缺失时请求精确版本 0.1.1。需要安装 FalsePatternLib；离线部署请预先提供 Core。该机制不覆盖已加载旧 Jar，不解决任意版本组合，也不意味着自动追踪最新版。Forge 最终校验兼容区间。参见 [上游格式](https://github.com/FalsePattern/FalsePatternLib/blob/1.12.0/src/main/resources/DEPENDENCIES.md)。
+系列 Mod 的 META-INF JSON 使用 FalsePatternLib 1.12.0+ 的 modDependencies，首次缺失时请求精确版本 0.1.2。需要安装 FalsePatternLib；离线部署请预先提供 Core。该机制不覆盖已加载旧 Jar，不解决任意版本组合，也不意味着自动追踪最新版。Forge 最终校验兼容区间。参见 [上游格式](https://github.com/FalsePattern/FalsePatternLib/blob/1.12.0/src/main/resources/DEPENDENCIES.md)。
 
 ## 模块
 
@@ -56,3 +56,7 @@ ExtensionCatalog 回调同步执行于实例锁内，禁止等待另一个需要
 使用 JDK 25 执行 Gradle，产物为 Java 8 字节码：gradlew build --no-configuration-cache。check 包含纯 JVM 时间边界、句柄生命周期和 glint 参数契约；这不代表 native GUI/光效已经游戏验收。发布前必须先完成检查，提交、设置与 RELEASE_VERSION 相符的本地 Tag，确认工作树干净，再从 Tag 构建。正式 Maven 坐标不可覆盖，变更必须递增版本。
 
 AGPL-3.0。原有实现与资源来源见 [NOTICE](NOTICE.md)。
+
+## Platform baseline
+
+MIAOKATZE Core 0.1.2 and this migration batch support GTNH 2.9.0 RC2 only: GregTech 5.09.54.205, ModularUI2 2.3.92-1.7.10 and GTNHLib 0.11.52. Forge checks these dependencies before initialization. Older beta/RC1 platforms are unsupported. Optional integrations remain isolated and quiet; persistent data migration and the public Core API retain their compatibility contracts.

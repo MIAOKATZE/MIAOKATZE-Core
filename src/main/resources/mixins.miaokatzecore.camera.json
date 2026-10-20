@@ -1,0 +1,10 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "com.miaokatze.miaokatzecore.mixin",
+  "refmap": "mixins.miaokatzecore.refmap.json",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [],
+  "client": [],
+  "injectors": { "defaultRequire": 1 }
+}

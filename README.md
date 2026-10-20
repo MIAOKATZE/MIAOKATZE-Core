@@ -1,23 +1,23 @@
 # MIAOKATZE Core
 
-Minecraft 1.7.10 / Forge 10.13.4.1614 / Java 8 的模块化基础库。首个 API 基线为 **0.1.2**，将系列 Mod 已验证的底层实现抽出，原 Mod 继续拥有玩法、注册、配置、存档与测试维度。
+Minecraft 1.7.10 / Forge 10.13.4.1614 / Java 8 的模块化基础库。当前 API 基线为 **0.1.3**，将系列 Mod 已验证的底层实现抽出，原 Mod 继续拥有玩法、注册、配置、存档与测试维度。
 
 ## 安装与依赖
 
-[下载普通 JAR 0.1.2](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.2/miaokatzecore-0.1.2.jar) · [SHA-256](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.2/miaokatzecore-0.1.2.jar.sha256) · [dev JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.2/miaokatzecore-0.1.2-dev.jar) · [sources JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.2/miaokatzecore-0.1.2-sources.jar)
+[下载普通 JAR 0.1.3](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.3/miaokatzecore-0.1.3.jar) · [SHA-256](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.3/miaokatzecore-0.1.3.jar.sha256) · [dev JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.3/miaokatzecore-0.1.3-dev.jar) · [sources JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.3/miaokatzecore-0.1.3-sources.jar)
 
-客户端和服务端安装同一版 Core。普通 Forge Mod，无 coremod、早期 Mixin 或运行时扫描注册。通用 API 不引用客户端类型；client 包只能在客户端调用。MUI2 适配针对 **2.3.92-1.7.10**，使用相应适配功能的 Mod 负责提供该依赖。
+客户端和服务端安装同一版 Core。同一 JAR 包含普通 Forge Mod 和极小的 FML early loader，复用整合包 UniMixins 启动机制，不携带另一套 Mixin bootstrap。专服不选择客户端 Mixin。通用数学与所有权契约不依赖 Minecraft/OpenGL；client 包只在客户端调用。MUI2 适配针对 **2.3.92-1.7.10**，使用相应适配功能的 Mod 负责提供该依赖。
 
 Gradle 仓库：https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/
 
 ~~~groovy
 repositories { maven { url = "https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/" } }
-dependencies { api("com.miaokatze.miaokatzecore:miaokatzecore:0.1.2:dev") { transitive = false } }
+dependencies { api("com.miaokatze.miaokatzecore:miaokatzecore:0.1.3:dev") { transitive = false } }
 ~~~
 
-Forge 依赖声明：required-after:miaokatzecore@[0.1.2,0.2.0)
+Forge 依赖声明：required-after:miaokatzecore@[0.1.3,0.2.0)
 
-系列 Mod 的 META-INF JSON 使用 FalsePatternLib 1.12.0+ 的 modDependencies，首次缺失时请求精确版本 0.1.2。需要安装 FalsePatternLib；离线部署请预先提供 Core。该机制不覆盖已加载旧 Jar，不解决任意版本组合，也不意味着自动追踪最新版。Forge 最终校验兼容区间。参见 [上游格式](https://github.com/FalsePattern/FalsePatternLib/blob/1.12.0/src/main/resources/DEPENDENCIES.md)。
+系列 Mod 的 META-INF JSON 使用 FalsePatternLib 1.12.0+ 的 modDependencies，首次缺失时请求精确版本 0.1.3。需要安装 FalsePatternLib；离线部署请预先提供 Core。该机制不覆盖已加载旧 Jar，不解决任意版本组合，也不意味着自动追踪最新版。Forge 最终校验兼容区间。普通 LaunchWrapper 首次补下载带 early hooks 的0.1.3可能提示退出并需要再次启动；RC2 的 RFB 路径在 FML 扫描前下载，实际结果以启动日志为准。参见 [上游格式](https://github.com/FalsePattern/FalsePatternLib/blob/1.12.0/src/main/resources/DEPENDENCIES.md)。
 
 ## 模块
 
@@ -34,6 +34,9 @@ Forge 依赖声明：required-after:miaokatzecore@[0.1.2,0.2.0)
 | client.preview.PreviewRenderScope | GL/FBO/Tessellator 预览隔离和显式第三方上下文清理；调用方控制快照、恢复时机 |
 | ui.mui2.ScrollEdges | 绘制滚动内容上下渐隐与边缘；不拥有滚动、裁剪、鼠标或控件生命周期 |
 | api.extension.ExtensionCatalog | 每实例命名空间注册、稳定快照、可关闭句柄、安装重入保护与注销失败重试 |
+| api.camera | 不可变姿态、正交投影/反投影射线、交点、缩放与旋转缓动，不引用 Minecraft 或 GL |
+| client.camera.WorldCameras | 客户端镜头独占租约、优先级、世界身份及输入/GUI策略，无消费者时被动放行 |
+| client.camera.WorldCameraHooks | 统一投影、同帧世界射线、渲染原点、GL/实体/鼠标恢复，消费者不复制公共 Mixin |
 | testkit.Deadline | 可注入单调时间戳的被动预算，处理 nanoTime 回绕，不注册维度或后台任务 |
 
 ~~~java
@@ -45,6 +48,8 @@ try (GlScope scope = new GlScope()) {
 
 ExtensionCatalog 回调同步执行于实例锁内，禁止等待另一个需要此 catalog 的线程。注销动作须精确撤销自身安装；失败后句柄保持 active，调用方可重试。不要在全局共享可变 catalog 中混合无关生命周期。
 
+世界等距引擎的完整调用示例、所有权与坐标约定见 [相机 API](docs/world-camera.md)。Outpost 提供模式、战斗与远端策略，蓝图提供选点和编辑策略；引擎不注册两仓的按键或玩法。
+
 ## 兼容与演进
 
 0.1.x 保持已公开签名兼容；新增能力采用新入口或重载。破坏性变更进入 0.2 并先迁移消费者。客户端保护不能随意混用 raw GL 与带缓存的状态管理器：GTIT 保留自身状态路径，Core 仅输出轨迹。第三方预览清理为显式调用，仅在类存在时执行，不创建强制依赖。
@@ -53,10 +58,10 @@ ExtensionCatalog 回调同步执行于实例锁内，禁止等待另一个需要
 
 ## 构建
 
-使用 JDK 25 执行 Gradle，产物为 Java 8 字节码：gradlew build --no-configuration-cache。check 包含纯 JVM 时间边界、句柄生命周期和 glint 参数契约；这不代表 native GUI/光效已经游戏验收。发布前必须先完成检查，提交、设置与 RELEASE_VERSION 相符的本地 Tag，确认工作树干净，再从 Tag 构建。正式 Maven 坐标不可覆盖，变更必须递增版本。
+使用 JDK 25 执行 Gradle，产物为 Java 8 字节码：gradlew build --no-configuration-cache。check 包含纯 JVM 相机投影/反投影、镜头所有权、时间边界、句柄生命周期和 glint 参数契约；这不代表 native GUI/光效已经游戏验收。发布前必须先完成检查，提交、设置与 RELEASE_VERSION 相符的本地 Tag，确认工作树干净，再从 Tag 构建。正式 Maven 坐标不可覆盖，变更必须递增版本。
 
 AGPL-3.0。原有实现与资源来源见 [NOTICE](NOTICE.md)。
 
 ## Platform baseline
 
-MIAOKATZE Core 0.1.2 and this migration batch support GTNH 2.9.0 RC2 only: GregTech 5.09.54.205, ModularUI2 2.3.92-1.7.10 and GTNHLib 0.11.52. Forge checks these dependencies before initialization. Older beta/RC1 platforms are unsupported. Optional integrations remain isolated and quiet; persistent data migration and the public Core API retain their compatibility contracts.
+MIAOKATZE Core 0.1.3 and this migration batch support GTNH 2.9.0 RC2 only: GregTech 5.09.54.205, ModularUI2 2.3.92-1.7.10 and GTNHLib 0.11.52. Forge checks these dependencies before initialization. Older beta/RC1 platforms are unsupported. Optional integrations remain isolated and quiet; persistent data migration and the public Core API retain their compatibility contracts.

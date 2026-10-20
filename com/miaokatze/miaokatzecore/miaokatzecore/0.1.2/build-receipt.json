@@ -1,0 +1,34 @@
+{
+  "version": "0.1.2",
+  "tag": "v0.1.2",
+  "commit": "af2752ce5fcbdbec39f741e3ca8346a5dc315c73",
+  "clean": true,
+  "build": "build --no-configuration-cache",
+  "baseline": {
+    "gregtech": "5.09.54.205",
+    "modularui2": "2.3.92-1.7.10",
+    "gtnhlib": "0.11.52"
+  },
+  "artifacts": [
+    {
+      "file": "miaokatzecore-0.1.2.jar",
+      "sha256": "a27349916f9355a8f5b725356a90493f710a15e0e2ac47f16ad794467c24fef8",
+      "bytes": 41468
+    },
+    {
+      "file": "miaokatzecore-0.1.2-dev.jar",
+      "sha256": "feaee9f52f18bb1d6162531589784502aa6c95fb36fd392c26d066f30dba224a",
+      "bytes": 40658
+    },
+    {
+      "file": "miaokatzecore-0.1.2-sources.jar",
+      "sha256": "d78129d2f3a408780b4efc6e13a9df6f9393b49193a21b96289c68df76c5478d",
+      "bytes": 23927
+    },
+    {
+      "file": "miaokatzecore-0.1.2.pom",
+      "sha256": "67e220afb8b327a48b0b3d3b68a6416a5d2e5654d16f9d8c7c58126183127f20",
+      "bytes": 536
+    }
+  ]
+}

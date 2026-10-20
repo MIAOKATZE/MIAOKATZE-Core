@@ -4,6 +4,8 @@ Minecraft 1.7.10 / Forge 10.13.4.1614 / Java 8 的模块化基础库。首个 AP
 
 ## 安装与依赖
 
+[下载普通 JAR 0.1.1](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.1/miaokatzecore-0.1.1.jar) · [SHA-256](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.1/miaokatzecore-0.1.1.jar.sha256) · [dev JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.1/miaokatzecore-0.1.1-dev.jar) · [sources JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.1/miaokatzecore-0.1.1-sources.jar)
+
 客户端和服务端安装同一版 Core。普通 Forge Mod，无 coremod、早期 Mixin 或运行时扫描注册。通用 API 不引用客户端类型；client 包只能在客户端调用。MUI2 适配针对 **2.3.92-1.7.10**，使用相应适配功能的 Mod 负责提供该依赖。
 
 Gradle 仓库：https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/

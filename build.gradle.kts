@@ -41,3 +41,19 @@ tasks.register<JavaExec>("runCameraLeaseContracts") {
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
 tasks.named("check") { dependsOn("runCameraContracts", "runCameraLeaseContracts") }
+
+mapOf(
+    "runCamera014MathContracts" to "com.miaokatze.miaokatzecore.api.camera.Camera014MathContracts",
+    "runCamera014ValueContracts" to "com.miaokatze.miaokatzecore.client.camera.Camera014ValueContracts",
+    "runCameraFrameStoreContracts" to "com.miaokatze.miaokatzecore.client.camera.CameraFrameStoreContracts",
+    "runCameraPointerContracts" to "com.miaokatze.miaokatzecore.client.camera.CameraPointerContracts",
+    "runCameraHudContracts" to "com.miaokatze.miaokatzecore.client.camera.hud.CameraHudContracts",
+    "runSliceMeshContracts" to "com.miaokatze.miaokatzecore.client.camera.slice.SliceMeshContracts"
+).forEach { (taskName, entryPoint) ->
+    tasks.register<JavaExec>(taskName) {
+        group = "verification"
+        mainClass = entryPoint
+        classpath = sourceSets.getByName("test").runtimeClasspath
+    }
+    tasks.named("check") { dependsOn(taskName) }
+}

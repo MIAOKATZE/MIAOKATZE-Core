@@ -1,6 +1,6 @@
-# 世界相机 API（0.1.3）
+# 世界相机 API（0.1.4）
 
-Core 提供可独立调用的世界等距引擎。消费者只提交锚点、角度、缩放和输入/显示策略；按键、权限、战斗、方块选点、网络和存档仍在消费者。所有相机与租约操作必须在客户端线程进行，不能从服务端类的静态字段引用客户端入口。
+Core 提供可独立调用的世界等距引擎。消费者只提交锚点、角度、缩放和输入/显示策略；按键、权限、战斗、方块选点、网络和存档仍在消费者。所有相机与租约操作必须在客户端线程进行，不能从服务端类的静态字段引用客户端入口。0.1.3 的 Source、Options、View、Lease 和数学入口继续可用；新增功能通过默认方法桥接，不强迫旧调用方启用工具栏或改变准星。
 
 ## 最小接入
 
@@ -36,7 +36,7 @@ if (lease != null) lease.close();
 
 ## 坐标与拾取
 
-`WorldCameraHooks.mouseRay(owner, world, displayX, displayY)` 使用刚应用的同帧投影，坐标是 LWJGL 窗口像素，原点在左下。`projectWorld` 返回 Y 向上的 NDC；GUI 的 Y 为 `(1 - ndcY) * scaledHeight / 2`。无有效帧、owner/world 不匹配、窗口尺寸变化或暂停时返回 null。调用者应拒绝该次选点，不能退回玩家眼睛射线。
+`WorldCameraHooks.mouseRay(owner, world, displayX, displayY)` 使用最近一次成功显示的冻结投影，坐标是 LWJGL 窗口像素，原点在左下。`projectWorld` 在 WorldLast 使用当次冻结投影，其他阶段使用成功显示帧，返回 Y 向上的 NDC；GUI 的 Y 为 `(1 - ndcY) * scaledHeight / 2`。无有效帧、owner/world 不匹配、窗口尺寸变化、真实 GUI 或暂停时不能世界选点。调用者应拒绝该次选点，不能退回玩家眼睛射线。
 
 射线原点在正交近裁面，方向归一化。它不是玩家交互距离，也不意味着穿过未加载区块或获得服务器编辑权限。消费者负责实体/方块查询、已加载区域、业务距离和权限。`CameraIntersections` 提供平面和 AABB 几何，返回射线距离，无命中为 NaN。
 
@@ -46,4 +46,33 @@ Core 在锚点驱动绘制期间临时调整 view entity 的渲染位置，在 W
 
 公共 hooks 随 Core 的 FML early loader 启动，专服返回空客户端 Mixin 列表。使用整合包已有 UniMixins，不注册 Core 自有 RFB 插件，不在 preInit 动态追加 Mixin。Angelica/Celeritas 的通用正交面/视锥门控位于 Core，业务可见性仍由消费者保留。
 
-FalsePatternLib 精确下载0.1.3，不覆盖已安装旧版本。普通 LaunchWrapper 首次下载带 early plugin 的 JAR 可能退出并要求重启；RFB 路径需在 FML 扫描前发现下载结果。安装器退出0不能单独证明相机 hooks 已生效，应以实际启动与画面/拾取验证为准。
+FalsePatternLib 精确下载0.1.4，不覆盖已安装旧版本。普通 LaunchWrapper 首次下载带 early plugin 的 JAR 可能退出并要求重启；RFB 路径需在 FML 扫描前发现下载结果。安装器退出0不能单独证明相机 hooks 已生效，应以实际启动与画面/拾取验证为准。
+
+## 设置、操作与工具栏
+
+新消费者覆盖 `Source.settings()` 和 `Source.controls()`。`CameraSettings` 的 `Render`、`Input`、`Hud`、`Navigation` 分别使用具名 builder；缓存不可变设置，仅在策略或切层请求变化时替换。`CameraSettings.legacy(options, guiPolicy)` 是旧入口的兼容桥。
+
+`Hud.crosshair(HIDDEN)` 只取消 Forge 的 CROSSHAIRS 元素，手臂策略独立配置。`panelVisible(true)` 启用非模态工具栏，可拖动、折叠并配置位置、宽度及颜色；不会打开 GuiScreen。按钮同时要求导航策略允许和 `CameraControls.supports(...)` 返回 true。不支持俯仰的消费方可以只开放水平旋转、缩放和切层。回调只提交本地相机请求，不移动玩家、不代替网络权限检查。
+
+Core 在 Forge 鼠标事件分派前接管工具栏及中键平移、Ctrl+滚轮缩放。按下至释放的捕获绑定 owner epoch 和世界身份；GUI、失焦及抢占撤销捕获并隔离旧释放。`KEEP` 只保留画面，真实 GUI 中仍禁止世界操作。
+
+```java
+CameraSettings settings = CameraSettings.builder()
+    .hud(CameraSettings.Hud.builder()
+        .crosshair(CameraSettings.Hud.Crosshair.HIDDEN).panelVisible(true).build())
+    .navigation(CameraSettings.Navigation.builder()
+        .yaw(true).zoom(true).reset(true).sliceRange(0, 256).build())
+    .slice(HeightSlice.below(80, .25))
+    .build();
+// Return this cached value from Source.settings(). Implement supported callbacks in Source.controls().
+```
+
+## X 光高度裁切
+
+`HeightSlice.below(maxExclusive, feather)` 保留 Y 小于边界的方块层，`above(minInclusive, feather)` 保留边界及其上方，`between(minInclusive, maxExclusive, feather)` 保留区间。工具栏提供开关、上下方向、单高度条及窄带渐变；API 也接受双边界。高度按整数方块层提交，默认微渐变宽度为四分之一格。边缘使用有序覆盖抖动，保留原有深度与透明排序。
+
+默认裁切地形与方块 TESR；天空、手臂、普通实体、粒子和 HUD 不参与。世界预览需显式包裹 `SliceBackend.worldPreview()`，GUI 预览不要使用该域。GPU 预览与原生边界补面配合，补面沿用 RenderBlocks 与 GT205 标准判面链，更新仅排队相关边界区段并限制每 tick 数量。活动 Iris shaderpack 会报告不支持并关闭切层；绕过标准判面的自定义 ISBRH 不能保证补面。
+
+`CameraFrame` 是只读历史快照，不包含 World/Source，也不是输入授权。它分开记录 requested、displayed、committed 切片及内容 revision。PREVIEW、APPLYING、RESTORING 期间禁止世界选点；READY 取决于匹配网格实际上传。消费方仍需使用当前 hooks 检验所有权、焦点、捕获和就绪状态。
+
+`rayInterval(...)` 保持原近裁面射线不变，返回可查询距离区间。查询只接受方块原生碰撞面的真实交点，并用 `SliceSurfaceRule.keeps(slice, y, normalY, displayX, displayY)` 对照同像素覆盖；不能把区间起点当成新碰撞面。区间、显示帧、真实侧面法线及像素必须来自同次查询，缓存键包含 owner epoch、变换、切片、网格 revision 与像素。

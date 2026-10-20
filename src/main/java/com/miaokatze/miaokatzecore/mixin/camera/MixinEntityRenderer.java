@@ -20,14 +20,22 @@ public abstract class MixinEntityRenderer {
     @WrapMethod(method = "renderWorld")
     private void core$renderWorld(float partialTicks, long time, Operation<Void> original) {
         Minecraft mc = Minecraft.getMinecraft();
+        boolean success = false;
         try {
             WorldCameraHooks.beginWorldRender(mc, partialTicks);
             original.call(partialTicks, time);
+            success = true;
         } catch (RuntimeException | Error failure) {
             WorldCameraHooks.abortWorldRender();
             throw failure;
         } finally {
-            WorldCameraHooks.endWorldRender(mc);
+            try {
+                WorldCameraHooks.endWorldRender(mc);
+            } catch (RuntimeException | Error failure) {
+                WorldCameraHooks.abortWorldRender();
+                throw failure;
+            }
+            if (success) WorldCameraHooks.completeWorldRender(mc);
         }
     }
 

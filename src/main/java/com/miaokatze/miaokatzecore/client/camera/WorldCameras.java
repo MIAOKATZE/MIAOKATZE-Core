@@ -87,6 +87,15 @@ public final class WorldCameras {
             return GuiPolicy.SUSPEND;
         }
 
+        /** Immutable policy sampled by Core at tick/render boundaries. Legacy sources remain passive HUD users. */
+        default CameraSettings settings() {
+            return CameraSettings.legacy(options(), guiPolicy());
+        }
+
+        default CameraControls controls() {
+            return CameraControls.NONE;
+        }
+
         default boolean allowKey(int keyCode) {
             return true;
         }
@@ -104,6 +113,7 @@ public final class WorldCameras {
 
     private static volatile Entry current;
     private static boolean revoking;
+    private static long epoch;
     private static Runnable cleanup;
 
     private WorldCameras() {}
@@ -116,7 +126,7 @@ public final class WorldCameras {
         Objects.requireNonNull(source, "source");
         if (revoking || current != null && priority <= current.priority) return null;
         revoke();
-        Entry entry = new Entry(ownerId, worldToken, priority, source, onRevoked);
+        Entry entry = new Entry(ownerId, worldToken, priority, source, onRevoked, ++epoch);
         current = entry;
         return entry;
     }
@@ -164,13 +174,15 @@ public final class WorldCameras {
         final int priority;
         final Source source;
         final Runnable onRevoked;
+        final long epoch;
 
-        Entry(String owner, Object world, int priority, Source source, Runnable onRevoked) {
+        Entry(String owner, Object world, int priority, Source source, Runnable onRevoked, long epoch) {
             this.owner = owner;
             this.world = world;
             this.priority = priority;
             this.source = source;
             this.onRevoked = onRevoked;
+            this.epoch = epoch;
         }
 
         @Override

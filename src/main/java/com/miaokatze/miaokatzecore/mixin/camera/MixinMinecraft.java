@@ -24,6 +24,11 @@ public abstract class MixinMinecraft {
         WorldCameraHooks.lifecycle((Minecraft) (Object) this);
     }
 
+    @Inject(method = "runTick", at = @At("RETURN"))
+    private void core$pointerQueueDrained(CallbackInfo ci) {
+        WorldCameraHooks.endTick();
+    }
+
     @Inject(method = "displayGuiScreen", at = @At("RETURN"))
     private void core$gui(GuiScreen screen, CallbackInfo ci) {
         // Forge's cancellable GuiOpenEvent must run before ownership policy (e.g. Esc exits a camera first).
@@ -33,6 +38,16 @@ public abstract class MixinMinecraft {
     @Inject(method = "loadWorld(Lnet/minecraft/client/multiplayer/WorldClient;Ljava/lang/String;)V", at = @At("HEAD"))
     private void core$world(WorldClient world, String message, CallbackInfo ci) {
         WorldCameras.worldChanged(world);
+    }
+
+    @WrapOperation(
+        method = "runTick",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraftforge/client/ForgeHooksClient;postMouseEvent()Z",
+            remap = false))
+    private boolean core$cameraPointer(Operation<Boolean> original) {
+        return WorldCameraHooks.rawMouseEvent((Minecraft) (Object) this) || original.call();
     }
 
     @WrapOperation(

@@ -1,5 +1,6 @@
 package com.miaokatze.miaokatzecore.bootstrap;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -26,16 +27,42 @@ public final class CoreLoadingPlugin implements IFMLLoadingPlugin, IEarlyMixinLo
     public List<String> getMixins(Set<String> loadedCoreMods) {
         if (!FMLLaunchHandler.side()
             .isClient()) return Collections.emptyList();
-        return Arrays.asList(
-            "camera.MixinEntityRenderer",
-            "camera.MixinRenderGlobal",
-            "camera.MixinMinecraft",
-            "camera.MixinMovementInputFromOptions",
-            "camera.MixinKeyBinding",
-            "camera.MixinEntity",
-            "camera.MixinCeleritasViewport",
-            "camera.MixinAngelicaRenderSectionManager",
-            "camera.MixinAngelicaChunkRenderer");
+        List<String> mixins = new ArrayList<>(
+            Arrays.asList(
+                "camera.MixinEntityRenderer",
+                "camera.MixinRenderGlobal",
+                "camera.MixinMinecraft",
+                "camera.MixinMovementInputFromOptions",
+                "camera.MixinKeyBinding",
+                "camera.MixinEntity",
+                "camera.MixinCeleritasViewport",
+                "camera.MixinAngelicaRenderSectionManager",
+                "camera.MixinAngelicaChunkRenderer",
+                "camera.slice.shader.MixinSliceShaderReload"));
+        // Probe the resource without loading an optional renderer class during early bootstrap.
+        if (getClass().getClassLoader()
+            .getResource("com/gtnewhorizons/angelica/rendering/celeritas/AngelicaRenderSectionManager.class") != null) {
+            mixins.addAll(
+                Arrays.asList(
+                    "camera.slice.shader.MixinSliceShaderLoader",
+                    "camera.slice.shader.MixinSliceVertexShaderGenerator",
+                    "camera.slice.shader.MixinSliceFragmentShaderGenerator",
+                    "camera.slice.shader.MixinSliceGeometryShaderGenerator",
+                    "camera.slice.shader.MixinSliceShaderManager",
+                    "camera.slice.shader.MixinSliceDefaultChunkShaderInterface",
+                    "camera.slice.shader.MixinSliceTerrainDomain",
+                    "camera.slice.shader.MixinSliceTileEntityDomain",
+                    "camera.slice.shader.MixinSliceGlStateManager",
+                    "camera.slice.shader.MixinSliceGlProgram",
+                    "camera.slice.mesh.MixinAngelicaSliceManager",
+                    "camera.slice.mesh.MixinAngelicaSliceTask",
+                    "camera.slice.mesh.MixinSliceBuildOutput",
+                    "camera.slice.mesh.MixinSliceUploadManager",
+                    "camera.slice.mesh.MixinSliceRenderBlocks",
+                    "camera.slice.mesh.MixinSliceGTWorldContext",
+                    "camera.slice.mesh.MixinSliceSortTask"));
+        }
+        return mixins;
     }
 
     @Override

@@ -1,0 +1,30 @@
+{
+  "version": "0.1.6",
+  "tag": "v0.1.6",
+  "commit": "712bf6f672ad54c5761d0bcc6641d685a3a310b1",
+  "clean": true,
+  "nativeStatus": "ADAPTER_MESH_ONLY_REAL_INPUT_VISUAL_PENDING",
+  "publication": "IMMUTABLE_MAVEN_ARTIFACT",
+  "artifacts": [
+    {
+      "file": "miaokatzecore-0.1.6.jar",
+      "bytes": 211477,
+      "sha256": "f9d4578ad6d38f1d3b706ada5aa8480bb444a2123364266802b36bbe335b00a7"
+    },
+    {
+      "file": "miaokatzecore-0.1.6-dev.jar",
+      "bytes": 208091,
+      "sha256": "c6bf0434de868082bab0735b7a39f3404f0bcee20ab43af66187907176b73f73"
+    },
+    {
+      "file": "miaokatzecore-0.1.6-sources.jar",
+      "bytes": 107540,
+      "sha256": "b964e0f6d88694459330edb71e9597afb6da7cd430134ff73f441bf97e6f1164"
+    },
+    {
+      "file": "miaokatzecore-0.1.6.pom",
+      "bytes": 536,
+      "sha256": "b6d1e010aa560783a5d71763f7e10d40107edfe37677934e6b414c325a6d2dbf"
+    }
+  ]
+}

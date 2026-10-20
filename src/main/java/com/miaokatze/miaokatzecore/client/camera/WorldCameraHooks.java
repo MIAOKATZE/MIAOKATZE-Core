@@ -42,7 +42,8 @@ public final class WorldCameraHooks {
         }
         if (mc.currentScreen != null) guiOpened();
         owner = usable(mc);
-        if (owner != null && owner.source.options().freeCursor) {
+        // GUI/paused focus owns its own ungrabbed state; never retain that as the in-game baseline.
+        if (owner != null && mc.currentScreen == null && mc.inGameHasFocus && owner.source.options().freeCursor) {
             if (!cursorSaved) {
                 cursorWasGrabbed = Mouse.isGrabbed();
                 cursorSaved = true;

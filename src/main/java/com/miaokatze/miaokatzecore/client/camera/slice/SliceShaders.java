@@ -12,7 +12,7 @@ import com.miaokatze.miaokatzecore.api.camera.CameraPose;
 import com.miaokatze.miaokatzecore.api.camera.OrthographicProjection;
 import com.miaokatze.miaokatzecore.api.camera.SliceSurfaceRule;
 
-/** RC2 default-terrain and emulated-FFP slice bridge. Mutable state belongs to the render thread. */
+/** RC default-terrain and emulated-FFP slice bridge. Mutable state belongs to the render thread. */
 public final class SliceShaders {
 
     public enum Domain {
@@ -102,12 +102,12 @@ public final class SliceShaders {
         if (owned && enabledPrograms != 0) Bridge.disableCurrentProgram();
     }
 
-    /** Null means the RC2 default shader path is available. Active shader packs are unsupported. */
+    /** Null means the RC default shader path is available. Active shader packs are unsupported. */
     public static String unsupportedReason() {
         try {
             return Bridge.unsupportedReason();
         } catch (LinkageError missingRenderer) {
-            return "Angelica 2.2.28 default shader backend is unavailable";
+            return "Angelica default shader backend is unavailable";
         }
     }
 
@@ -190,7 +190,7 @@ public final class SliceShaders {
         }
         int main = source.indexOf("void main() {");
         int end = source.lastIndexOf('}');
-        if (main < 0 || end < main) throw new IllegalStateException("Unsupported RC2 vertex shader layout");
+        if (main < 0 || end < main) throw new IllegalStateException("Unsupported RC vertex shader layout");
         return source.substring(0, main) + declarations
             + source.substring(main, end)
             + assignment
@@ -200,7 +200,7 @@ public final class SliceShaders {
     public static String fragmentSource(String source) {
         if (source.contains("coreSliceDiscard")) return source;
         int main = source.indexOf("void main() {");
-        if (main < 0) throw new IllegalStateException("Unsupported RC2 fragment shader layout");
+        if (main < 0) throw new IllegalStateException("Unsupported RC fragment shader layout");
         return source.substring(0, main) + FragmentSource.VALUE
             + source.substring(main)
                 .replace("void main() {", "void main() {\n  coreSliceDiscard();");
@@ -209,15 +209,18 @@ public final class SliceShaders {
     /** Forward the new varying through wide-line near-plane interpolation. */
     public static String geometrySource(String source) {
         int main = source.indexOf("void main() {");
-        if (main < 0) throw new IllegalStateException("Unsupported RC2 geometry shader layout");
+        if (main < 0) throw new IllegalStateException("Unsupported RC geometry shader layout");
         String result = source.substring(0, main) + "in vec3 v_CoreSliceEye_gs[];\nout vec3 v_CoreSliceEye;\n"
             + source.substring(main);
+        // RC1 emits the original endpoints; RC2 clips near-plane endpoints and interpolates their varyings.
+        boolean interpolated = source.contains("v_Color = mix(v_Color_gs[0], v_Color_gs[1], t0);");
         for (int i = 0; i < 2; i++) {
-            String anchor = "v_Color = mix(v_Color_gs[0], v_Color_gs[1], t" + i + ");";
-            if (!result.contains(anchor)) throw new IllegalStateException("Unsupported RC2 wide-line interpolation");
-            result = result.replace(
-                anchor,
-                anchor + "\n    v_CoreSliceEye = mix(v_CoreSliceEye_gs[0], " + "v_CoreSliceEye_gs[1], t" + i + ");");
+            String anchor = interpolated ? "v_Color = mix(v_Color_gs[0], v_Color_gs[1], t" + i + ");"
+                : "v_Color = v_Color_gs[" + i + "];";
+            if (!result.contains(anchor)) throw new IllegalStateException("Unsupported RC wide-line varying layout");
+            String varying = interpolated ? "mix(v_CoreSliceEye_gs[0], v_CoreSliceEye_gs[1], t" + i + ")"
+                : "v_CoreSliceEye_gs[" + i + "]";
+            result = result.replace(anchor, anchor + "\n    v_CoreSliceEye = " + varying + ";");
         }
         return result;
     }

@@ -67,7 +67,7 @@ public abstract class MixinAngelicaSliceTask implements SliceMeshTask {
     }
 
     @ModifyExpressionValue(
-        method = { "execute", "completeDeferred" },
+        method = "execute",
         at = @At(
             value = "NEW",
             target = "(Lorg/embeddedt/embeddium/impl/render/chunk/RenderSection;Lorg/embeddedt/embeddium/impl/render/chunk/data/BuiltRenderSectionData;Lit/unimi/dsi/fastutil/objects/Reference2ReferenceMap;I)Lorg/embeddedt/embeddium/impl/render/chunk/compile/ChunkBuildOutput;"),
@@ -75,4 +75,17 @@ public abstract class MixinAngelicaSliceTask implements SliceMeshTask {
     private ChunkBuildOutput core$stampSliceOutput(ChunkBuildOutput output) {
         return SliceMeshes.tag(output, core$sliceSnapshot);
     }
+
+    /** RC2 hands deferred work off to a separate completion method; RC1 completes it inside execute. */
+    @ModifyExpressionValue(
+        method = "completeDeferred",
+        at = @At(
+            value = "NEW",
+            target = "(Lorg/embeddedt/embeddium/impl/render/chunk/RenderSection;Lorg/embeddedt/embeddium/impl/render/chunk/data/BuiltRenderSectionData;Lit/unimi/dsi/fastutil/objects/Reference2ReferenceMap;I)Lorg/embeddedt/embeddium/impl/render/chunk/compile/ChunkBuildOutput;"),
+        require = 0,
+        remap = false)
+    private ChunkBuildOutput core$stampDeferredSliceOutput(ChunkBuildOutput output) {
+        return SliceMeshes.tag(output, core$sliceSnapshot);
+    }
+
 }

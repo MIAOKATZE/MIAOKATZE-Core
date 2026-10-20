@@ -9,8 +9,8 @@ import com.miaokatze.miaokatzecore.client.camera.CameraFrame;
 import com.miaokatze.miaokatzecore.client.camera.SliceState;
 
 /**
- * Client-thread coordinator for the RC2 slice renderer. Requested GPU preview and uploaded boundary geometry have
- * separate revisions. Upload completion, rather than queue submission, makes world picking ready.
+ * Client-thread coordinator for the slice renderer. Requested GPU preview and uploaded boundary geometry have
+ * separate revisions. Picking follows the displayed clipping policy while boundary meshes rebuild in the background.
  */
 public final class SliceBackend {
 
@@ -107,7 +107,7 @@ public final class SliceBackend {
             status.committedRevision(),
             status.geometryRevision(),
             state,
-            status.pickReady(),
+            supported || status.pickReady(),
             supported,
             unavailable);
     }
@@ -143,8 +143,8 @@ public final class SliceBackend {
     }
 
     /**
-     * Read-only click fence. Section loading, task creation or upload may change mesh readiness after publication;
-     * none of those changes may be hidden by a previously published READY frame.
+     * Read-only click fence for the displayed clipping policy. Mesh uploads change visual boundary completion,
+     * not the world ray or its clipped interval; a slice change still invalidates the previous displayed frame.
      */
     public static boolean canPick(CameraFrame frame) {
         if (frame == null || !session
@@ -158,16 +158,13 @@ public final class SliceBackend {
             || !frame.displayedSlice()
                 .equals(lastDisplayed))
             return false;
+        if (frame.sliceSupported()) return true;
+        // An unsupported provider must finish restoring its old boundary meshes before ordinary camera picking.
         SliceMeshes.Status status = SliceMeshes.status();
-        if (!status.pickReady() || status.state() == SliceMeshes.State.PREVIEW
-            || status.state() == SliceMeshes.State.APPLYING
-            || status.state() == SliceMeshes.State.RESTORING) return false;
-        if (status.state() == SliceMeshes.State.UNSUPPORTED && (frame.sliceSupported() || frame.displayedSlice()
-            .enabled())) return false;
-        return frame.geometryRevision() == status.geometryRevision()
-            && frame.committedRevision() == status.committedRevision()
-            && frame.committedSlice()
-                .equals(status.committed());
+        return !frame.displayedSlice()
+            .enabled() && status.pickReady()
+            && status.state() != SliceMeshes.State.APPLYING
+            && status.state() != SliceMeshes.State.RESTORING;
     }
 
     /** Explicit opt-in for world-space mod previews. GUI renderers must not enter this scope. */

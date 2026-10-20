@@ -4,6 +4,7 @@ package com.miaokatze.miaokatzecore.client.camera;
 public final class CameraPointerContracts {
 
     public static void main(String[] args) {
+        rotationGestures();
         CameraPointerState pointer = new CameraPointerState();
         Object world = new Object();
         require(pointer.capture(0, 1, 1, world) && pointer.matches(1, world), "capture exact owner/world");
@@ -32,6 +33,25 @@ public final class CameraPointerContracts {
         pointer.reconcile(button -> false);
         require(!pointer.captured(), "no stale release debt");
         System.out.println("Camera pointer contracts passed (Minecraft/OpenGL not required).");
+    }
+
+    private static void rotationGestures() {
+        CameraDragGesture gesture = new CameraDragGesture();
+        gesture.begin(100, 200, 4);
+        require(!gesture.move(103, 201) && gesture.click(), "short jitter remains a click without rotation");
+        require(!gesture.move(104, 200) && gesture.click(), "threshold endpoint is still a click");
+        require(gesture.move(105, 200) && !gesture.click(), "crossing the threshold latches drag");
+        require(gesture.deltaX() == 5 && gesture.deltaY() == 0, "first drag includes movement held before threshold");
+        require(gesture.move(100, 200) && !gesture.click(), "returning to origin must not select a point");
+        gesture.begin(0, 0, 8);
+        require(!gesture.move(6, 4), "scaled framebuffer threshold preserves logical-pixel jitter tolerance");
+        require(gesture.move(7, 4) && !gesture.click(), "diagonal displacement also crosses threshold");
+        gesture.begin(0, 0, 0);
+        require(
+            gesture.move(1, 0) && gesture.deltaX() == 1 && !gesture.click(),
+            "legacy navigation rotates immediately");
+        gesture.begin(0, 0, 4);
+        require(gesture.click(), "a new capture clears the previous drag latch");
     }
 
     private static void require(boolean condition, String message) {

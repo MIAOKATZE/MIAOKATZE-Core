@@ -54,6 +54,10 @@ mapOf(
         group = "verification"
         mainClass = entryPoint
         classpath = sourceSets.getByName("test").runtimeClasspath
+        if (taskName == "runCameraFrameStoreContracts") {
+            // Exercise the production slice click fence without launching Minecraft or an OpenGL context.
+            classpath += sourceSets.getByName("main").compileClasspath
+        }
     }
     tasks.named("check") { dependsOn(taskName) }
 }

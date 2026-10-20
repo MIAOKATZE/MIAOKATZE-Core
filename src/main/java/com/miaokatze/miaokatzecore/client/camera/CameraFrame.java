@@ -196,6 +196,7 @@ public final class CameraFrame {
         return sliceState;
     }
 
+    /** The displayed clipping policy can be picked even while boundary geometry is APPLYING or RESTORING. */
     public boolean pickReady() {
         return pickReady;
     }

@@ -96,6 +96,9 @@ public final class WorldCameras {
             return CameraControls.NONE;
         }
 
+        /** Opt-in short rotation-button click, after capture ends; coordinates are bottom-left framebuffer pixels. */
+        default void rotationClick(int button, int displayX, int displayY) {}
+
         default boolean allowKey(int keyCode) {
             return true;
         }

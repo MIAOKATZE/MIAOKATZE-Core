@@ -412,7 +412,7 @@ public final class CameraSettings {
 
         private final boolean pan, yaw, pitch, zoom, reset;
         private final int panButton, rotateButton, rotateKey;
-        private final double rotationDegreesPerPixel;
+        private final double rotationDegreesPerPixel, rotationClickThreshold;
         private final WheelZoom wheelZoom;
         private final WheelDeltaUnit wheelDeltaUnit;
         private final double wheelSensitivity, wheelZoomLimit;
@@ -430,6 +430,7 @@ public final class CameraSettings {
             rotateButton = builder.rotateButton;
             rotateKey = builder.rotateKey;
             rotationDegreesPerPixel = builder.rotationDegreesPerPixel;
+            rotationClickThreshold = builder.rotationClickThreshold;
             wheelZoom = builder.wheelZoom;
             wheelDeltaUnit = builder.wheelDeltaUnit;
             wheelSensitivity = builder.wheelSensitivity;
@@ -485,6 +486,11 @@ public final class CameraSettings {
         /** Sensitivity is measured in scaled GUI pixels, independent of the display scale. */
         public double rotationDegreesPerPixel() {
             return rotationDegreesPerPixel;
+        }
+
+        /** Logical GUI pixels before rotation begins; zero retains immediate legacy dragging. */
+        public double rotationClickThreshold() {
+            return rotationClickThreshold;
         }
 
         public WheelZoom wheelZoom() {
@@ -544,7 +550,7 @@ public final class CameraSettings {
 
             private boolean pan, yaw, pitch, zoom, reset;
             private int panButton = 2, rotateButton = -1, rotateKey;
-            private double rotationDegreesPerPixel = .35;
+            private double rotationDegreesPerPixel = .35, rotationClickThreshold;
             private WheelZoom wheelZoom = WheelZoom.CTRL;
             private WheelDeltaUnit wheelDeltaUnit = WheelDeltaUnit.LEGACY_120;
             private double wheelSensitivity = 1, wheelZoomLimit = Double.POSITIVE_INFINITY;
@@ -595,6 +601,14 @@ public final class CameraSettings {
             public Builder rotationDegreesPerPixel(double value) {
                 positive(value, "rotationDegreesPerPixel");
                 rotationDegreesPerPixel = value;
+                return this;
+            }
+
+            /** A positive threshold reports short releases through Source.rotationClick instead of rotating. */
+            public Builder rotationClickThreshold(double logicalPixels) {
+                finite(logicalPixels, "rotationClickThreshold");
+                if (logicalPixels < 0) throw new IllegalArgumentException("Negative rotationClickThreshold");
+                rotationClickThreshold = logicalPixels;
                 return this;
             }
 

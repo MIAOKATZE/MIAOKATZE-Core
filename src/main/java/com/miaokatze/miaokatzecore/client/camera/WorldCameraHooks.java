@@ -318,8 +318,7 @@ public final class WorldCameraHooks {
                 .equals(
                     SESSION.settings()
                         .slice())
-            && SliceBackend.canPick(f)
-            && (f.sliceState() == SliceState.READY || f.sliceState() == SliceState.DISABLED) ? f : null;
+            && SliceBackend.canPick(f) ? f : null;
     }
 
     /** Original normalized near-plane ray; the slice never changes its origin. */

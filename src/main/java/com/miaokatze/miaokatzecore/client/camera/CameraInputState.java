@@ -15,6 +15,7 @@ final class CameraInputState {
         .getResource("org/lwjglx/input/Mouse.class") != null;
 
     private final CameraPointerState pointer = new CameraPointerState();
+    private final CameraDragGesture rotation = new CameraDragGesture();
     private int navigating;
     private long exclusiveEpoch = Long.MIN_VALUE;
     private int lastX, lastY;
@@ -59,7 +60,8 @@ final class CameraInputState {
             if (navigating != 0) {
                 if (eventButton < 0) {
                     if (navigating == 2) {
-                        rotate(frame, settings.navigation(), controls, eventX - lastX, eventY - lastY);
+                        if (rotation.move(eventX, eventY))
+                            rotate(frame, settings.navigation(), controls, rotation.deltaX(), rotation.deltaY());
                     } else {
                         double dx = -2.0 * (eventX - lastX)
                             * frame.projection()
@@ -88,8 +90,16 @@ final class CameraInputState {
             lastX = eventX;
             lastY = eventY;
             if (eventButton == capturedButton && !pressed) {
+                // A release can carry the last movement even when no standalone motion event was queued.
+                if (navigating == 2 && rotation.move(eventX, eventY)
+                    && (rotation.deltaX() != 0 || rotation.deltaY() != 0))
+                    rotate(frame, settings.navigation(), controls, rotation.deltaX(), rotation.deltaY());
+                boolean click = navigating == 2 && rotation.click();
+                WorldCameras.Entry clickOwner = session.owner();
                 pointer.releaseSuppressed(capturedButton);
                 finish();
+                if (click && clickOwner.active() && session.interactive(mc))
+                    clickOwner.source.rotationClick(capturedButton, eventX, eventY);
             }
             return true;
         }
@@ -171,6 +181,13 @@ final class CameraInputState {
         }
         if (!pointer.capture(pressedButton, frame.ownerEpoch(), session.owner().epoch, mc.theWorld)) return;
         navigating = mode;
+        if (mode == 2) rotation.begin(
+            x,
+            y,
+            session.settings()
+                .navigation()
+                .rotationClickThreshold() * frame.displayWidth()
+                / frame.scaledWidth());
         lastX = x;
         lastY = y;
     }

@@ -36,6 +36,19 @@ public final class Camera014ValueContracts {
             .panExcludesControl(true)
             .rotateExcludesControl(true)
             .build();
+        check(legacy.rotationClickThreshold() == 0, "old navigation retains immediate dragging");
+        check(
+            CameraSettings.Navigation.builder()
+                .rotationClickThreshold(4)
+                .build()
+                .rotationClickThreshold() == 4,
+            "click and drag discrimination is opt-in");
+        expect(
+            () -> CameraSettings.Navigation.builder()
+                .rotationClickThreshold(-1));
+        expect(
+            () -> CameraSettings.Navigation.builder()
+                .rotationClickThreshold(Double.NaN));
         double factor = CameraWheel.factor(1, fast, true);
         check(Math.abs(factor - 1.5) < 1e-12, "lwjgl3ify raw-one notch has controlled visible response");
         check(

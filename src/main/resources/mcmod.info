@@ -1,0 +1,13 @@
+[
+  {
+    "modid": "miaokatzecore",
+    "name": "MIAOKATZE Core",
+    "description": "Shared foundations for the MIAOKATZE mod family.",
+    "version": "@CORE_RELEASE@",
+    "mcversion": "1.7.10",
+    "url": "https://github.com/MIAOKATZE/MIAOKATZE-Core",
+    "authorList": [
+      "MIAOKATZE"
+    ]
+  }
+]

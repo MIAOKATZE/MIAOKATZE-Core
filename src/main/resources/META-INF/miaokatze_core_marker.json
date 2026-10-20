@@ -1,0 +1,6 @@
+{
+  "identifier": "falsepatternlib_dependencies",
+  "bundledArtifacts": [
+    "com.miaokatze.miaokatzecore:miaokatzecore:0.1.1"
+  ]
+}

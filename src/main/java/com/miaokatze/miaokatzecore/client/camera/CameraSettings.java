@@ -404,10 +404,19 @@ public final class CameraSettings {
             DIRECT_EXCEPT_ALT
         }
 
+        public enum WheelDeltaUnit {
+            LEGACY_120,
+            NOTCH,
+            AUTO
+        }
+
         private final boolean pan, yaw, pitch, zoom, reset;
         private final int panButton, rotateButton, rotateKey;
         private final double rotationDegreesPerPixel;
         private final WheelZoom wheelZoom;
+        private final WheelDeltaUnit wheelDeltaUnit;
+        private final double wheelSensitivity, wheelZoomLimit;
+        private final boolean panExcludesControl, rotateExcludesControl;
         private final double minPitch, maxPitch, minScale, maxScale, basePixelsPerWorldUnit;
         private final int sliceMinimumY, sliceMaximumY;
 
@@ -422,6 +431,11 @@ public final class CameraSettings {
             rotateKey = builder.rotateKey;
             rotationDegreesPerPixel = builder.rotationDegreesPerPixel;
             wheelZoom = builder.wheelZoom;
+            wheelDeltaUnit = builder.wheelDeltaUnit;
+            wheelSensitivity = builder.wheelSensitivity;
+            wheelZoomLimit = builder.wheelZoomLimit;
+            panExcludesControl = builder.panExcludesControl;
+            rotateExcludesControl = builder.rotateExcludesControl;
             minPitch = builder.minPitch;
             maxPitch = builder.maxPitch;
             minScale = builder.minScale;
@@ -477,6 +491,26 @@ public final class CameraSettings {
             return wheelZoom;
         }
 
+        public WheelDeltaUnit wheelDeltaUnit() {
+            return wheelDeltaUnit;
+        }
+
+        public double wheelSensitivity() {
+            return wheelSensitivity;
+        }
+
+        public double wheelZoomLimit() {
+            return wheelZoomLimit;
+        }
+
+        public boolean panExcludesControl() {
+            return panExcludesControl;
+        }
+
+        public boolean rotateExcludesControl() {
+            return rotateExcludesControl;
+        }
+
         public double minPitch() {
             return minPitch;
         }
@@ -512,6 +546,9 @@ public final class CameraSettings {
             private int panButton = 2, rotateButton = -1, rotateKey;
             private double rotationDegreesPerPixel = .35;
             private WheelZoom wheelZoom = WheelZoom.CTRL;
+            private WheelDeltaUnit wheelDeltaUnit = WheelDeltaUnit.LEGACY_120;
+            private double wheelSensitivity = 1, wheelZoomLimit = Double.POSITIVE_INFINITY;
+            private boolean panExcludesControl, rotateExcludesControl;
             private double minPitch = -89, maxPitch = 89, minScale = 2, maxScale = 128, basePixelsPerWorldUnit = 16;
             private int sliceMinimumY = 0, sliceMaximumY = 256;
 
@@ -563,6 +600,35 @@ public final class CameraSettings {
 
             public Builder wheelZoom(WheelZoom value) {
                 wheelZoom = Objects.requireNonNull(value, "wheelZoom");
+                return this;
+            }
+
+            public Builder wheelDeltaUnit(WheelDeltaUnit value) {
+                wheelDeltaUnit = Objects.requireNonNull(value, "wheelDeltaUnit");
+                return this;
+            }
+
+            public Builder wheelSensitivity(double value) {
+                positive(value, "wheelSensitivity");
+                wheelSensitivity = value;
+                return this;
+            }
+
+            /** Maximum multiplicative change per raw wheel event; legacy defaults to no additional limit. */
+            public Builder wheelZoomLimit(double value) {
+                positive(value, "wheelZoomLimit");
+                if (value <= 1) throw new IllegalArgumentException("wheelZoomLimit must exceed one");
+                wheelZoomLimit = value;
+                return this;
+            }
+
+            public Builder panExcludesControl(boolean value) {
+                panExcludesControl = value;
+                return this;
+            }
+
+            public Builder rotateExcludesControl(boolean value) {
+                rotateExcludesControl = value;
                 return this;
             }
 

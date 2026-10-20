@@ -11,6 +11,9 @@ import com.miaokatze.miaokatzecore.client.camera.hud.CameraHud;
 /** Raw mouse ownership precedes Forge's event bus, so a captured sequence cannot reach business handlers. */
 final class CameraInputState {
 
+    private static final boolean UNIT_WHEEL = CameraInputState.class.getClassLoader()
+        .getResource("org/lwjglx/input/Mouse.class") != null;
+
     private final CameraPointerState pointer = new CameraPointerState();
     private int navigating;
     private long exclusiveEpoch = Long.MIN_VALUE;
@@ -98,6 +101,7 @@ final class CameraInputState {
         CameraSettings.Navigation navigation = settings.navigation();
         if (pressed && eventButton >= 0
             && eventButton == navigation.rotateButton()
+            && (!navigation.rotateExcludesControl() || !controlDown())
             && (navigation.rotateKey() == 0 || Keyboard.isKeyDown(navigation.rotateKey()))
             && (navigation.yaw() && controls.supports(CameraControl.YAW)
                 || navigation.pitch() && controls.supports(CameraControl.PITCH))) {
@@ -106,6 +110,7 @@ final class CameraInputState {
         }
         if (eventButton >= 0 && eventButton == navigation.panButton()
             && pressed
+            && (!navigation.panExcludesControl() || !controlDown())
             && settings.navigation()
                 .pan()
             && controls.supports(CameraControl.PAN)) {
@@ -122,7 +127,7 @@ final class CameraInputState {
                 Math.min(
                     settings.navigation()
                         .maxScale(),
-                    current * Math.pow(1.1, wheel / 120.0)));
+                    current * CameraWheel.factor(wheel, navigation, UNIT_WHEEL)));
             controls.zoom(target / current);
             return true;
         }
@@ -138,6 +143,10 @@ final class CameraInputState {
             default:
                 return Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL);
         }
+    }
+
+    private static boolean controlDown() {
+        return Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL);
     }
 
     private static void rotate(CameraFrame frame, CameraSettings.Navigation navigation, CameraControls controls, int dx,

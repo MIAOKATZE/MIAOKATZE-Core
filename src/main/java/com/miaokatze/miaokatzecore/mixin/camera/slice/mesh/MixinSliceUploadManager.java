@@ -11,8 +11,10 @@ import org.embeddedt.embeddium.impl.render.chunk.compile.ChunkTaskOutput;
 import org.embeddedt.embeddium.impl.render.chunk.compile.executor.ChunkJobResult;
 import org.embeddedt.embeddium.impl.render.chunk.compile.tasks.ChunkBuilderSortTask;
 import org.embeddedt.embeddium.impl.render.chunk.region.RenderRegionManager;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -21,11 +23,26 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.miaokatze.miaokatzecore.client.camera.slice.SliceMeshScheduler;
 import com.miaokatze.miaokatzecore.client.camera.slice.SliceMeshes;
+
+import it.unimi.dsi.fastutil.objects.ReferenceSet;
 
 @Pseudo
 @Mixin(targets = "org.embeddedt.embeddium.impl.render.chunk.RenderSectionManager", remap = false)
-public abstract class MixinSliceUploadManager {
+public abstract class MixinSliceUploadManager implements SliceMeshScheduler {
+
+    @Shadow
+    @Final
+    protected ReferenceSet<RenderSection> sectionsRequestingUpdate;
+
+    @Override
+    public void core$scheduleSliceRebuild(RenderSection section) {
+        RenderSectionManager manager = (RenderSectionManager) (Object) this;
+        manager.scheduleRebuild(section.getChunkX(), section.getChunkY(), section.getChunkZ(), true);
+        // requestUpdate can return false for a previously requested update whose queue entry was consumed/lost.
+        if (section.getPendingUpdate() != null) sectionsRequestingUpdate.add(section);
+    }
 
     @ModifyExpressionValue(
         method = "onSectionAdded",

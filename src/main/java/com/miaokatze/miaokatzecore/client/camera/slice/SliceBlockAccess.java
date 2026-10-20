@@ -38,8 +38,7 @@ final class SliceBlockAccess implements IBlockAccess {
 
     @Override
     public int getLightBrightnessForSkyBlocks(int x, int y, int z, int minimum) {
-        // Keep native light propagation. Cutting a roof must not invent skylight in a cave or another dimension.
-        return original.getLightBrightnessForSkyBlocks(x, y, z, minimum);
+        return SliceLightingRules.brightness(slice, y, original.getLightBrightnessForSkyBlocks(x, y, z, minimum));
     }
 
     @Override

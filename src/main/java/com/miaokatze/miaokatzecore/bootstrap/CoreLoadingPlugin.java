@@ -59,6 +59,7 @@ public final class CoreLoadingPlugin implements IFMLLoadingPlugin, IEarlyMixinLo
                     "camera.slice.mesh.MixinSliceBuildOutput",
                     "camera.slice.mesh.MixinSliceUploadManager",
                     "camera.slice.mesh.MixinSliceRenderBlocks",
+                    "camera.slice.mesh.MixinSliceLightDataCache",
                     "camera.slice.mesh.MixinSliceGTWorldContext",
                     "camera.slice.mesh.MixinSliceSortTask"));
         }

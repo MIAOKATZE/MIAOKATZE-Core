@@ -10,7 +10,7 @@ val coreReleaseVersion = providers.gradleProperty("RELEASE_VERSION")
 
 tasks.processResources {
     inputs.property("coreRelease", coreReleaseVersion)
-    filesMatching("mcmod.info") { filter<ReplaceTokens>("tokens" to mapOf("CORE_RELEASE" to coreReleaseVersion.get())) }
+    filesMatching(listOf("mcmod.info", "META-INF/miaokatze_core_marker.json")) { filter<ReplaceTokens>("tokens" to mapOf("CORE_RELEASE" to coreReleaseVersion.get())) }
 }
 
 tasks.test { failOnNoDiscoveredTests = false }

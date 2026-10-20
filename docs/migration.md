@@ -19,3 +19,14 @@ Core 拥有基础设施与显式扩展点。每仓拥有维度与 Provider 注�
 先完成 Core 检查并固定不可变产物，再构建消费者。每个 PR 记录 Core 版本、源码提交、Tag、干净构建及 SHA-256；存在客户端改动时明确 native 渲染验收边界。相同坐标不重新发布不同字节，依赖下载精确锁定，不自动覆盖玩家旧 Jar。
 
 代码仓、plan 与 Wiki 分开提交。多仓交付清单记录关联 PR 和各自状态，不做跨仓自动回滚或自动合并。公开 Wiki 遵守每 Mod 注册表的 local-source / published-release 边界，历史截图不改标成新版本。
+
+## HUD 公共构件：下一批 0.1.2 优先项（尚未实施）
+
+用户补充的 GTMB 指定/自定义提示 HUD、模式切换，以及 GTSWN 轮盘和其他 HUD 已纳入候选。实读入口：GTMB HologramWorldGuide、HologramCutModeScreen、HologramCutInput.Switcher；GTSWN TerminalWheelGeometry、TerminalWheelHold、PortableHudLayout。
+
+- 轮盘几何可参数化扇区数、起始角、顺逆时针、内外半径和间隙命中；现有八扇区、向上起始、顺时针和0.025间隙为消费者配置，绘制与命中共用同一几何。
+- 提示框可提供测量/换行适配、锚点、边距、背景与逐行布局，并注入样式和避让区域；GTMB 的按键高亮、Waila 命中判断、RenderWitness 及 NBT 光标业务继续由消费侧决定。
+- 不把输入协议强行合成一个状态机：GTMB 是 MUI2 模态屏，Shift 松开仅提交一次、右键切换、Esc 取消；GTSWN 是10tick长按确认、首次释放抑制、后续短按释放切换、Shift TAKE。可以共享中立输入工具，但保留各自手势语义、权限与网络操作。
+- PortableHudLayout 的 EU/AE 分组、source 不可分分页和超高单元规则是业务策略，未来通过策略接口调用中立布局器，不直接搬运 PinnedLine 或把分页当作提示换行。
+
+下批先选实际重复且有真实消费者的最小构件，核对屏幕缩放、隐藏条件、GUI抢占和状态所有权。验证聚焦纯几何边界、布局、消费者编译和必要显示/输入核验。已推送0.1.1不改写；实际增加 API 时发布0.1.2，统一消费者依赖、补下载清单与新不可变产物。

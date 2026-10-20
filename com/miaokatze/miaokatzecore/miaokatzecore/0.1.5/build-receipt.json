@@ -1,0 +1,30 @@
+{
+  "version": "0.1.5",
+  "tag": "v0.1.5",
+  "commit": "ddada47ecb3e0eac850cc8091ac902445962f8fe",
+  "clean": true,
+  "nativeStatus": "NOT_RUN_USER_TEST_PENDING",
+  "publication": "IMMUTABLE_MAVEN_ARTIFACT",
+  "artifacts": [
+    {
+      "file": "miaokatzecore-0.1.5.jar",
+      "bytes": 201665,
+      "sha256": "f7abdc63ecdab37e9396b2d2da0002e415b021a14d84e4520ba7738aecefc5a8"
+    },
+    {
+      "file": "miaokatzecore-0.1.5-dev.jar",
+      "bytes": 198415,
+      "sha256": "1a74988127a1da5ddd7188b7ae8b46a29f4c122fb677cbab352f84cfee74fca5"
+    },
+    {
+      "file": "miaokatzecore-0.1.5-sources.jar",
+      "bytes": 102067,
+      "sha256": "996395bb5a64f36ccd9cd7f2e5bb726823d41d02de4b032890e7ef5e050c9151"
+    },
+    {
+      "file": "miaokatzecore-0.1.5.pom",
+      "bytes": 536,
+      "sha256": "c0c77453f10154807118a4154e4d9b06607a0b15aa6167c2fd0e3ce5b2900f78"
+    }
+  ]
+}

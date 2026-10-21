@@ -1,0 +1,27 @@
+{
+  "version": "0.1.8",
+  "tag": "v0.1.8",
+  "commit": "7399c8dbc2e04f320c28d29251d5e5cc9cd08493",
+  "clean": true,
+  "javaClassMajor": 52,
+  "artifacts": [
+    {
+      "file": "miaokatzecore-v0.1.8.jar",
+      "classifier": "",
+      "bytes": 213104,
+      "sha256": "f45cbec0305b49c8233247f7e1f76596a4d5b37cbe17ed6fc08616f7de4a55b2"
+    },
+    {
+      "file": "miaokatzecore-v0.1.8-dev.jar",
+      "classifier": "-dev",
+      "bytes": 209692,
+      "sha256": "5310a43ff9d85a209a91e5150957b6ecdd79a0aaee33853552eae6582a91325f"
+    },
+    {
+      "file": "miaokatzecore-v0.1.8-sources.jar",
+      "classifier": "-sources",
+      "bytes": 108801,
+      "sha256": "44030c40f5bfacb5bee5c356c1912dd713f1701fa059a9a1ec1a2445bdedb94b"
+    }
+  ]
+}

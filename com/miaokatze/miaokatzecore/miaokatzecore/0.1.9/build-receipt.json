@@ -1,0 +1,40 @@
+{
+  "version": "0.1.9",
+  "tag": "v0.1.9",
+  "commit": "07fcb99f6c83f7482b9f411fe94b44621fc5ed16",
+  "clean": true,
+  "canonicalCoordinate": "com.miaokatze.miaokatzecore:miaokatzecore:0.1.9",
+  "javaClassMajor": 52,
+  "mavenRoot": "E:\\CodeGT\\MIAOKATZE-Core\\build\\verification\\editor0137-core-maven",
+  "path": "E:\\CodeGT\\MIAOKATZE-Core\\build\\verification\\editor0137-core-maven\\com\\miaokatze\\miaokatzecore\\miaokatzecore\\0.1.9",
+  "baselinePom": "E:\\CodeGT\\.worktrees\\core-20261020\\core-maven\\com\\miaokatze\\miaokatzecore\\miaokatzecore\\0.1.8\\miaokatzecore-0.1.8.pom",
+  "baselinePomSha256": "88a4da3c37208c44fc0526c425e2d6a6f7a2fc4fc2552f6f2670a3177f232829",
+  "pomChange": "Only project version replaced; no Gradle module metadata copied",
+  "artifacts": [
+    {
+      "file": "miaokatzecore-0.1.9.jar",
+      "source": "E:\\CodeGT\\MIAOKATZE-Core\\build\\libs\\miaokatzecore-v0.1.9.jar",
+      "bytes": 217927,
+      "sha256": "d08900fe79d7addeb65a8c4faf99c30131093c53be3c259c839bcc0d71ca844b"
+    },
+    {
+      "file": "miaokatzecore-0.1.9-dev.jar",
+      "source": "E:\\CodeGT\\MIAOKATZE-Core\\build\\libs\\miaokatzecore-v0.1.9-dev.jar",
+      "bytes": 214420,
+      "sha256": "1b1a14ab8baeb958873abe1fe79f822f8fe0cb3e1c882c83d492dccbd0bd326d"
+    },
+    {
+      "file": "miaokatzecore-0.1.9-sources.jar",
+      "source": "E:\\CodeGT\\MIAOKATZE-Core\\build\\libs\\miaokatzecore-v0.1.9-sources.jar",
+      "bytes": 111701,
+      "sha256": "31e8794616f2ddaf82a730abbe1ede59a34db59f359e26970fcdb9eafc2cb6c5"
+    },
+    {
+      "file": "miaokatzecore-0.1.9.pom",
+      "source": "E:\\CodeGT\\.worktrees\\core-20261020\\core-maven\\com\\miaokatze\\miaokatzecore\\miaokatzecore\\0.1.8\\miaokatzecore-0.1.8.pom",
+      "bytes": 536,
+      "sha256": "a95553081fad2a73ea9c61c05f5ab6aa9f585ad4b2782a21d83b881adf0980f4"
+    }
+  ],
+  "networkPublished": false
+}

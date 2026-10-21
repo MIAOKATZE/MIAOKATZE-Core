@@ -8,7 +8,7 @@ import cpw.mods.fml.common.Mod;
     name = "MIAOKATZE Core",
     version = Tags.RELEASE_VERSION,
     acceptedMinecraftVersions = "[1.7.10]",
-    dependencies = "required-before:gregtech@[5.09.54.183,5.09.54.205];required-after:modularui2@[2.3.91-1.7.10,2.3.92-1.7.10];required-after:gtnhlib@[0.11.51,0.11.52]")
+    dependencies = "required-before:gregtech;required-after:modularui2;required-after:gtnhlib")
 public final class MiaokatzeCore {
 
     public static final String MODID = "miaokatzecore";

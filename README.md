@@ -35,6 +35,7 @@ Forge 依赖声明：required-after:miaokatzecore@[0.1.8,)
 | ui.mui2.ScrollEdges | 绘制滚动内容上下渐隐与边缘；不拥有滚动、裁剪、鼠标或控件生命周期 |
 | api.extension.ExtensionCatalog | 每实例命名空间注册、稳定快照、可关闭句柄、安装重入保护与注销失败重试 |
 | api.camera | 不可变姿态、正交投影/反投影射线、交点、缩放与旋转缓动，不引用 Minecraft 或 GL |
+| api.ui.CanvasTransform / api.camera.ViewportCoordinates | 纯 Java 8 的画布正逆映射、GUI/NDC 坐标与裁剪后的 framebuffer 整数边界 |
 | client.camera.WorldCameras | 客户端镜头独占租约、优先级、世界身份及输入/GUI策略，无消费者时被动放行 |
 | client.camera.WorldCameraHooks | 统一投影、同帧世界射线、渲染原点、GL/实体/鼠标恢复，消费者不复制公共 Mixin |
 | client.camera.CameraSettings / CameraControls | 不可变具名策略及能力回调；准星、非模态控制条、平移旋转缩放与切层由消费者选择 |
@@ -54,6 +55,8 @@ ExtensionCatalog 回调同步执行于实例锁内，禁止等待另一个需要
 
 世界等距引擎的完整调用示例、所有权与坐标约定见 [相机 API](docs/world-camera.md)。Outpost 提供模式、战斗与远端策略，蓝图提供选点和编辑策略；引擎不注册两仓的按键或玩法。
 
+`CanvasTransform(sourceX, sourceY, targetX, targetY, scale)` 将源锚点映射到目标锚点，提供 `toScreenX/Y` 和 `toLocalX/Y`；所有参数必须有限，scale 必须为正。`child.compose(parent)` 按 `parent(child(local))` 顺序组合。`ViewportCoordinates(x, y, width, height)` 使用左上原点的 GUI 坐标，要求位置、非负尺寸及右下边界有限；`contains` 左上包含、右下排除，零面积不命中。`ndcX/Y` 与 `screenX/Y` 连接 Y 向上的 NDC，允许映射视口外坐标，零尺寸轴不能归一化。`framebufferRect(guiWidth, guiHeight, displayWidth, displayHeight)` 裁剪到 GUI 边界并转换为 GL 左下原点，以 `FramebufferRect.left()/bottom()/width()/height()` 返回向外取整的像素边界，空轴保持为空；GUI 尺寸须正且有限，显示尺寸允许为零但不能为负。它们不读取 GL 状态，也不代替现有相机投影或射线 API。
+
 ## 兼容与演进
 
 0.1.x 保持已公开签名兼容；新增能力采用新入口或重载。破坏性变更进入 0.2 并先迁移消费者。客户端保护不能随意混用 raw GL 与带缓存的状态管理器：GTIT 保留自身状态路径，Core 仅输出轨迹。第三方预览清理为显式调用，仅在类存在时执行，不创建强制依赖。
@@ -62,7 +65,7 @@ ExtensionCatalog 回调同步执行于实例锁内，禁止等待另一个需要
 
 ## 构建
 
-使用 JDK 25 执行 Gradle，产物为 Java 8 字节码：gradlew build --no-configuration-cache。check 包含纯 JVM 相机投影/反投影、镜头所有权、时间边界、句柄生命周期和 glint 参数契约；这不代表 native GUI/光效已经游戏验收。发布前必须先完成检查，提交、设置与 RELEASE_VERSION 相符的本地 Tag，确认工作树干净，再从 Tag 构建。正式 Maven 坐标不可覆盖，变更必须递增版本。
+使用 JDK 25 执行 Gradle，产物为 Java 8 字节码：gradlew build --no-configuration-cache。check 包含纯 JVM 画布/视口坐标、相机投影/反投影、镜头所有权、时间边界、句柄生命周期和 glint 参数契约；画布/视口契约也可单独执行 `gradlew runViewportCoordinateContracts --no-configuration-cache`。这不代表 native GUI/光效已经游戏验收。发布前必须先完成检查，提交、设置与 RELEASE_VERSION 相符的本地 Tag，确认工作树干净，再从 Tag 构建。正式 Maven 坐标不可覆盖，变更必须递增版本。
 
 AGPL-3.0。原有实现与资源来源见 [NOTICE](NOTICE.md)。
 

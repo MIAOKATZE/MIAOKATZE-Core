@@ -7,10 +7,12 @@ public final class Camera014MathContracts {
 
     public static void main(String[] args) {
         basis();
+        foregroundCloudPlane();
         intervals();
         surfaces();
         validation();
-        System.out.println("Camera014MathContracts: PASS (basis, intervals, slice surfaces, validation)");
+        System.out
+            .println("Camera014MathContracts: PASS (basis, foreground clouds, intervals, slice surfaces, validation)");
     }
 
     private static void basis() {
@@ -36,6 +38,29 @@ public final class Camera014MathContracts {
             near(old.directionY(), ray.directionY(), "cached forward Y");
             near(old.directionZ(), ray.directionZ(), "cached forward Z");
             near(0, cached.rightX() * cached.upX() + cached.rightZ() * cached.upZ(), "right/up orthogonal");
+        }
+    }
+
+    /** Reproduces the ground-anchor/high-eye mismatch without a native renderer or a cloud texture. */
+    private static void foregroundCloudPlane() {
+        OrthographicProjection projection = new OrthographicProjection(20, 15, 512, .05, 1024);
+        for (int facing = 0; facing < 4; facing++) {
+            CameraPose pose = new CameraPose(8.5, 5.62, 8.5, 45 + facing * 90, 60);
+            CameraBasis basis = new CameraBasis(pose);
+            CameraRay ray = basis.ray(projection, 0, 0);
+            check(pose.anchorY() < 128 && ray.originY() > 128, "ground anchor can have an eye above vanilla clouds");
+            double maxDistance = projection.far() - projection.near();
+            double cloud = CameraIntersections.plane(ray, 0, 1, 0, 128, 0, maxDistance);
+            double ground = CameraIntersections.plane(ray, 0, 1, 0, pose.anchorY(), 0, maxDistance);
+            check(Double.isFinite(cloud) && cloud < ground, "cloud geometry lies in front of the factory floor");
+            double cloudX = ray.originX() + ray.directionX() * cloud;
+            double cloudZ = ray.originZ() + ray.directionZ() * cloud;
+            check(
+                Math.abs(cloudX - pose.anchorX()) < 256 && Math.abs(cloudZ - pose.anchorZ()) < 256,
+                "center ray crosses the native fast-cloud mesh centered on the anchor");
+            ProjectedPoint projected = basis.project(projection, cloudX, 128, cloudZ);
+            near(0, projected.ndcX(), "cloud crosses the center screen X");
+            near(0, projected.ndcY(), "cloud crosses the center screen Y");
         }
     }
 

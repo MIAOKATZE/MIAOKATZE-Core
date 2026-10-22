@@ -30,6 +30,8 @@ if (lease != null) lease.close();
 
 同一世界只允许一个有效租约。更高优先级撤销旧租约；相同或更低优先级返回 null，调用者应显示本地提示并等待用户操作。owner ID 不是撤销凭据，旧句柄无法撤销新的同名租约。世界通过对象身份匹配，换维度、退出或替换世界会释放。撤销回调在显式 close、被抢占及换世界时执行；回调应只清理本地状态，不能重入抢占。
 
+0.1.11 新增 `WorldCameras.tryActivate(ownerId, worldToken, priority, source, onRevoked)`，供用户按键或按钮主动切换同优先级视图。它允许替换相同优先级的租约，仍拒绝抢占更高优先级镜头；旧句柄失效、渲染清理与禁止回调重入的规则不变。后台恢复和每 tick 维护继续使用 `tryAcquire`，避免多个消费者互相抢占。原 `tryAcquire` 的签名和相同优先级拒绝行为保持兼容。
+
 `GuiPolicy` 提供 KEEP（保留）、SUSPEND（暂停画面）与 RELEASE（释放）；默认 SUSPEND。`Source.sample` 每次 `renderWorld` 采样一次，返回 null 可以只预留所有权而不应用正交投影。Options 默认全被动；隐藏手臂、关闭雾/剔除、滚轮、调试快捷键、移动抑制和游离鼠标均显式选择。`allowKey` 只控制原生 KeyBinding 状态，不替代消费者的权限或网络校验。
 
 本批消费者优先级约定为 Outpost 普通视角20、蓝图编辑30、Outpost Support100。数字和恢复策略不是 Core 内置规则：Outpost 可在引擎空闲时恢复已请求的模式，蓝图被抢占后只接受用户重新开启。Core 不自动替任一消费者重抢镜头。

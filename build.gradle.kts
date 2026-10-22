@@ -49,13 +49,14 @@ mapOf(
     "runCameraFrameStoreContracts" to "com.miaokatze.miaokatzecore.client.camera.CameraFrameStoreContracts",
     "runCameraPointerContracts" to "com.miaokatze.miaokatzecore.client.camera.CameraPointerContracts",
     "runCameraHudContracts" to "com.miaokatze.miaokatzecore.client.camera.hud.CameraHudContracts",
-    "runSliceMeshContracts" to "com.miaokatze.miaokatzecore.client.camera.slice.SliceMeshContracts"
+    "runSliceMeshContracts" to "com.miaokatze.miaokatzecore.client.camera.slice.SliceMeshContracts",
+    "runTessellatorSliceContracts" to "com.miaokatze.miaokatzecore.client.render.TessellatorSliceContracts"
 ).forEach { (taskName, entryPoint) ->
     tasks.register<JavaExec>(taskName) {
         group = "verification"
         mainClass = entryPoint
         classpath = sourceSets.getByName("test").runtimeClasspath
-        if (taskName == "runCameraFrameStoreContracts") {
+        if (taskName == "runCameraFrameStoreContracts" || taskName == "runTessellatorSliceContracts") {
             // Exercise the production slice click fence without launching Minecraft or an OpenGL context.
             classpath += sourceSets.getByName("main").compileClasspath
         }

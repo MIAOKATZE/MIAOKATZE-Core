@@ -29,6 +29,8 @@ public final class CoreLoadingPlugin implements IFMLLoadingPlugin, IEarlyMixinLo
             .isClient()) return Collections.emptyList();
         List<String> mixins = new ArrayList<>(
             Arrays.asList(
+                "render.TessellatorAccessor",
+                "render.MixinTessellatorCapture",
                 "camera.MixinEntityRenderer",
                 "camera.MixinRenderGlobal",
                 "camera.MixinMinecraft",

@@ -37,6 +37,34 @@ public final class CameraLeaseContracts {
         require(
             reentrant[0] == null && WorldCameras.currentOwnerId() == null,
             "revoke callback cannot steal in-flight handoff");
+        WorldCameras.Lease engineering = WorldCameras.tryAcquire("engineering", world, 20, SOURCE, () -> revoked[0]++);
+        require(
+            WorldCameras.tryAcquire("combat", world, 20, SOURCE, null) == null,
+            "background recovery still refuses equal priority");
+        WorldCameras.Lease combat = WorldCameras.tryActivate("combat", world, 20, SOURCE, () -> {
+            revoked[0]++;
+            reentrant[0] = WorldCameras.tryActivate("reentrant", world, 999, SOURCE, null);
+        });
+        require(
+            combat != null && combat.active() && !engineering.active() && revoked[0] == 3,
+            "explicit equal-priority switch revokes the previous owner once");
+        engineering.close();
+        require(combat.active(), "stale engineering lease cannot close combat");
+        require(
+            WorldCameras.tryActivate("lower", world, 19, SOURCE, null) == null,
+            "explicit activation cannot steal a higher priority");
+        WorldCameras.Lease restoredEngineering = WorldCameras.tryActivate("engineering", world, 20, SOURCE, null);
+        require(
+            restoredEngineering != null && restoredEngineering.active()
+                && !combat.active()
+                && revoked[0] == 4
+                && reentrant[0] == null,
+            "switching back is atomic and revoke callbacks cannot steal the handoff");
+        WorldCameras.Lease cinematic = WorldCameras.tryAcquire("cinematic", world, 40, SOURCE, null);
+        require(
+            cinematic != null && WorldCameras.tryActivate("engineering", world, 20, SOURCE, null) == null,
+            "high-priority cinematic remains protected from user mode switches");
+        cinematic.close();
         require(SOURCE.options() == WorldCameras.Options.PASSIVE && SOURCE.allowKey(1), "default input passive");
         require(
             !SOURCE.options().freeCursor && SOURCE.guiPolicy() == WorldCameras.GuiPolicy.SUSPEND,

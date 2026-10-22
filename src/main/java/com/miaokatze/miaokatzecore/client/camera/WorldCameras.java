@@ -128,11 +128,26 @@ public final class WorldCameras {
 
     /** Equal/lower priority is refused. Tokens use world object identity, never dimension numbers. */
     public static Lease tryAcquire(String ownerId, Object worldToken, int priority, Source source, Runnable onRevoked) {
+        return acquire(ownerId, worldToken, priority, source, onRevoked, false);
+    }
+
+    /**
+     * Explicit user activation may replace an equal-priority camera. Higher-priority cameras remain protected.
+     * Call only for a user action; background recovery must use {@link #tryAcquire}.
+     */
+    public static Lease tryActivate(String ownerId, Object worldToken, int priority, Source source,
+        Runnable onRevoked) {
+        return acquire(ownerId, worldToken, priority, source, onRevoked, true);
+    }
+
+    private static Lease acquire(String ownerId, Object worldToken, int priority, Source source, Runnable onRevoked,
+        boolean replaceEqualPriority) {
         Objects.requireNonNull(ownerId, "ownerId");
         if (ownerId.isEmpty()) throw new IllegalArgumentException("ownerId must not be empty");
         Objects.requireNonNull(worldToken, "worldToken");
         Objects.requireNonNull(source, "source");
-        if (revoking || current != null && priority <= current.priority) return null;
+        if (revoking || current != null
+            && (priority < current.priority || priority == current.priority && !replaceEqualPriority)) return null;
         revoke();
         Entry entry = new Entry(ownerId, worldToken, priority, source, onRevoked, ++epoch);
         current = entry;

@@ -7,6 +7,8 @@ dependencies {
     testRuntimeOnly("org.joml:joml:1.10.8") { transitive = false }
     compileOnly("com.github.GTNewHorizons:ModularUI2:${coreMuiVersion}:dev") { transitive = false }
     compileOnly("com.github.GTNewHorizons:GTNHLib:${coreLibVersion}:dev") { transitive = false }
+    // Optional client-only ordering adapter, matching GTNH 2.9 RC2. Never bundled or required at runtime.
+    compileOnly("com.github.GTNewHorizons:NotEnoughItems:2.8.145-GTNH:dev") { transitive = false }
     compileOnly("com.github.GTNewHorizons:Angelica:${coreAngelicaVersion}:dev") { transitive = false }
     // RC2's native rebuild submission set is a fastutil ReferenceSet.
     compileOnly("it.unimi.dsi:fastutil:8.5.18") { transitive = false }

@@ -34,6 +34,8 @@ if (lease != null) lease.close();
 
 `GuiPolicy` 提供 KEEP（保留）、SUSPEND（暂停画面）与 RELEASE（释放）；默认 SUSPEND。`Source.sample` 每次 `renderWorld` 采样一次，返回 null 可以只预留所有权而不应用正交投影。Options 默认全被动；隐藏手臂、关闭雾/剔除、滚轮、调试快捷键、移动抑制和游离鼠标均显式选择。`allowKey` 只控制原生 KeyBinding 状态，不替代消费者的权限或网络校验。
 
+0.1.13 修复 `KEEP` 在真实 GUI 清除 `inGameHasFocus` 后被错误暂停的问题。只要原生窗口仍激活且世界、租约有效，GUI 背景继续使用相机投影，`frame` / `projectWorld` 仍可读取显示帧。GUI 不获得世界拾取、导航或独占键盘权限；这些操作继续要求没有 GUI 且游戏有焦点。窗口失焦会撤销显示帧与捕获，恢复光标时也不会重新抓取失焦窗口；切换世界、断线及租约失效仍清理原会话。消费者应直接打开真实 GUI，无需修改 `inGameHasFocus`。原有签名、默认 `SUSPEND` 和 `RELEASE` 行为保持不变。
+
 本批消费者优先级约定为 Outpost 普通视角20、蓝图编辑30、Outpost Support100。数字和恢复策略不是 Core 内置规则：Outpost 可在引擎空闲时恢复已请求的模式，蓝图被抢占后只接受用户重新开启。Core 不自动替任一消费者重抢镜头。
 
 ## 坐标与拾取

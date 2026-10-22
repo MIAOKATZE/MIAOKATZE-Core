@@ -216,7 +216,10 @@ final class CameraInputState {
     void restoreCursor(Minecraft mc) {
         if (!cursorSaved) return;
         cursorSaved = false;
-        if (cursorWasGrabbed && mc.currentScreen == null && mc.inGameHasFocus && mc.theWorld != null) {
+        if (cursorWasGrabbed && mc.currentScreen == null
+            && mc.inGameHasFocus
+            && mc.theWorld != null
+            && CameraSession.windowActive()) {
             mc.mouseHelper.grabMouseCursor();
         }
     }

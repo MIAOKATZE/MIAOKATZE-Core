@@ -51,7 +51,7 @@ public final class WorldCameraHooks {
 
     private static void validate(Minecraft mc) {
         CameraFrame old = FRAMES.displayed();
-        if (!SESSION.visible(mc) || !mc.inGameHasFocus || old != null && !SESSION.matches(old, mc)) {
+        if (!SESSION.visible(mc) || old != null && !SESSION.matches(old, mc)) {
             FRAMES.clear();
             INPUT.cancel();
             SliceBackend.release();
@@ -62,7 +62,7 @@ public final class WorldCameraHooks {
         endWorldRender(mc);
         SESSION.sample(mc);
         validate(mc);
-        if (!SESSION.visible(mc) || !mc.inGameHasFocus || mc.renderViewEntity == null) return;
+        if (!SESSION.visible(mc) || mc.renderViewEntity == null) return;
         WorldCameras.Entry owner = SESSION.owner();
         ScaledResolution scaled = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
         WorldCameras.View view = owner.source.sample(partialTicks, scaled.getScaledWidth(), scaled.getScaledHeight());
@@ -190,12 +190,12 @@ public final class WorldCameraHooks {
 
     private static CameraFrameStore.Candidate candidate(Minecraft mc) {
         CameraFrameStore.Candidate f = FRAMES.candidate;
-        return f != null && mc.inGameHasFocus && SESSION.matches(f.frame, mc) ? f : null;
+        return f != null && SESSION.matches(f.frame, mc) ? f : null;
     }
 
     private static CameraFrame displayed(Minecraft mc) {
         CameraFrame f = FRAMES.displayed();
-        return f != null && mc.inGameHasFocus && SESSION.matches(f, mc) ? f : null;
+        return f != null && SESSION.matches(f, mc) ? f : null;
     }
 
     /** Last successfully displayed values; retaining the value grants no input authority. */

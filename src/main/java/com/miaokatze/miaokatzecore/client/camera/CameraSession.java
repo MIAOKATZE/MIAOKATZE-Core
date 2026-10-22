@@ -4,6 +4,8 @@ import java.util.Objects;
 
 import net.minecraft.client.Minecraft;
 
+import org.lwjgl.opengl.Display;
+
 import com.miaokatze.miaokatzecore.api.camera.HeightSlice;
 
 /** Sole bridge from the ownership token to Minecraft. Frame values never retain this session. */
@@ -83,11 +85,20 @@ final class CameraSession {
     }
 
     boolean visible(Minecraft mc) {
-        return valid(mc) && (mc.currentScreen == null || settings.guiPolicy() == WorldCameras.GuiPolicy.KEEP);
+        return CameraActivity.visible(
+            valid(mc),
+            mc.currentScreen != null,
+            mc.inGameHasFocus,
+            windowActive(),
+            settings == null ? null : settings.guiPolicy());
     }
 
     boolean interactive(Minecraft mc) {
-        return valid(mc) && mc.currentScreen == null && mc.inGameHasFocus;
+        return CameraActivity.interactive(valid(mc), mc.currentScreen != null, mc.inGameHasFocus, windowActive());
+    }
+
+    static boolean windowActive() {
+        return Display.isCreated() && Display.isActive();
     }
 
     WorldCameras.Entry owner() {

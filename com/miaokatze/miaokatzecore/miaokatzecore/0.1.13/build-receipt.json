@@ -1,0 +1,17 @@
+{
+  "version": "0.1.13",
+  "sourceCommit": "ec1165a579d43f15f65fca33440c28a322a3183b",
+  "sourceTag": "v0.1.13",
+  "sourceClean": true,
+  "releasePublished": false,
+  "publicationStatus": "PR_MERGED_TAG_CLEAN_BUILD_VERIFIED",
+  "jarSHA256": {
+    "miaokatzecore-0.1.13-dev.jar": "ca1a81a8f37d592825d4e973f51d7f796dfb93dcd6049e9c7a623dfa95a071f9",
+    "miaokatzecore-0.1.13-sources.jar": "c91dac2419e9187034d7b2c55376b9dc59c3dc2336e3f5a67d29e00933073834",
+    "miaokatzecore-0.1.13.jar": "309c484fb5cbc83ca3ef6ab1d9d115a9558968bc58cd3ccbcc965283ed67ebb2",
+    "miaokatzecore-0.1.13.pom": "412bb566d3489ab39aa7a4561a67b7d0308d5a3bc5a3899cbf874f025990bfbd"
+  },
+  "verification": "11 JVM contract groups and public signatures of 156 baseline classes passed. GTSWN background MUI verification is recorded separately and does not certify OS input.",
+  "testedCandidateCommit": "b299fa93a79a5a38bf1a47239eb01c62b5ccb45b",
+  "mergeTreeMatchesCandidate": true
+}

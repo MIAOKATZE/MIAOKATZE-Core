@@ -1,0 +1,14 @@
+{
+  "version": "0.1.12",
+  "sourceCommit": "0dbd7a2b94eff01c197af44255e77572ba460515",
+  "sourceTag": "v0.1.12",
+  "sourceDate": "2026-10-22T23:19:49+08:00",
+  "sourceClean": true,
+  "releasePublished": false,
+  "jarSHA256": {
+    "miaokatzecore-0.1.12.jar": "5dea3a73a7fecbf5097e933ce93d487a3f1ad9aaaf995d8252e773d7cf003498",
+    "miaokatzecore-0.1.12-dev.jar": "f4c42b27ba6d243303c324097fa8e028a47dbccb6b851cfb5a220c9e902c5a54",
+    "miaokatzecore-0.1.12-sources.jar": "f40a4da0c5efa783a0c45db32e8565df973fd08c5868fe513be91bde836b1410"
+  },
+  "verification": "Full Core check and accepted GTSR integration; exact accepted-candidate artifacts except Git version"
+}

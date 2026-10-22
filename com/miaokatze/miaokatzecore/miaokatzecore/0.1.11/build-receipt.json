@@ -1,0 +1,27 @@
+{
+  "version": "0.1.11",
+  "commit": "e7076509dee67ed1bc7c8c14b2e62ddf6eb09ad6",
+  "tag": "v0.1.11",
+  "sourceClean": true,
+  "oldPublicSymbolsRemoved": 0,
+  "publicSymbolAdded": "WorldCameras.tryActivate",
+  "coreContracts": "PASS",
+  "pr": "https://github.com/MIAOKATZE/MIAOKATZE-Core/pull/5",
+  "artifacts": [
+    {
+      "file": "miaokatzecore-0.1.11.jar",
+      "bytes": 229255,
+      "sha256": "e087d49ab0629032add28a3a075ad1278482656a0b218577fa9d50df32800615"
+    },
+    {
+      "file": "miaokatzecore-0.1.11-dev.jar",
+      "bytes": 225563,
+      "sha256": "41b41d670cbc8ec036e56b138aa0294ebf102c5c0b0d93f52d0fe344ddfe158b"
+    },
+    {
+      "file": "miaokatzecore-0.1.11-sources.jar",
+      "bytes": 116282,
+      "sha256": "7abb238d19be595add4c1898de654529b3943ae2fa8bf412b75a09ae6637fbb7"
+    }
+  ]
+}

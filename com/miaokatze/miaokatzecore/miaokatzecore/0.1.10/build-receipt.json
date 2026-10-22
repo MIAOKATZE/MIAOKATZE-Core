@@ -1,0 +1,43 @@
+{
+  "version": "0.1.10",
+  "tag": "v0.1.10",
+  "commit": "0c44f0f71a43f1047937f0610eb2258716420fd6",
+  "clean": true,
+  "canonicalCoordinate": "com.miaokatze.miaokatzecore:miaokatzecore:0.1.10",
+  "javaClassMajor": 52,
+  "mavenRoot": "E:\\CodeGT\\.worktrees\\core-20261020\\core-maven",
+  "path": "E:\\CodeGT\\.worktrees\\core-20261020\\core-maven\\com\\miaokatze\\miaokatzecore\\miaokatzecore\\0.1.10",
+  "baselinePom": "E:\\CodeGT\\.worktrees\\core-20261020\\core-maven\\com\\miaokatze\\miaokatzecore\\miaokatzecore\\0.1.9\\miaokatzecore-0.1.9.pom",
+  "baselinePomSha256": "a95553081fad2a73ea9c61c05f5ab6aa9f585ad4b2782a21d83b881adf0980f4",
+  "pomChange": "Only project version replaced; no Gradle module metadata copied",
+  "artifacts": [
+    {
+      "file": "miaokatzecore-0.1.10.jar",
+      "source": "E:\\CodeGT\\MIAOKATZE-Core\\build\\libs\\miaokatzecore-v0.1.10.jar",
+      "bytes": 229137,
+      "sha256": "2dbb70c0397f40ad04c22e9fc386639bd4f3c5200aa38a07425f67b274c7a189"
+    },
+    {
+      "file": "miaokatzecore-0.1.10-dev.jar",
+      "source": "E:\\CodeGT\\MIAOKATZE-Core\\build\\libs\\miaokatzecore-v0.1.10-dev.jar",
+      "bytes": 225442,
+      "sha256": "c6b364e15f79ae14473db31f75dd96e6b1ab5af92d5d4f7d528807f5cdc7ff83"
+    },
+    {
+      "file": "miaokatzecore-0.1.10-sources.jar",
+      "source": "E:\\CodeGT\\MIAOKATZE-Core\\build\\libs\\miaokatzecore-v0.1.10-sources.jar",
+      "bytes": 116118,
+      "sha256": "0e60052d69ad0e807e0a8c4e1b6d58be71cf34debc20ba6f9d4e7e207e220170"
+    },
+    {
+      "file": "miaokatzecore-0.1.10.pom",
+      "source": "E:\\CodeGT\\.worktrees\\core-20261020\\core-maven\\com\\miaokatze\\miaokatzecore\\miaokatzecore\\0.1.9\\miaokatzecore-0.1.9.pom",
+      "bytes": 537,
+      "sha256": "8a2daed446dfa5fc8edbadda2a86e88eda4d332386d6a753f67325f2ac955557"
+    }
+  ],
+  "networkPublished": false,
+  "registry": "https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/",
+  "registrySource": "E:\\CodeGT\\GT-Steam-Reborn\\repositories.gradle",
+  "publicMavenUrl": "https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.10/"
+}

@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><groupId>com.miaokatze.miaokatzecore</groupId><artifactId>miaokatzecore</artifactId><version>0.1.10</version><name>MIAOKATZE Core</name><description>Modular Java 8 / Forge 1.7.10 foundations</description><url>https://github.com/MIAOKATZE/MIAOKATZE-Core</url><licenses><license><name>GNU Affero General Public License v3.0</name><url>https://www.gnu.org/licenses/agpl-3.0.html</url></license></licenses></project>

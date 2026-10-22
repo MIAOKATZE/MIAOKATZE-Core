@@ -2,6 +2,7 @@ package com.miaokatze.miaokatzecore.mixin.camera;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.EntityRenderer;
+import net.minecraft.client.renderer.RenderGlobal;
 
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
@@ -63,6 +64,12 @@ public abstract class MixinEntityRenderer {
     @Inject(method = "setupFog", at = @At("HEAD"), cancellable = true)
     private void core$fog(int mode, float partialTicks, CallbackInfo ci) {
         if (WorldCameraHooks.setupFog()) ci.cancel();
+    }
+
+    @Inject(method = "renderCloudsCheck", at = @At("HEAD"), cancellable = true)
+    private void core$clouds(RenderGlobal renderer, float partialTicks, CallbackInfo ci) {
+        // The orthographic eye may be above the cloud plane while the anchor is on the factory floor.
+        if (WorldCameraHooks.orthographicActive()) ci.cancel();
     }
 
     @WrapOperation(

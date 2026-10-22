@@ -46,6 +46,8 @@ if (lease != null) lease.close();
 
 Core 在锚点驱动绘制期间临时调整 view entity 的渲染位置，在 WorldLast 前恢复真实实体插值与统一渲染原点；WorldLast 的普通渲染器继续采用原版“减真实 view entity 原点”约定。每次渲染通过 finally 恢复实体、矩阵、雾与剔除状态；消费者不应叠加另一套公共投影或自己修改玩家位置。
 
+Core 正交世界渲染期间跳过 `renderCloudsCheck` 云绘制入口。正交投影的深度偏移可能使虚拟镜头位于云层上方，即使锚点仍在地面，云面也会挡在工厂与镜头之间；关闭雾无法消除云几何。此规则适用于所有使用 Core 相机的消费者，不修改用户云设置；普通玩家视角继续按原设置绘云，天空及其他渲染通道保持原有行为。
+
 ## 启动与版本
 
 公共 hooks 随 Core 的 FML early loader 启动，专服返回空客户端 Mixin 列表。使用整合包已有 UniMixins，不注册 Core 自有 RFB 插件，不在 preInit 动态追加 Mixin。Angelica/Celeritas 的通用正交面/视锥门控位于 Core，业务可见性仍由消费者保留。

@@ -144,13 +144,33 @@ public final class WorldCameraHooks {
     }
 
     public static void beforeWorldLast(Minecraft mc) {
+        beforeWorldLast(mc, 0);
+    }
+
+    public static void beforeWorldLast(Minecraft mc, float partialTicks) {
         CameraFrameStore.Candidate f = candidate(mc);
         boolean original = renderScope != null && renderScope.restoreEntity(mc.renderViewEntity);
-        if (f == null || !f.applied || f.worldLast || !f.view.anchorDriven || !original) return;
-        GL11.glMatrixMode(GL11.GL_MODELVIEW);
-        GL11.glTranslated(f.realX - f.originX, f.realY - f.originY, f.realZ - f.originZ);
-        renderScope.worldLastOrigin(f.realX, f.realY, f.realZ);
+        if (f == null || !f.applied || f.worldLast) return;
+        if (f.view.anchorDriven) {
+            if (!original) return;
+            GL11.glMatrixMode(GL11.GL_MODELVIEW);
+            GL11.glTranslated(f.realX - f.originX, f.realY - f.originY, f.realZ - f.originZ);
+            renderScope.worldLastOrigin(f.realX, f.realY, f.realZ);
+        }
         f.worldLast = true;
+        if (f.settings.render()
+            .renderPlayerBody()) CameraPlayerBody.render(mc, partialTicks);
+    }
+
+    /** Avoid an earlier third-person copy at a temporarily anchored view-entity position. */
+    public static boolean deferPlayerBody(Entity entity) {
+        Minecraft mc = Minecraft.getMinecraft();
+        CameraFrameStore.Candidate f = candidate(mc);
+        return entity == mc.thePlayer && f != null
+            && f.applied
+            && !f.worldLast
+            && f.settings.render()
+                .renderPlayerBody();
     }
 
     /** Promote only after original rendering and all restoration have succeeded. */

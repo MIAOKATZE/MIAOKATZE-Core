@@ -73,6 +73,17 @@ public final class Camera014ValueContracts {
     }
 
     private static void settings() {
+        check(
+            !CameraSettings.Render.builder()
+                .build()
+                .renderPlayerBody(),
+            "legacy render keeps vanilla body policy");
+        check(
+            CameraSettings.Render.builder()
+                .renderPlayerBody(true)
+                .build()
+                .renderPlayerBody(),
+            "local body is opt-in");
         WorldCameras.Options old = new WorldCameras.Options(
             true,
             false,
@@ -83,6 +94,10 @@ public final class Camera014ValueContracts {
             WorldCameras.MovementPolicy.HORIZONTAL,
             true);
         CameraSettings legacy = CameraSettings.legacy(old, WorldCameras.GuiPolicy.RELEASE);
+        check(
+            !legacy.render()
+                .renderPlayerBody(),
+            "Options bridge does not opt old consumers into body rendering");
         check(
             legacy.render()
                 .hideHand()

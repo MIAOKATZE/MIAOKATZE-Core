@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.miaokatze.miaokatzecore.api.collection.BoundedMru;
 import com.miaokatze.miaokatzecore.api.extension.ExtensionCatalog;
 import com.miaokatze.miaokatzecore.api.itemfx.GlintStyle;
 import com.miaokatze.miaokatzecore.testkit.Deadline;
@@ -42,7 +43,30 @@ public final class CoreContracts {
             "large budget");
         testCatalog();
         testGlint();
-        System.out.println("CoreContracts: PASS (deadline, catalog, glint)");
+        testMru();
+        System.out.println("CoreContracts: PASS (deadline, catalog, glint, bounded MRU)");
+    }
+
+    private static void testMru() {
+        List<String> original = Arrays.asList("a:old", "b:first", "a:duplicate", "b:duplicate", "c:last");
+        java.util.function.BiPredicate<String, String> identity = (a, b) -> a.charAt(0) == b.charAt(0);
+        List<String> recent = BoundedMru.moveToFront(original, "a:new", 3, identity);
+        check(recent.equals(Arrays.asList("a:new", "b:first", "c:last")), "replace and deduplicate stable history");
+        check(
+            original.size() == 5 && original.get(0)
+                .equals("a:old"),
+            "input remains unchanged");
+        expect(UnsupportedOperationException.class, () -> recent.add("d:entry"));
+        check(
+            BoundedMru.moveToFront(original, "d:new", 2, identity)
+                .equals(Arrays.asList("d:new", "a:old")),
+            "evict oldest");
+        check(
+            BoundedMru.moveToFront(original, "d:new", 1, identity)
+                .equals(Arrays.asList("d:new")),
+            "single entry limit");
+        expect(IllegalArgumentException.class, () -> BoundedMru.moveToFront(original, "a:new", 0, identity));
+        expect(NullPointerException.class, () -> BoundedMru.moveToFront(original, null, 3, identity));
     }
 
     private static void testCatalog() {

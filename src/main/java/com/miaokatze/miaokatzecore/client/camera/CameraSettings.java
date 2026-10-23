@@ -122,10 +122,11 @@ public final class CameraSettings {
 
     public static final class Render {
 
-        private final boolean hideHand, disableFog, disableCull, disableVanillaFrustum;
+        private final boolean hideHand, disableFog, disableCull, disableVanillaFrustum, renderPlayerBody;
 
         private Render(Builder builder) {
             hideHand = builder.hideHand;
+            renderPlayerBody = builder.renderPlayerBody;
             disableFog = builder.disableFog;
             disableCull = builder.disableCull;
             disableVanillaFrustum = builder.disableVanillaFrustum;
@@ -133,6 +134,11 @@ public final class CameraSettings {
 
         public static Builder builder() {
             return new Builder();
+        }
+
+        /** Opt-in local body rendering at its real world position, independently of the user's F5 mode. */
+        public boolean renderPlayerBody() {
+            return renderPlayerBody;
         }
 
         public boolean hideHand() {
@@ -153,7 +159,13 @@ public final class CameraSettings {
 
         public static final class Builder {
 
-            private boolean hideHand, disableFog, disableCull, disableVanillaFrustum;
+            private boolean hideHand, disableFog, disableCull, disableVanillaFrustum, renderPlayerBody;
+
+            /** Default false preserves legacy consumers' first/third-person entity behavior. */
+            public Builder renderPlayerBody(boolean value) {
+                renderPlayerBody = value;
+                return this;
+            }
 
             public Builder hideHand(boolean value) {
                 hideHand = value;

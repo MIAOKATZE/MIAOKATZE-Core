@@ -53,7 +53,7 @@ public abstract class MixinEntityRenderer {
             shift = At.Shift.BEFORE,
             remap = false))
     private void core$restoreViewBeforeWorldLast(float partialTicks, long time, CallbackInfo ci) {
-        WorldCameraHooks.beforeWorldLast(Minecraft.getMinecraft());
+        WorldCameraHooks.beforeWorldLast(Minecraft.getMinecraft(), partialTicks);
     }
 
     @Inject(method = "renderHand", at = @At("HEAD"), cancellable = true)

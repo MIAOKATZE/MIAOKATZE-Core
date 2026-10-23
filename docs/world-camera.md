@@ -150,3 +150,9 @@ Core继续区分请求、显示预览和实际网格上传。切片显示后，�
 排队前已开始的当前切片任务不会再被Core自身取消。没有活任务token的dirty区段可以重试；RC2已经标为pending但丢失队列入口时会重新进入原生interim队列，仍保持每预算最多4个区段。不会使用超时强制READY。生产实际使用的 `SliceMeshProgress` 纯JVM回归覆盖提交/确认、取消重试、隐藏转可见、旧回执和恢复转换；它不能替代真实渲染上传验证。
 
 需要有限的本机排查时，客户端线程可显式调用 `SliceMeshes.diagnostics()` 获取只读状态、dirty/visiblePending/queued/building/installed/token/update/orphan计数、revision和区段样例。该入口不自动打印、不操作队列；正常游戏无诊断日志开销。RC2队列桥只在编译期引用fastutil 8.5.18（与Angelica RC2相同），不会把该库打进Core产物。
+
+## 本地玩家本体（0.1.14，可选）
+
+`CameraSettings.Render.builder().renderPlayerBody(true)` 在 Core 正交世界画面中显示本地玩家本体，默认 `false`，旧版 `Options` 桥接也保持关闭。Core 在实体阶段仅延后本地玩家，等 WorldLast 前恢复真实玩家插值坐标和渲染原点后统一绘制；第一人称和进入前已用 F5 切换的第三人称均只绘制一次，不会把本体画在自由镜头的虚拟锚点。普通视角与其他实体的原版通道不变。
+
+调用方无需复制实体、修改 `renderViewEntity`、F5 选项或玩家坐标。Core 复用原生 `RenderManager` 和已存在的完整渲染状态 scope；矩阵栈、纹理/光照贴图缓存、GL 属性与程序/缓冲绑定在 `finally` 恢复。该策略不改变玩家移动、碰撞、服务端位置或游戏权限。`WorldCameraHooks.beforeWorldLast(Minecraft)` 保留兼容入口，内部 Mixin 使用带 `partialTicks` 的重载以正确插值本体动画。

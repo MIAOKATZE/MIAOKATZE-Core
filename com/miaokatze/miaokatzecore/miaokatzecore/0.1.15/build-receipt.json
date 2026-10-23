@@ -1,0 +1,29 @@
+{
+  "sourceCommit": "01c9d0269a0974976312067f13b6e2d1f37aba28",
+  "sourceTag": "v0.1.15",
+  "version": "0.1.15",
+  "sameTree": true,
+  "mergedTagBuild": "PASS",
+  "artifacts": [
+    {
+      "file": "miaokatzecore-0.1.15.jar",
+      "bytes": 245671,
+      "sha256": "9ab9928b2e1c9bb25d9aab4176e926fdd2d7779df87576c0b418869511c4eb9b"
+    },
+    {
+      "file": "miaokatzecore-0.1.15-dev.jar",
+      "bytes": 241763,
+      "sha256": "de826ff5c82a1946048d382bc99aaae8f01b82de008aab694c767f5ff107c443"
+    },
+    {
+      "file": "miaokatzecore-0.1.15-sources.jar",
+      "bytes": 125759,
+      "sha256": "c5cde4d9312eb0389dc21415da8ade1c838ac5b2da077728a25385149969199a"
+    },
+    {
+      "file": "miaokatzecore-0.1.15.pom",
+      "bytes": 537,
+      "sha256": "d4bdbd7bb1e00512335138e632bf835d7aade0e212f1d935d806aea4a7a0956b"
+    }
+  ]
+}

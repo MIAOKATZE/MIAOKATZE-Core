@@ -38,6 +38,10 @@ if (lease != null) lease.close();
 
 本批消费者优先级约定为 Outpost 普通视角20、蓝图编辑30、Outpost Support100。数字和恢复策略不是 Core 内置规则：Outpost 可在引擎空闲时恢复已请求的模式，蓝图被抢占后只接受用户重新开启。Core 不自动替任一消费者重抢镜头。
 
+0.1.18 将相机生命周期包装移到 `updateCameraAndRender(F)V` 内的 `renderWorld(FJ)V` 调用处，覆盖原版限帧和不限帧两条分支。`renderWorld` 的方法体留在原入口，使 Curvy Pipes 1.15.9 的原生补丁仍能扫描绘制指令；原有 `try/catch/finally`、异常中止、恢复与成功帧发布保持不变。Core 不识别特定 Mod 来关闭相机功能，公开 API 也不变。
+
+MC、Angelica 2.2.28 和已审计的系列消费者均经过该入口。未知第三方绕过 `updateCameraAndRender` 直接调用 `renderWorld` 时，不在此生命周期覆盖范围。RC2 后台隔离客户端已用玩家日志中的四个 Release 包完成原故障复现与修复对照，验证 Curvy 原生渲染和相机启用/释放；测试只适配渲染可见性的焦点读取，未授予输入权限，未覆盖硬件输入、视觉或实际管道传输验收。异常路径另由实际编译 handler 的契约回归验证。
+
 ## 坐标与拾取
 
 `WorldCameraHooks.mouseRay(owner, world, displayX, displayY)` 使用最近一次成功显示的冻结投影，坐标是 LWJGL 窗口像素，原点在左下。`projectWorld` 在 WorldLast 使用当次冻结投影，其他阶段使用成功显示帧，返回 Y 向上的 NDC；GUI 的 Y 为 `(1 - ndcY) * scaledHeight / 2`。无有效帧、owner/world 不匹配、窗口尺寸变化、真实 GUI 或暂停时不能世界选点。调用者应拒绝该次选点，不能退回玩家眼睛射线。

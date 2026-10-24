@@ -1,0 +1,28 @@
+{
+  "sourceCommit": "616c4aa83d722f5dcf9df3a585f331eef5b8c6a4",
+  "sourceTag": "v0.1.21",
+  "version": "0.1.21",
+  "status": "candidate-local-tag-clean-build",
+  "artifacts": [
+    {
+      "file": "miaokatzecore-0.1.21-dev.jar",
+      "bytes": 277654,
+      "sha256": "1d728835c4240aec5149599984951c0e085c29851a44484f7479c6f346576c4d"
+    },
+    {
+      "file": "miaokatzecore-0.1.21-sources.jar",
+      "bytes": 144338,
+      "sha256": "55d46ce095ae94a8c627d430867822e242796d8244fcddbd12825a6fb6f15b94"
+    },
+    {
+      "file": "miaokatzecore-0.1.21.jar",
+      "bytes": 282018,
+      "sha256": "0aba28604e96e7cd5e6ab62ad9b18a8a51b44ee797230f290543eded93c6c4e3"
+    },
+    {
+      "file": "miaokatzecore-0.1.21.pom",
+      "bytes": 537,
+      "sha256": "4fce18f0e274ea26ea7bfcbd24a13be0c4bfd7eb2acf3eda97b331874e779182"
+    }
+  ]
+}

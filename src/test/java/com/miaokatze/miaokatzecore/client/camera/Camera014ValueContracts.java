@@ -24,6 +24,7 @@ public final class Camera014ValueContracts {
     private static void wheel() {
         CameraSettings.Navigation legacy = CameraSettings.Navigation.builder()
             .build();
+        check(legacy.minScale() == .4 && legacy.maxScale() == 128, "default zoom extends five times farther out");
         check(Math.abs(CameraWheel.factor(120, legacy, true) - 1.1) < 1e-12, "legacy wheel retains 120-unit notch");
         check(
             Math.abs(CameraWheel.factor(1, legacy, true) - Math.pow(1.1, 1 / 120.0)) < 1e-12,

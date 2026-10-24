@@ -16,7 +16,7 @@ public final class OrthographicProjection {
 
     /**
      * Outpost-compatible dynamic depth. The caller supplies its own scale and minimum depth policy.
-     * Rejects scales whose 8000-unit far cap would clip the anchor itself.
+     * Rejects scales whose 40000-unit far cap would clip the anchor itself.
      */
     public static OrthographicProjection scaled(double scaledWidth, double scaledHeight, double pixelsPerWorldUnit,
         double minimumDepth) {
@@ -27,7 +27,7 @@ public final class OrthographicProjection {
         double halfW = scaledWidth / pixelsPerWorldUnit / 2;
         double halfH = scaledHeight / pixelsPerWorldUnit / 2;
         double depth = Math.max(minimumDepth, Math.ceil(3.2 * halfH));
-        double far = Math.min(8000, depth + 3.6 * halfH + 200);
+        double far = Math.min(40000, depth + 3.6 * halfH + 200);
         if (depth <= .05 || depth >= far) {
             throw new IllegalArgumentException(
                 "Scale/depth places the anchor outside the [.05, far] clipping interval");

@@ -7,6 +7,7 @@ public final class CameraContracts {
 
     public static void main(String[] args) {
         projection();
+        expandedZoom();
         intersections();
         invalidNumbers();
         motion();
@@ -77,6 +78,52 @@ public final class CameraContracts {
         near(Math.sqrt(.5), huge.directionX(), "overflow-safe normalization");
         CameraRay tiny = new CameraRay(0, 0, 0, Double.MIN_VALUE, 0, 0);
         near(1, tiny.directionX(), "subnormal normalization");
+    }
+
+    private static void expandedZoom() {
+        OrthographicProjection previous = OrthographicProjection.scaled(854, 480, 16 * .125, 512);
+        OrthographicProjection expanded = OrthographicProjection.scaled(854, 480, 16 * .025, 512);
+        near(previous.halfWidth() * 5, expanded.halfWidth(), "five times the visible width");
+        near(previous.halfHeight() * 5, expanded.halfHeight(), "five times the visible height");
+        near(1920, expanded.depthOffset(), "expanded near protection");
+        near(4280, expanded.far(), "expanded dynamic far");
+        OrthographicProjection highResolution = OrthographicProjection.scaled(7680, 4320, 16 * .025, 512);
+        near(17280, highResolution.depthOffset(), "8K minimum zoom depth");
+        near(36920, highResolution.far(), "8K minimum zoom far");
+        OrthographicProjection capped = OrthographicProjection.scaled(7680, 6000, 16 * .025, 512);
+        near(40000, capped.far(), "expanded finite far cap");
+        expect(() -> OrthographicProjection.scaled(7680, 10000, 16 * .025, 512));
+        for (double pitch : new double[] { 15, 60, 85 }) {
+            for (int facing = 0; facing < 4; facing++) {
+                CameraBasis basis = new CameraBasis(new CameraPose(123, 70, -456, 45 + 90 * facing, pitch));
+                for (OrthographicProjection view : new OrthographicProjection[] { expanded, highResolution, capped }) {
+                    ProjectedPoint anchor = basis.project(view, 123, 70, -456);
+                    check(anchor.ndcZ() > -1 && anchor.ndcZ() < 1, "anchor stays inside clipping interval");
+                    CameraRay ray = basis.ray(view, .4, -.3);
+                    double distance = CameraIntersections.plane(ray, 0, 1, 0, 70, 0, view.far() - view.near());
+                    check(Double.isFinite(distance), "expanded view ground hit");
+                    ProjectedPoint hit = basis.project(
+                        view,
+                        ray.originX() + distance * ray.directionX(),
+                        ray.originY() + distance * ray.directionY(),
+                        ray.originZ() + distance * ray.directionZ());
+                    near(.4, hit.ndcX(), "expanded ray screen X");
+                    near(-.3, hit.ndcY(), "expanded ray screen Y");
+                }
+                double oldPan = 2 * previous.halfWidth() / 854;
+                double newPan = 2 * expanded.halfWidth() / 854;
+                near(5 * basis.screenDeltaX(oldPan, oldPan), basis.screenDeltaX(newPan, newPan), "scaled pan X");
+                near(5 * basis.screenDeltaY(oldPan, oldPan), basis.screenDeltaY(newPan, newPan), "scaled pan Y");
+                near(5 * basis.screenDeltaZ(oldPan, oldPan), basis.screenDeltaZ(newPan, newPan), "scaled pan Z");
+            }
+        }
+        ZoomMotion zoom = new ZoomMotion(1, .025, 8);
+        zoom.multiply(.001, .5);
+        near(.025, zoom.target(), "expanded minimum clamps target");
+        for (int i = 0; i < 200; i++) zoom.advance(.25, .85);
+        near(.025, zoom.actual(), "expanded minimum settles exactly");
+        zoom.snap(100);
+        near(8, zoom.actual(), "maximum zoom remains unchanged");
     }
 
     private static void invalidNumbers() {

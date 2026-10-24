@@ -30,3 +30,24 @@ keyTyped 使用 LWJGL 2 key code，支持 Tab / Shift-Tab、按钮 Enter/Space�
 id 在一个 scene 内唯一，重复会拒绝；child 只属于一个 parent。remove/clear 永久销毁对应子树，先取消其捕获/焦点，再执行 onDispose；不影响其他分支的捕获。close 幂等、销毁所有节点并解除回调。node/scene 均只允许宿主 GUI 线程访问。
 
 `runUiComponentContracts` 覆盖布局、dirty、共享命中/变换/clip、滚动、捕获按钮匹配、Esc/失焦/移除清理、冒泡、焦点/文本、销毁以及绘制异常收尾。无头契约不证明字体、IME、GPU 裁剪或游戏内视觉；这些需要客户端验收。
+
+## 被动引导与调用侧配色
+
+`GuidanceRenderer` 复用已经 begin 的 `UiRenderer`；`MinecraftGuidanceRenderer` 为屏幕 GUI 坐标提供 begin/end 桥，并复用 `MinecraftUiRenderer` / `GlScope`。宿主提供锚点、视口与预留矩形；标题卡避让目标、点击指针和预留区域，没有可读位置时省略。点击指针与扩张角仅为动画，不派发模拟输入。资格、翻译、完成条件及持久化均由宿主拥有。
+
+两个 renderer 原有 `render` / `card` 签名保留，默认使用 `GuidanceStyle.DEFAULT`，颜色与原 GTMB 引导一致。新重载在 renderer / Minecraft 参数之后接收 `GuidanceStyle`。宿主可在静态字段构建一次不可变调色板，两个入口共用，不在逐帧绘制时建 builder：
+
+```java
+private static final GuidanceStyle GUIDE = GuidanceStyle.builder()
+    .background(0xF0102538).titleText(0xFFE1F2F5).detailText(0xFF90AEBF)
+    .highlight(0xFF68E1E8).pointerFill(0xFFE1F2F5).pointerOutline(0xFF101F32)
+    .pressedHint(0x7068E1E8).clickCorner(0xFF68E1E8).fadedClickCorner(0x8868E1E8)
+    .build();
+
+GuidanceRenderer.render(renderer, GUIDE, anchor, viewport, title, detail, elapsedMillis, true, reservedHud);
+GuidanceRenderer.card(renderer, GUIDE, box, title, detail, elapsedMillis);
+```
+
+所有颜色为 ARGB；未设角色沿用默认颜色。高亮保留原来约 165–255 的 alpha 脉冲，再与调色板的 alpha 相乘并向下取整，RGB 不变，不会提高宿主配置的 alpha；点击角的普通/末相颜色分别可调。文字 alpha 0–3 被省略，避免 Minecraft 1.7 字体将这种近透明色自动当作不透明色；alpha 4–255 原样交给绘制桥。该局部边界不改变共享 `UiRenderer.text` 的合同。
+
+`GuidanceContracts` 包含旧重载/显式默认绘制序列一致、自定义九个颜色角色、alpha 边界、预留避让及绘制异常时 clip 收尾。无头合同不证明真实客户端的字体或 GL 视觉。

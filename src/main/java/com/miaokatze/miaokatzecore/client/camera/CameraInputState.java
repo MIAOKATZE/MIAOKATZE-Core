@@ -20,8 +20,14 @@ final class CameraInputState {
     private long exclusiveEpoch = Long.MIN_VALUE;
     private int lastX, lastY;
     private boolean cursorSaved, cursorWasGrabbed;
+    private boolean hudHidden;
 
     void maintain(Minecraft mc, CameraSession session, CameraFrame frame) {
+        if (hudHidden != mc.gameSettings.hideGUI) {
+            hudHidden = mc.gameSettings.hideGUI;
+            // F1 ends the old gesture; its queued release remains quarantined by the existing router.
+            cancel();
+        }
         if (session.interactive(mc) && session.settings()
             .input()
             .exclusiveKeyboard()) {

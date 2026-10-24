@@ -57,7 +57,8 @@ mapOf(
     "runCameraPointerContracts" to "com.miaokatze.miaokatzecore.client.camera.CameraPointerContracts",
     "runCameraHudContracts" to "com.miaokatze.miaokatzecore.client.camera.hud.CameraHudContracts",
     "runSliceMeshContracts" to "com.miaokatze.miaokatzecore.client.camera.slice.SliceMeshContracts",
-    "runTessellatorSliceContracts" to "com.miaokatze.miaokatzecore.client.render.TessellatorSliceContracts"
+    "runTessellatorSliceContracts" to "com.miaokatze.miaokatzecore.client.render.TessellatorSliceContracts",
+    "runCameraRenderBoundaryContracts" to "com.miaokatze.miaokatzecore.mixin.camera.CameraRenderBoundaryContracts"
 ).forEach { (taskName, entryPoint) ->
     tasks.register<JavaExec>(taskName) {
         group = "verification"

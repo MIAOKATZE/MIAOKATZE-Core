@@ -10,7 +10,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.miaokatze.miaokatzecore.client.camera.WorldCameraHooks;
@@ -18,13 +17,17 @@ import com.miaokatze.miaokatzecore.client.camera.WorldCameraHooks;
 @Mixin(EntityRenderer.class)
 public abstract class MixinEntityRenderer {
 
-    @WrapMethod(method = "renderWorld")
-    private void core$renderWorld(float partialTicks, long time, Operation<Void> original) {
+    // Keep renderWorld's body in place for downstream transformers that inspect its instructions.
+    // Both vanilla frame-limit branches invoke renderWorld from this method.
+    @WrapOperation(
+        method = "updateCameraAndRender(F)V",
+        at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/EntityRenderer;renderWorld(FJ)V"))
+    private void core$renderWorld(EntityRenderer renderer, float partialTicks, long time, Operation<Void> original) {
         Minecraft mc = Minecraft.getMinecraft();
         boolean success = false;
         try {
             WorldCameraHooks.beginWorldRender(mc, partialTicks);
-            original.call(partialTicks, time);
+            original.call(renderer, partialTicks, time);
             success = true;
         } catch (RuntimeException | Error failure) {
             WorldCameraHooks.abortWorldRender();

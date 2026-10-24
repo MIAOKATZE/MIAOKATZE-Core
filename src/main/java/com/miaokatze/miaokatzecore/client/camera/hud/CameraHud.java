@@ -260,7 +260,10 @@ public final class CameraHud {
     }
 
     private static boolean available(CameraFrame frame, CameraSettings settings, CameraControls controls) {
-        if (frame == null || settings == null
+        // Raw mouse may still carry settings from the last displayed frame when vanilla has just toggled F1.
+        // Drawing and hit testing must therefore read the live visibility flag at this common boundary.
+        if (Minecraft.getMinecraft().gameSettings.hideGUI || frame == null
+            || settings == null
             || controls == null
             || !(settings.hud()
                 .panelVisible()

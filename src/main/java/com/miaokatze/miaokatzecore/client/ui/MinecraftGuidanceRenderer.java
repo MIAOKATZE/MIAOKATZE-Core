@@ -5,6 +5,7 @@ import net.minecraft.client.Minecraft;
 import com.miaokatze.miaokatzecore.api.ui.CanvasTransform;
 import com.miaokatze.miaokatzecore.api.ui.component.UiRect;
 import com.miaokatze.miaokatzecore.api.ui.guidance.GuidanceRenderer;
+import com.miaokatze.miaokatzecore.api.ui.guidance.GuidanceStyle;
 
 /** Scaled-screen bridge using the existing MinecraftUiRenderer and its symmetric GlScope lifecycle. */
 public final class MinecraftGuidanceRenderer {
@@ -13,12 +14,18 @@ public final class MinecraftGuidanceRenderer {
 
     public static void render(Minecraft mc, UiRect anchor, int width, int height, String title, String detail,
         long elapsedMillis, boolean click, UiRect... reserved) {
+        render(mc, GuidanceStyle.DEFAULT, anchor, width, height, title, detail, elapsedMillis, click, reserved);
+    }
+
+    public static void render(Minecraft mc, GuidanceStyle style, UiRect anchor, int width, int height, String title,
+        String detail, long elapsedMillis, boolean click, UiRect... reserved) {
         if (width <= 0 || height <= 0) return;
         MinecraftUiRenderer renderer = renderer(mc, width, height);
         renderer.begin(CanvasTransform.identity());
         try {
             GuidanceRenderer.render(
                 renderer,
+                style,
                 anchor,
                 new UiRect(0, 0, width, height),
                 title,
@@ -33,11 +40,16 @@ public final class MinecraftGuidanceRenderer {
 
     public static void card(Minecraft mc, UiRect box, int width, int height, String title, String detail,
         long elapsedMillis) {
+        card(mc, GuidanceStyle.DEFAULT, box, width, height, title, detail, elapsedMillis);
+    }
+
+    public static void card(Minecraft mc, GuidanceStyle style, UiRect box, int width, int height, String title,
+        String detail, long elapsedMillis) {
         if (width <= 0 || height <= 0) return;
         MinecraftUiRenderer renderer = renderer(mc, width, height);
         renderer.begin(CanvasTransform.identity());
         try {
-            GuidanceRenderer.card(renderer, box, title, detail, elapsedMillis);
+            GuidanceRenderer.card(renderer, style, box, title, detail, elapsedMillis);
         } finally {
             renderer.end();
         }

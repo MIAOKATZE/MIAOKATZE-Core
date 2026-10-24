@@ -30,6 +30,13 @@ tasks.register<JavaExec>("runCoreContracts") {
 }
 tasks.named("check") { dependsOn("runCoreContracts") }
 
+tasks.register<JavaExec>("runUiComponentContracts") {
+    group = "verification"
+    mainClass = "com.miaokatze.miaokatzecore.api.ui.component.UiComponentContracts"
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+tasks.named("check") { dependsOn("runUiComponentContracts") }
+
 tasks.register<JavaExec>("runCameraContracts") {
     group = "verification"
     mainClass = "com.miaokatze.miaokatzecore.api.camera.CameraContracts"

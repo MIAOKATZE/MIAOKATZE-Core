@@ -567,7 +567,7 @@ public final class CameraSettings {
             private WheelDeltaUnit wheelDeltaUnit = WheelDeltaUnit.LEGACY_120;
             private double wheelSensitivity = 1, wheelZoomLimit = Double.POSITIVE_INFINITY;
             private boolean panExcludesControl, rotateExcludesControl;
-            private double minPitch = -89, maxPitch = 89, minScale = 2, maxScale = 128, basePixelsPerWorldUnit = 16;
+            private double minPitch = -89, maxPitch = 89, minScale = .4, maxScale = 128, basePixelsPerWorldUnit = 16;
             private int sliceMinimumY = 0, sliceMaximumY = 256;
 
             public Builder pan(boolean value) {

@@ -5,6 +5,8 @@ public final class CameraPointerContracts {
 
     public static void main(String[] args) {
         rotationGestures();
+        visibilityBoundary();
+        focusBoundary();
         CameraPointerState pointer = new CameraPointerState();
         Object world = new Object();
         require(pointer.capture(0, 1, 1, world) && pointer.matches(1, world), "capture exact owner/world");
@@ -33,6 +35,41 @@ public final class CameraPointerContracts {
         pointer.reconcile(button -> false);
         require(!pointer.captured(), "no stale release debt");
         System.out.println("Camera pointer contracts passed (Minecraft/OpenGL not required).");
+    }
+
+    private static void visibilityBoundary() {
+        CameraPointerState pointer = new CameraPointerState();
+        Object world = new Object();
+        // CameraInputState cancels on both F1 edges. An old press may never click the newly exposed surface.
+        for (int button : new int[] { 0, 1, 2 }) {
+            require(pointer.capture(button, 7, 7, world), "begin UI or navigation gesture before F1");
+            pointer.cancel();
+            pointer.cancel();
+            require(pointer.button() < 0, "F1 removes the active pointer owner");
+            require(pointer.consumeSuppressed(-1, false), "old drag motion remains quarantined");
+            require(pointer.consumeSuppressed(button, false), "old release cannot click the restored HUD");
+            pointer.reconcile(value -> false);
+            require(!pointer.captured(), "F1 leaves no capture after release");
+            require(pointer.capture(button, 7, 7, world), "fresh gesture works after visibility returns");
+            pointer.finish();
+        }
+    }
+
+    private static void focusBoundary() {
+        CameraPointerState pointer = new CameraPointerState();
+        Object world = new Object();
+        require(pointer.capture(1, 9, 9, world), "begin right drag before focus loss");
+        pointer.cancel();
+        pointer.reconcile(button -> true);
+        require(pointer.button() < 0 && pointer.captured(), "focus loss ends drag while its held tail stays isolated");
+        require(pointer.consumeSuppressed(1, false), "release after focus gain cannot complete the old action");
+        require(pointer.capture(1, 9, 9, world), "same lease accepts the next deliberate right drag");
+        pointer.cancel();
+        pointer.reconcile(button -> false);
+        require(!pointer.captured(), "external release without an event rearms after the queue drains");
+        pointer.suppress(1);
+        require(!pointer.consumeSuppressed(1, true), "fresh native press proves a missing external release");
+        require(!pointer.captured(), "a missing release never permanently swallows right click");
     }
 
     private static void rotationGestures() {

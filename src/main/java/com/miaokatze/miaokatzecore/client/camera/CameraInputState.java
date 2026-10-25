@@ -20,8 +20,29 @@ final class CameraInputState {
     private long exclusiveEpoch = Long.MIN_VALUE;
     private int lastX, lastY;
     private boolean cursorSaved, cursorWasGrabbed;
+    private boolean hudHidden;
+    private boolean windowActive;
 
     void maintain(Minecraft mc, CameraSession session, CameraFrame frame) {
+        boolean activeWindow = CameraSession.windowActive();
+        if (windowActive != activeWindow) {
+            windowActive = activeWindow;
+            if (session.valid(mc)) {
+                cancel();
+                KeyBinding.unPressAllKeys();
+                // A held button carried back into the window cannot start a new navigation or HUD gesture.
+                if (Mouse.isCreated()) {
+                    for (int button = 0; button < Mouse.getButtonCount(); button++) {
+                        if (Mouse.isButtonDown(button)) pointer.suppress(button);
+                    }
+                }
+            }
+        }
+        if (hudHidden != mc.gameSettings.hideGUI) {
+            hudHidden = mc.gameSettings.hideGUI;
+            // F1 ends the old gesture; its queued release remains quarantined by the existing router.
+            cancel();
+        }
         if (session.interactive(mc) && session.settings()
             .input()
             .exclusiveKeyboard()) {
@@ -43,7 +64,13 @@ final class CameraInputState {
                 cursorSaved = true;
             }
             if (Mouse.isGrabbed()) Mouse.setGrabbed(false);
-        } else restoreCursor(mc);
+        } else if (!session.valid(mc) || session.settings() == null
+            || !session.settings()
+                .input()
+                .freeCursor()) {
+                    // Focus/automatic pause only suspends this owner. Preserve its original cursor restoration state.
+                    restoreCursor(mc);
+                }
     }
 
     boolean event(Minecraft mc, CameraSession session, CameraFrame frame, CameraSettings settings) {

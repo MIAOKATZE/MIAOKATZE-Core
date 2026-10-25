@@ -43,6 +43,10 @@ public final class CoreLoadingPlugin implements IFMLLoadingPlugin, IEarlyMixinLo
                 "camera.slice.shader.MixinSliceShaderReload"));
         // Probe the resource without loading an optional renderer class during early bootstrap.
         if (getClass().getClassLoader()
+            .getResource("com/gtnewhorizons/angelica/rendering/FpsReducer.class") != null) {
+            mixins.add("camera.MixinAngelicaFpsReducer");
+        }
+        if (getClass().getClassLoader()
             .getResource("com/gtnewhorizons/angelica/rendering/celeritas/AngelicaRenderSectionManager.class") != null) {
             mixins.addAll(
                 Arrays.asList(

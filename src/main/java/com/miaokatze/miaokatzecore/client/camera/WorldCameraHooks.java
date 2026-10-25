@@ -1,6 +1,7 @@
 package com.miaokatze.miaokatzecore.client.camera;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiIngameMenu;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.MovementInput;
@@ -20,6 +21,7 @@ public final class WorldCameraHooks {
     private static final CameraSession SESSION = new CameraSession();
     private static final CameraFrameStore FRAMES = new CameraFrameStore();
     private static final CameraInputState INPUT = new CameraInputState();
+    private static final CameraPauseLifecycle PAUSE = new CameraPauseLifecycle();
     private static CameraRenderScope renderScope;
 
     static {
@@ -31,6 +33,7 @@ public final class WorldCameraHooks {
     /** Tick policy boundary, before vanilla/Forge receives any mouse event. */
     public static void lifecycle(Minecraft mc) {
         CameraClientEvents.install();
+        PAUSE.observe(mc.currentScreen, mc.theWorld);
         SliceBackend.tick(mc);
         SESSION.sample(mc);
         validate(mc);
@@ -39,6 +42,22 @@ public final class WorldCameraHooks {
 
     public static void endTick() {
         INPUT.endTick();
+    }
+
+    /** Called only around vanilla's automatic lost-focus pause, with the native focus value unchanged. */
+    public static void pauseOnLostFocus(Minecraft mc, Runnable openMenu) {
+        PAUSE.pause(mc.theWorld, openMenu, () -> mc.currentScreen instanceof GuiIngameMenu ? mc.currentScreen : null);
+    }
+
+    /** During GuiOpenEvent, distinguishes the automatic pause menu from a user's explicit exit. */
+    public static boolean isAutomaticPause() {
+        return PAUSE.automatic();
+    }
+
+    /** True only for the actual automatic pause-menu instance in the world that opened it. */
+    public static boolean isAutomaticPauseScreen() {
+        Minecraft mc = Minecraft.getMinecraft();
+        return mc.currentScreen instanceof GuiIngameMenu && PAUSE.screen(mc.currentScreen, mc.theWorld);
     }
 
     public static void guiOpened() {

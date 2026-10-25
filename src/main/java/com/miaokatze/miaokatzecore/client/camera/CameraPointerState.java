@@ -34,8 +34,9 @@ final class CameraPointerState {
 
     boolean consumeSuppressed(int eventButton, boolean pressed) {
         if (eventButton >= 0 && eventButton < Long.SIZE && (suppressed & 1L << eventButton) != 0) {
-            if (!pressed) releaseSuppressed(eventButton);
-            return true;
+            releaseSuppressed(eventButton);
+            // A new native press proves the previous sequence ended, even if its external release was lost.
+            return !pressed;
         }
         return button < 0 && suppressed != 0 && eventButton < 0;
     }

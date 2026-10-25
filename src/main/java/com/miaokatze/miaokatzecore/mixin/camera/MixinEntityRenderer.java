@@ -17,6 +17,13 @@ import com.miaokatze.miaokatzecore.client.camera.WorldCameraHooks;
 @Mixin(EntityRenderer.class)
 public abstract class MixinEntityRenderer {
 
+    @WrapOperation(
+        method = "updateCameraAndRender(F)V",
+        at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;displayInGameMenu()V"))
+    private void core$automaticPause(Minecraft mc, Operation<Void> original) {
+        WorldCameraHooks.pauseOnLostFocus(mc, () -> original.call(mc));
+    }
+
     // Keep renderWorld's body in place for downstream transformers that inspect its instructions.
     // Both vanilla frame-limit branches invoke renderWorld from this method.
     @WrapOperation(

@@ -32,7 +32,9 @@ final class CameraSession {
         owner = next;
         settings = sampled;
         controls = controlsFor(mc, next, sampledControls);
-        if (mc.currentScreen != null && sampled.guiPolicy() == WorldCameras.GuiPolicy.RELEASE) next.close();
+        if (CameraActivity
+            .releasesForGui(mc.currentScreen != null, sampled.guiPolicy(), WorldCameraHooks.isAutomaticPauseScreen()))
+            next.close();
     }
 
     void clear() {

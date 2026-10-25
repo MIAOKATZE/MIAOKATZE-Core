@@ -9,6 +9,7 @@ public final class CameraLeaseContracts {
 
     public static void main(String[] args) {
         CameraActivityContracts.run();
+        CameraPauseLifecycleContracts.run();
         Object world = new Object();
         int[] revoked = { 0 };
         WorldCameras.Lease first = WorldCameras.tryAcquire("first", world, 20, SOURCE, () -> revoked[0]++);

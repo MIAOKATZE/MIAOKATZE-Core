@@ -6,6 +6,7 @@ public final class CameraPointerContracts {
     public static void main(String[] args) {
         rotationGestures();
         visibilityBoundary();
+        focusBoundary();
         CameraPointerState pointer = new CameraPointerState();
         Object world = new Object();
         require(pointer.capture(0, 1, 1, world) && pointer.matches(1, world), "capture exact owner/world");
@@ -52,6 +53,23 @@ public final class CameraPointerContracts {
             require(pointer.capture(button, 7, 7, world), "fresh gesture works after visibility returns");
             pointer.finish();
         }
+    }
+
+    private static void focusBoundary() {
+        CameraPointerState pointer = new CameraPointerState();
+        Object world = new Object();
+        require(pointer.capture(1, 9, 9, world), "begin right drag before focus loss");
+        pointer.cancel();
+        pointer.reconcile(button -> true);
+        require(pointer.button() < 0 && pointer.captured(), "focus loss ends drag while its held tail stays isolated");
+        require(pointer.consumeSuppressed(1, false), "release after focus gain cannot complete the old action");
+        require(pointer.capture(1, 9, 9, world), "same lease accepts the next deliberate right drag");
+        pointer.cancel();
+        pointer.reconcile(button -> false);
+        require(!pointer.captured(), "external release without an event rearms after the queue drains");
+        pointer.suppress(1);
+        require(!pointer.consumeSuppressed(1, true), "fresh native press proves a missing external release");
+        require(!pointer.captured(), "a missing release never permanently swallows right click");
     }
 
     private static void rotationGestures() {

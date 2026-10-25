@@ -13,4 +13,8 @@ final class CameraActivity {
     static boolean interactive(boolean valid, boolean guiOpen, boolean gameFocus, boolean windowActive) {
         return valid && windowActive && !guiOpen && gameFocus;
     }
+
+    static boolean releasesForGui(boolean guiOpen, WorldCameras.GuiPolicy policy, boolean automaticPause) {
+        return guiOpen && policy == WorldCameras.GuiPolicy.RELEASE && !automaticPause;
+    }
 }

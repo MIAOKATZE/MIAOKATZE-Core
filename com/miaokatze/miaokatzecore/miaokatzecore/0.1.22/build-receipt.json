@@ -1,0 +1,40 @@
+{
+  "sourceCommit": "c60f32e9b698f5a0455610551c4cd1af5cc7ac74",
+  "sourceTag": "v0.1.22",
+  "version": "0.1.22",
+  "status": "FORMAL_TAG_FINAL_CLEAN_ASSEMBLE; NATIVE_NOT_ASSERTED",
+  "artifacts": [
+    {
+      "file": "miaokatzecore-0.1.22.jar",
+      "source": "E:\\CodeGT\\MIAOKATZE-Core\\build\\libs\\miaokatzecore-v0.1.22.jar",
+      "bytes": 285700,
+      "sha256": "25651a2ca8848f40c6ff4c3a4db13b23e15e8f7455b4474843b4556435898904"
+    },
+    {
+      "file": "miaokatzecore-0.1.22-dev.jar",
+      "source": "E:\\CodeGT\\MIAOKATZE-Core\\build\\libs\\miaokatzecore-v0.1.22-dev.jar",
+      "bytes": 281272,
+      "sha256": "584e46d378be7cf354446f3d9946283bd87bb4467d1bbb0d46746f4d05db0083"
+    },
+    {
+      "file": "miaokatzecore-0.1.22-sources.jar",
+      "source": "E:\\CodeGT\\MIAOKATZE-Core\\build\\libs\\miaokatzecore-v0.1.22-sources.jar",
+      "bytes": 146461,
+      "sha256": "23f56ceb496c285133e2f1e024b698d23a9972ac3a5c62c8f02d473355392952"
+    }
+  ],
+  "finalBuildReceiptSHA256": "60d06a5351352904d3eef9c23c6127af7d79c32740a156dbfe02d993de7fd512",
+  "artifactReceiptSHA256": "432023ed5e75780de1b9a4ee755a2f2fde8a0c214ecf91a13473cd09082fa0df",
+  "frozenInitialInputReceiptSHA256": "e345821e9d7ae3bcaa2a3b2b8feadcf656668867cf64a3f4d22855b5d5bf9d80",
+  "pomStatus": "LOCAL_VERSION_ONLY_DERIVATION_OF_EXISTING_DESCRIPTOR",
+  "initialToFinalRuntimeComparison": {
+    "path": "E:\\CodeGT\\GT-Miao-Blueprint\\plan\\evidence\\v0.1.48-rotation-preview-follow-up\\delivery\\core022\\compat-clean-to-final.json",
+    "sha256": "9bada27e7cae80661d62fb34ff833090151345a2212f4c0130b64486e2aa4787",
+    "status": "PASS",
+    "summary": {
+      "IDENTICAL": 227,
+      "VERSION_ONLY": 0,
+      "FAIL": 0
+    }
+  }
+}

@@ -1,5 +1,13 @@
 # 迁移与多仓协作
 
+## 0.1.23 候选：显式共享工作准入
+
+新增 [`api.work.WorkGovernor`](work-governor.md)，将通用 CPU 许可、字节租约、有界 singleflight 和退休回收下沉 Core。Core 不拥有 GTMB 的生命周期、蓝图 schema、World/TE、付款、网络协议、具体 worker 或 GUI。GTMB 的 `HologramProcessGovernor` 保留全部既有公开方法与嵌套类型，作为 owner guard、配置和 metrics 的适配层。
+
+采用新入口的 GTMB 将最低依赖与精确首次下载请求更新到 0.1.23；仍只调用旧 API 的系列 Mod 保留各自当前版本声明。已公开的 0.1.x 类型和方法未删除或改签名。进程共享配置由显式首个消费者固定，其他消费者复用同一实例；不要在 client/server 或不同 executor 内另建独立“全局”许可。
+
+本节描述本次候选，不覆盖下面各历史阶段的版本与验收记录。正式 Core/消费者产物分别提交、发布和关联 PR，构建顺序为 Core 候选检查与固定产物，再构建 GTMB；组件通过不替代实际游戏负载验收。
+
 本批 API 基线 0.1.3；七仓统一 Forge 区间 [0.1.3,0.2.0)。运行平台统一为 GTNH 2.9.0 RC2，GT 5.09.54.205、MUI2 2.3.92-1.7.10、GTNHlib 0.11.52；不再维护旧整合包 API 分派。消费者分别建立 task worktree 和版本 PR，原工作副本保留原分支及改动。Core 本轮经授权直接提交、打 Tag、推送；消费者 Tag 留在本地，直到各自 PR 合并后调整到最终合并提交，再重新构建、推正式 Tag 与 Release。不要将候选 Jar 当成已发布产品。
 
 ## 分工边界

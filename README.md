@@ -2,6 +2,8 @@
 
 Minecraft 1.7.10 / Forge 10.13.4.1614 / Java 8 的模块化基础库。当前 API 基线为 **0.1.15**，原 Mod 继续拥有玩法、注册、配置、存档与测试维度。0.1.15 新增向下兼容的 [BoundedMru](docs/bounded-mru.md)，用于有界、去重的最近访问顺序；GTSR 2.0.8 的机器终端历史使用此接口。既有消费者不需要统一提高最低依赖版本。
 
+本次 **0.1.23 候选**新增纯 Java 8 的 [`api.work.WorkGovernor`](docs/work-governor.md)：CPU/内存租约、精确键 singleflight 与跨域退休回收。由消费者显式创建或接入进程共享实例，不创建 worker 或事件监听；旧公开 API 保持兼容，既有消费者无需一并提高最低依赖。候选尚不等于已发布产物。
+
 ## 安装与依赖
 
 [下载普通 JAR 0.1.15](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.15/miaokatzecore-0.1.15.jar) · [SHA-256](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.15/miaokatzecore-0.1.15.jar.sha256) · [dev JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.15/miaokatzecore-0.1.15-dev.jar) · [sources JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.15/miaokatzecore-0.1.15-sources.jar)
@@ -51,6 +53,7 @@ required-after:miaokatzecore@[0.1.9,)
 | api.camera.HeightSlice / SliceSurfaceRule | 整数上下高度区间、真实边界面及同像素渐变覆盖规则 |
 | client.camera.slice.SliceBackend | RC 版本默认地形与 TESR 裁切、局部边界补面和后台上传状态；不支持活动 Iris shaderpack |
 | testkit.Deadline | 可注入单调时间戳的被动预算，处理 nanoTime 回绕，不注册维度或后台任务 |
+| api.work.WorkGovernor（since 0.1.23） | 显式共享 CPU/字节准入、资源租约、精确键 singleflight、owner guard 与被动观察器；无游戏依赖、自动线程或监听 |
 
 ~~~java
 try (GlScope scope = new GlScope()) {
@@ -76,6 +79,8 @@ ExtensionCatalog 回调同步执行于实例锁内，禁止等待另一个需要
 使用 JDK 25 执行 Gradle，产物为 Java 8 字节码：gradlew build --no-configuration-cache。check 包含纯 JVM 画布/视口坐标、相机投影/反投影、镜头所有权、时间边界、句柄生命周期和 glint 参数契约；画布/视口契约也可单独执行 `gradlew runViewportCoordinateContracts --no-configuration-cache`。这不代表 native GUI/光效已经游戏验收。发布前必须先完成检查，提交、设置与 RELEASE_VERSION 相符的本地 Tag，确认工作树干净，再从 Tag 构建。正式 Maven 坐标不可覆盖，变更必须递增版本。
 
 AGPL-3.0。原有实现与资源来源见 [NOTICE](NOTICE.md)。
+
+共享工作契约可单独运行 `gradlew runWorkGovernorContracts --no-configuration-cache`，并已挂入 `check`。所有权与迁移边界见 [工作准入 API](docs/work-governor.md)。
 
 ## Platform baseline
 

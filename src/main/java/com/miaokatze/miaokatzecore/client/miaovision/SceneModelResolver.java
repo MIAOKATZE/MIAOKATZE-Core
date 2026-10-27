@@ -19,6 +19,14 @@ public interface SceneModelResolver {
         return false;
     }
 
+    /**
+     * Opt in to native pixel-edge extrusion instead of flat INVENTORY-only custom icon renderers.
+     * Block-helper custom models and native blocks retain their existing rendering path.
+     */
+    default boolean extrudeInventorySprites() {
+        return false;
+    }
+
     /** Room art in scene world coordinates. No callbacks may mutate gameplay inventories/worlds. */
     default void beforeBodies(SceneSnapshot snapshot) {}
 

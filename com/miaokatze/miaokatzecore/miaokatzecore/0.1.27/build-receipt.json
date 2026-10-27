@@ -1,0 +1,31 @@
+{
+  "version": "0.1.27",
+  "commit": "cfbaafaba05c39876c240b4f03e6d2c59ec27f32",
+  "tag": "v0.1.27",
+  "build": "PASS build --no-configuration-cache; RecipeRegistrationContracts and legacy checks",
+  "apiCompatibility": "1001 old public/protected members retained vs Core26; WorkGovernor old class bytes identical",
+  "features": "Once-per-JVM physical-side late main recipes, then derived views, then focused invalidation; callbacks outside monitor",
+  "nativeTesting": "DEFERRED_BY_USER; no instance started",
+  "artifacts": [
+    {
+      "file": "miaokatzecore-0.1.27-dev.jar",
+      "bytes": 347362,
+      "sha256": "2908fb28c14e69e6d95e3d14f068b5e5e784ff505755dff0834a36bea476e845"
+    },
+    {
+      "file": "miaokatzecore-0.1.27-sources.jar",
+      "bytes": 181167,
+      "sha256": "e83dcf5d7fe00a4e4a433beb6ff3f763fe07109990dacaa65dfceb567176a481"
+    },
+    {
+      "file": "miaokatzecore-0.1.27.jar",
+      "bytes": 352610,
+      "sha256": "e263081be21be63166f380f912033de222385666f5d7517b382cd05d6832d703"
+    },
+    {
+      "file": "miaokatzecore-0.1.27.pom",
+      "bytes": 537,
+      "sha256": "1b47c6adcbff9a2d528cb780a7a3e5801c2e944269141037195a80acf891b12c"
+    }
+  ]
+}

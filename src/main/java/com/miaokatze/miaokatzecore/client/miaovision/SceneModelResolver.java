@@ -19,6 +19,23 @@ public interface SceneModelResolver {
         return false;
     }
 
+    /**
+     * Opt in to native pixel-edge extrusion instead of flat INVENTORY-only custom icon renderers.
+     * Block-helper custom models and native blocks retain their existing rendering path.
+     */
+    default boolean extrudeInventorySprites() {
+        return false;
+    }
+
+    /**
+     * Opt-in bright, two-sided diorama lighting for native item geometry. Lights are placed before body transforms,
+     * not attached to each rotating/scaled item. Room art and existing consumers keep their original lighting.
+     * Custom renderers inherit this rig; they may still own special emissive/glint material passes.
+     */
+    default boolean dioramaItemLighting() {
+        return false;
+    }
+
     /** Room art in scene world coordinates. No callbacks may mutate gameplay inventories/worlds. */
     default void beforeBodies(SceneSnapshot snapshot) {}
 

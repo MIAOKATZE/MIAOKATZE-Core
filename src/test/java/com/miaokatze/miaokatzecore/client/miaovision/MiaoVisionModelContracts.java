@@ -7,6 +7,20 @@ public final class MiaoVisionModelContracts {
 
     public static int run() {
         int checks = 0;
+        if (SceneItemLightRig.AMBIENT < .65f || SceneItemLightRig.AMBIENT >= 1
+            || SceneItemLightRig.KEY <= 0
+            || SceneItemLightRig.FILL <= 0
+            || SceneItemLightRig.AMBIENT + SceneItemLightRig.KEY + SceneItemLightRig.FILL > 1.15f)
+            throw new AssertionError(
+                "diorama keeps readable unlit faces and bounded directional shading, not fullbright");
+        checks++;
+        equal(SceneSpriteTransform.planar(0), -.5, "sprite left/bottom");
+        equal(SceneSpriteTransform.planar(1), .5, "sprite right/top");
+        equal(SceneSpriteTransform.depth(-SceneSpriteTransform.NATIVE_DEPTH), -.5, "sprite back face");
+        equal(SceneSpriteTransform.depth(0), .5, "sprite front face");
+        equal(SceneSpriteTransform.depth(-SceneSpriteTransform.NATIVE_DEPTH / 2), 0, "sprite depth centered");
+        equal(SceneSpriteTransform.depth(0) * .027 * 2, .027, "thin sprite exact world half-depth");
+        checks += 6;
         InventoryModelTransform block = InventoryModelTransform.forHelper(true);
         InventoryModelTransform pixels = InventoryModelTransform.forHelper(false);
         for (int corner = 0; corner < 8; corner++) {

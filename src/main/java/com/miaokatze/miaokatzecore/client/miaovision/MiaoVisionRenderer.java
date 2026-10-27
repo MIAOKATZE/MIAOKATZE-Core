@@ -8,12 +8,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.RenderBlocks;
+import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.IIcon;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.IItemRenderer;
 import net.minecraftforge.client.MinecraftForgeClient;
@@ -40,6 +42,16 @@ import cpw.mods.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public final class MiaoVisionRenderer implements AutoCloseable {
 
+    private static final ResourceLocation GLINT = new ResourceLocation(
+        "minecraft",
+        "textures/misc/enchanted_item_glint.png");
+    // glLight/glMaterial read without advancing FloatBuffer.position(). Allocate once, never per body/frame.
+    private static final FloatBuffer DIORAMA_AMBIENT = lightVector(SceneItemLightRig.AMBIENT, 1);
+    private static final FloatBuffer DIORAMA_KEY = lightVector(SceneItemLightRig.KEY, 1);
+    private static final FloatBuffer DIORAMA_FILL = lightVector(SceneItemLightRig.FILL, 1);
+    private static final FloatBuffer DIORAMA_KEY_DIRECTION = lightBuffer(-.35f, 1, .65f, 0);
+    private static final FloatBuffer DIORAMA_FILL_DIRECTION = lightBuffer(.65f, .55f, -.75f, 0);
+    private static final FloatBuffer NO_EMISSION_OR_SPECULAR = lightVector(0, 1);
     private boolean closed;
     private final SceneOpacityCompositor compositor = new SceneOpacityCompositor();
 
@@ -50,9 +62,21 @@ public final class MiaoVisionRenderer implements AutoCloseable {
 
     public void render(SceneSnapshot snapshot, SceneBounds bounds, SceneViewport viewport, SceneCamera camera,
         SceneModelResolver resolver, ScenePresentation presentation) {
+        render(snapshot, bounds, bounds, viewport, camera, resolver, presentation);
+    }
+
+    /**
+     * Separates camera framing from authoritative simulation bounds. Existing callers retain identical framing.
+     * The caller must include every visible body and room surface in framingBounds, and use it for ray picking too.
+     */
+    public void render(SceneSnapshot snapshot, SceneBounds bounds, SceneBounds framingBounds, SceneViewport viewport,
+        SceneCamera camera, SceneModelResolver resolver, ScenePresentation presentation) {
         if (closed) throw new IllegalStateException("renderer closed");
-        if (snapshot == null || bounds == null || viewport == null || camera == null || resolver == null)
-            throw new IllegalArgumentException("render arguments");
+        if (snapshot == null || bounds == null
+            || framingBounds == null
+            || viewport == null
+            || camera == null
+            || resolver == null) throw new IllegalArgumentException("render arguments");
         if (presentation == null) presentation = ScenePresentation.VISIBLE;
         // All validation precedes changes to the caller's OpenGL/Tessellator state.
         for (SceneBody body : snapshot.bodies) bounds.validate(body);
@@ -110,8 +134,8 @@ public final class MiaoVisionRenderer implements AutoCloseable {
             GL11.glEnable(GL11.GL_TEXTURE_2D);
             OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240, 240);
             double radius = Math.sqrt(
-                square(bounds.maxX - bounds.minX) + square(bounds.maxY - bounds.minY)
-                    + square(bounds.maxZ - bounds.minZ))
+                square(framingBounds.maxX - framingBounds.minX) + square(framingBounds.maxY - framingBounds.minY)
+                    + square(framingBounds.maxZ - framingBounds.minZ))
                 * .55;
             double aspect = (double) viewport.width / viewport.height;
             double halfH = radius / camera.zoom / Math.min(1, aspect), halfW = halfH * aspect;
@@ -123,9 +147,9 @@ public final class MiaoVisionRenderer implements AutoCloseable {
             GL11.glRotated(camera.pitchDegrees, 1, 0, 0);
             GL11.glRotated(camera.yawDegrees, 0, 1, 0);
             GL11.glTranslated(
-                -(bounds.minX + bounds.maxX) / 2,
-                -(bounds.minY + bounds.maxY) / 2,
-                -(bounds.minZ + bounds.maxZ) / 2);
+                -(framingBounds.minX + framingBounds.maxX) / 2,
+                -(framingBounds.minY + framingBounds.maxY) / 2,
+                -(framingBounds.minZ + framingBounds.maxZ) / 2);
             renderRoom(resolver, snapshot, true);
             for (SceneRenderOrder.Entry entry : ordered) {
                 SceneBody body = entry.body;
@@ -158,13 +182,18 @@ public final class MiaoVisionRenderer implements AutoCloseable {
         try {
             modelState.push();
             GL11.glMatrixMode(GL11.GL_MODELVIEW);
+            boolean dioramaLighting = resolver.dioramaItemLighting();
+            // GL light positions are transformed at assignment. Do this before the body's quaternion/scale:
+            // thin item Z scaling and settled face-down poses must not rotate/stretch the light rig itself.
+            if (dioramaLighting) enableDioramaItemLighting();
             GL11.glTranslated(body.x, body.y, body.z);
             GL11.glMultMatrix(rotation(body));
             GL11.glScaled(body.halfX * 2, body.halfY * 2, body.halfZ * 2);
             GL11.glColor4f(1, 1, 1, 1);
             GL11.glDepthMask(true);
             // Native renderers own their material blend/color. Scene opacity is applied only after capture.
-            if (!resolver.render(body, stack, 1)) drawNative(stack, 1);
+            if (!resolver.render(body, stack, 1))
+                drawNative(stack, 1, resolver.extrudeInventorySprites(), dioramaLighting);
         } finally {
             ForgeHooksClient.setRenderPass(previousPass);
             modelState.restore();
@@ -200,14 +229,45 @@ public final class MiaoVisionRenderer implements AutoCloseable {
         return matrix;
     }
 
-    private static void drawNative(ItemStack stack, float opacity) {
+    private static void enableDioramaItemLighting() {
+        // Minecraft's helper supplies color-material, zero light ambient/specular and flat pixel shading.
+        // Override its low ambient and local-facing directions without changing the scoped lightmap policy.
+        RenderHelper.enableStandardItemLighting();
+        GL11.glEnable(GL11.GL_NORMALIZE); // Body scales are non-uniform; RESCALE_NORMAL alone is insufficient.
+        GL11.glLightModeli(GL11.GL_LIGHT_MODEL_TWO_SIDE, GL11.GL_TRUE);
+        GL11.glLightModel(GL11.GL_LIGHT_MODEL_AMBIENT, DIORAMA_AMBIENT);
+        GL11.glLight(GL11.GL_LIGHT0, GL11.GL_POSITION, DIORAMA_KEY_DIRECTION);
+        GL11.glLight(GL11.GL_LIGHT1, GL11.GL_POSITION, DIORAMA_FILL_DIRECTION);
+        GL11.glLight(GL11.GL_LIGHT0, GL11.GL_DIFFUSE, DIORAMA_KEY);
+        GL11.glLight(GL11.GL_LIGHT1, GL11.GL_DIFFUSE, DIORAMA_FILL);
+        // Neither inherited material emission/specular nor additional GUI/world lights belong to this rig.
+        GL11.glMaterial(GL11.GL_FRONT_AND_BACK, GL11.GL_EMISSION, NO_EMISSION_OR_SPECULAR);
+        GL11.glMaterial(GL11.GL_FRONT_AND_BACK, GL11.GL_SPECULAR, NO_EMISSION_OR_SPECULAR);
+        for (int light = GL11.GL_LIGHT2; light <= GL11.GL_LIGHT7; light++) GL11.glDisable(light);
+    }
+
+    private static FloatBuffer lightVector(float value, float alpha) {
+        return lightBuffer(value, value, value, alpha);
+    }
+
+    private static FloatBuffer lightBuffer(float x, float y, float z, float w) {
+        FloatBuffer buffer = BufferUtils.createFloatBuffer(4);
+        buffer.put(x)
+            .put(y)
+            .put(z)
+            .put(w)
+            .flip();
+        return buffer.asReadOnlyBuffer();
+    }
+
+    private static void drawNative(ItemStack stack, float opacity, boolean extrudeSprites, boolean dioramaLighting) {
         Minecraft mc = Minecraft.getMinecraft();
         Block block = stack.getItem() instanceof ItemBlock ? Block.getBlockFromItem(stack.getItem()) : Blocks.air;
         double[] blockBounds = block == Blocks.air ? null
             : new double[] { block.getBlockBoundsMinX(), block.getBlockBoundsMinY(), block.getBlockBoundsMinZ(),
                 block.getBlockBoundsMaxX(), block.getBlockBoundsMaxY(), block.getBlockBoundsMaxZ() };
         try {
-            drawNativeModel(mc, stack, opacity, block);
+            drawNativeModel(mc, stack, opacity, block, extrudeSprites, dioramaLighting);
         } finally {
             if (blockBounds != null) {
                 block.setBlockBounds(
@@ -222,9 +282,15 @@ public final class MiaoVisionRenderer implements AutoCloseable {
         }
     }
 
-    private static void drawNativeModel(Minecraft mc, ItemStack stack, float opacity, Block block) {
+    private static void drawNativeModel(Minecraft mc, ItemStack stack, float opacity, Block block,
+        boolean extrudeSprites, boolean dioramaLighting) {
         IItemRenderer custom = MinecraftForgeClient.getItemRenderer(stack, IItemRenderer.ItemRenderType.INVENTORY);
-        if (custom != null) {
+        if (custom != null && (!extrudeSprites || block != Blocks.air
+            || custom.shouldUseRenderHelper(
+                IItemRenderer.ItemRenderType.INVENTORY,
+                stack,
+                IItemRenderer.ItemRendererHelper.INVENTORY_BLOCK)
+            || !hasNativeSprite(stack))) {
             // Match ForgeHooksClient's atlas and helper decision, without importing its GUI camera transform.
             // A block helper emits unit-block coordinates, not 16-pixel icon coordinates (e.g. ArchitectureCraft).
             mc.getTextureManager()
@@ -271,18 +337,25 @@ public final class MiaoVisionRenderer implements AutoCloseable {
             GL11.GL_ONE_MINUS_SRC_ALPHA,
             GL11.GL_ONE,
             GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glTranslated(-.5, -.5, .5);
-        int passes = stack.getItem()
-            .requiresMultipleRenderPasses()
-                ? stack.getItem()
-                    .getRenderPasses(stack.getItemDamage())
-                : 1;
-        // Malformed/custom items cannot cause unbounded render loops.
-        passes = Math.min(16, Math.max(1, passes));
+        // Vanilla's native 1/16-pixel extrusion, normalized to the physical body's local thickness.
+        // The final depth is exactly 2*body.halfZ; consumers choose a thin proxy, not a unit collision cube.
+        if (!dioramaLighting) RenderHelper.enableStandardItemLighting();
+        GL11.glEnable(GL11.GL_NORMALIZE);
+        final float nativeThickness = SceneSpriteTransform.NATIVE_DEPTH;
+        GL11.glScaled(1, 1, SceneSpriteTransform.SCALE_Z);
+        GL11.glTranslated(
+            SceneSpriteTransform.OFFSET_XY,
+            SceneSpriteTransform.OFFSET_XY,
+            SceneSpriteTransform.OFFSET_Z);
+        int passes = nativePasses(stack);
+        boolean glint = false;
         for (int pass = 0; pass < passes; pass++) {
+            ForgeHooksClient.setRenderPass(pass);
             IIcon icon = stack.getItem()
                 .getIcon(stack, pass);
             if (icon == null) continue;
+            glint |= stack.getItem()
+                .hasEffect(stack, pass);
             int color = stack.getItem()
                 .getColorFromItemStack(stack, pass);
             GL11.glColor4f((color >> 16 & 255) / 255f, (color >> 8 & 255) / 255f, (color & 255) / 255f, opacity);
@@ -294,7 +367,60 @@ public final class MiaoVisionRenderer implements AutoCloseable {
                 icon.getMaxV(),
                 Math.max(1, icon.getIconWidth()),
                 Math.max(1, icon.getIconHeight()),
-                1);
+                nativeThickness);
+        }
+        if (glint) drawSpriteGlint(mc, nativeThickness);
+    }
+
+    private static int nativePasses(ItemStack stack) {
+        return Math.min(
+            16,
+            Math.max(
+                1,
+                stack.getItem()
+                    .requiresMultipleRenderPasses()
+                        ? stack.getItem()
+                            .getRenderPasses(stack.getItemDamage())
+                        : 1));
+    }
+
+    private static boolean hasNativeSprite(ItemStack stack) {
+        try {
+            for (int pass = 0; pass < nativePasses(stack); pass++) if (stack.getItem()
+                .getIcon(stack, pass) != null) return true;
+        } catch (RuntimeException unsupportedIconAccess) {
+            // This preflight is used only when a native custom renderer is available. Some custom-only
+            // models have no usable icon API. Retain that renderer; its own render errors still propagate.
+            return false;
+        }
+        return false;
+    }
+
+    private static void drawSpriteGlint(Minecraft mc, float thickness) {
+        PreviewRenderScope.RenderState glint = new PreviewRenderScope.RenderState();
+        try {
+            glint.push();
+            GL11.glDepthFunc(GL11.GL_EQUAL); // Only pixels already occupied by the actual native sprite.
+            GL11.glDepthMask(false);
+            GL11.glDisable(GL11.GL_LIGHTING);
+            GL11.glEnable(GL11.GL_BLEND);
+            GL11.glBlendFunc(GL11.GL_SRC_COLOR, GL11.GL_ONE);
+            GL11.glColor4f(.38f, .22f, .62f, 1);
+            mc.getTextureManager()
+                .bindTexture(GLINT);
+            for (int layer = 0; layer < 2; layer++) {
+                GL11.glMatrixMode(GL11.GL_TEXTURE);
+                GL11.glLoadIdentity();
+                GL11.glScaled(.13, .13, .13);
+                double phase = (System.currentTimeMillis() % (layer == 0 ? 3000L : 4873L))
+                    / (double) (layer == 0 ? 3000L : 4873L);
+                GL11.glTranslated((layer == 0 ? 1 : -1) * phase * 8, 0, 0);
+                GL11.glRotated(layer == 0 ? -45 : 15, 0, 0, 1);
+                GL11.glMatrixMode(GL11.GL_MODELVIEW);
+                ItemRenderer.renderItemIn2D(Tessellator.instance, 1, 0, 0, 1, 16, 16, thickness);
+            }
+        } finally {
+            glint.restore();
         }
     }
 

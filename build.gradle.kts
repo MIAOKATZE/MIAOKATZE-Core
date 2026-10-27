@@ -65,6 +65,7 @@ tasks.register<JavaExec>("runCameraLeaseContracts") {
 tasks.named("check") { dependsOn("runCameraContracts", "runCameraLeaseContracts") }
 
 mapOf(
+    "runOrientedSceneContracts" to "com.miaokatze.miaokatzecore.api.miaovision.OrientedSceneContracts",
     "runGuidanceContracts" to "com.miaokatze.miaokatzecore.api.ui.guidance.GuidanceContracts",
     "runViewportCoordinateContracts" to "com.miaokatze.miaokatzecore.api.camera.ViewportCoordinateContracts",
     "runCamera014MathContracts" to "com.miaokatze.miaokatzecore.api.camera.Camera014MathContracts",

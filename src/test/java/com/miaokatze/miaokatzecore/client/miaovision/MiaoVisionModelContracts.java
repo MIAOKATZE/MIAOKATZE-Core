@@ -7,6 +7,13 @@ public final class MiaoVisionModelContracts {
 
     public static int run() {
         int checks = 0;
+        if (SceneItemLightRig.AMBIENT < .65f || SceneItemLightRig.AMBIENT >= 1
+            || SceneItemLightRig.KEY <= 0
+            || SceneItemLightRig.FILL <= 0
+            || SceneItemLightRig.AMBIENT + SceneItemLightRig.KEY + SceneItemLightRig.FILL > 1.15f)
+            throw new AssertionError(
+                "diorama keeps readable unlit faces and bounded directional shading, not fullbright");
+        checks++;
         equal(SceneSpriteTransform.planar(0), -.5, "sprite left/bottom");
         equal(SceneSpriteTransform.planar(1), .5, "sprite right/top");
         equal(SceneSpriteTransform.depth(-SceneSpriteTransform.NATIVE_DEPTH), -.5, "sprite back face");

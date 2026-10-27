@@ -45,6 +45,13 @@ public final class MiaoVisionRenderer implements AutoCloseable {
     private static final ResourceLocation GLINT = new ResourceLocation(
         "minecraft",
         "textures/misc/enchanted_item_glint.png");
+    // glLight/glMaterial read without advancing FloatBuffer.position(). Allocate once, never per body/frame.
+    private static final FloatBuffer DIORAMA_AMBIENT = lightVector(SceneItemLightRig.AMBIENT, 1);
+    private static final FloatBuffer DIORAMA_KEY = lightVector(SceneItemLightRig.KEY, 1);
+    private static final FloatBuffer DIORAMA_FILL = lightVector(SceneItemLightRig.FILL, 1);
+    private static final FloatBuffer DIORAMA_KEY_DIRECTION = lightBuffer(-.35f, 1, .65f, 0);
+    private static final FloatBuffer DIORAMA_FILL_DIRECTION = lightBuffer(.65f, .55f, -.75f, 0);
+    private static final FloatBuffer NO_EMISSION_OR_SPECULAR = lightVector(0, 1);
     private boolean closed;
     private final SceneOpacityCompositor compositor = new SceneOpacityCompositor();
 
@@ -175,13 +182,18 @@ public final class MiaoVisionRenderer implements AutoCloseable {
         try {
             modelState.push();
             GL11.glMatrixMode(GL11.GL_MODELVIEW);
+            boolean dioramaLighting = resolver.dioramaItemLighting();
+            // GL light positions are transformed at assignment. Do this before the body's quaternion/scale:
+            // thin item Z scaling and settled face-down poses must not rotate/stretch the light rig itself.
+            if (dioramaLighting) enableDioramaItemLighting();
             GL11.glTranslated(body.x, body.y, body.z);
             GL11.glMultMatrix(rotation(body));
             GL11.glScaled(body.halfX * 2, body.halfY * 2, body.halfZ * 2);
             GL11.glColor4f(1, 1, 1, 1);
             GL11.glDepthMask(true);
             // Native renderers own their material blend/color. Scene opacity is applied only after capture.
-            if (!resolver.render(body, stack, 1)) drawNative(stack, 1, resolver.extrudeInventorySprites());
+            if (!resolver.render(body, stack, 1))
+                drawNative(stack, 1, resolver.extrudeInventorySprites(), dioramaLighting);
         } finally {
             ForgeHooksClient.setRenderPass(previousPass);
             modelState.restore();
@@ -217,14 +229,45 @@ public final class MiaoVisionRenderer implements AutoCloseable {
         return matrix;
     }
 
-    private static void drawNative(ItemStack stack, float opacity, boolean extrudeSprites) {
+    private static void enableDioramaItemLighting() {
+        // Minecraft's helper supplies color-material, zero light ambient/specular and flat pixel shading.
+        // Override its low ambient and local-facing directions without changing the scoped lightmap policy.
+        RenderHelper.enableStandardItemLighting();
+        GL11.glEnable(GL11.GL_NORMALIZE); // Body scales are non-uniform; RESCALE_NORMAL alone is insufficient.
+        GL11.glLightModeli(GL11.GL_LIGHT_MODEL_TWO_SIDE, GL11.GL_TRUE);
+        GL11.glLightModel(GL11.GL_LIGHT_MODEL_AMBIENT, DIORAMA_AMBIENT);
+        GL11.glLight(GL11.GL_LIGHT0, GL11.GL_POSITION, DIORAMA_KEY_DIRECTION);
+        GL11.glLight(GL11.GL_LIGHT1, GL11.GL_POSITION, DIORAMA_FILL_DIRECTION);
+        GL11.glLight(GL11.GL_LIGHT0, GL11.GL_DIFFUSE, DIORAMA_KEY);
+        GL11.glLight(GL11.GL_LIGHT1, GL11.GL_DIFFUSE, DIORAMA_FILL);
+        // Neither inherited material emission/specular nor additional GUI/world lights belong to this rig.
+        GL11.glMaterial(GL11.GL_FRONT_AND_BACK, GL11.GL_EMISSION, NO_EMISSION_OR_SPECULAR);
+        GL11.glMaterial(GL11.GL_FRONT_AND_BACK, GL11.GL_SPECULAR, NO_EMISSION_OR_SPECULAR);
+        for (int light = GL11.GL_LIGHT2; light <= GL11.GL_LIGHT7; light++) GL11.glDisable(light);
+    }
+
+    private static FloatBuffer lightVector(float value, float alpha) {
+        return lightBuffer(value, value, value, alpha);
+    }
+
+    private static FloatBuffer lightBuffer(float x, float y, float z, float w) {
+        FloatBuffer buffer = BufferUtils.createFloatBuffer(4);
+        buffer.put(x)
+            .put(y)
+            .put(z)
+            .put(w)
+            .flip();
+        return buffer.asReadOnlyBuffer();
+    }
+
+    private static void drawNative(ItemStack stack, float opacity, boolean extrudeSprites, boolean dioramaLighting) {
         Minecraft mc = Minecraft.getMinecraft();
         Block block = stack.getItem() instanceof ItemBlock ? Block.getBlockFromItem(stack.getItem()) : Blocks.air;
         double[] blockBounds = block == Blocks.air ? null
             : new double[] { block.getBlockBoundsMinX(), block.getBlockBoundsMinY(), block.getBlockBoundsMinZ(),
                 block.getBlockBoundsMaxX(), block.getBlockBoundsMaxY(), block.getBlockBoundsMaxZ() };
         try {
-            drawNativeModel(mc, stack, opacity, block, extrudeSprites);
+            drawNativeModel(mc, stack, opacity, block, extrudeSprites, dioramaLighting);
         } finally {
             if (blockBounds != null) {
                 block.setBlockBounds(
@@ -240,7 +283,7 @@ public final class MiaoVisionRenderer implements AutoCloseable {
     }
 
     private static void drawNativeModel(Minecraft mc, ItemStack stack, float opacity, Block block,
-        boolean extrudeSprites) {
+        boolean extrudeSprites, boolean dioramaLighting) {
         IItemRenderer custom = MinecraftForgeClient.getItemRenderer(stack, IItemRenderer.ItemRenderType.INVENTORY);
         if (custom != null && (!extrudeSprites || block != Blocks.air
             || custom.shouldUseRenderHelper(
@@ -296,7 +339,7 @@ public final class MiaoVisionRenderer implements AutoCloseable {
             GL11.GL_ONE_MINUS_SRC_ALPHA);
         // Vanilla's native 1/16-pixel extrusion, normalized to the physical body's local thickness.
         // The final depth is exactly 2*body.halfZ; consumers choose a thin proxy, not a unit collision cube.
-        RenderHelper.enableStandardItemLighting();
+        if (!dioramaLighting) RenderHelper.enableStandardItemLighting();
         GL11.glEnable(GL11.GL_NORMALIZE);
         final float nativeThickness = SceneSpriteTransform.NATIVE_DEPTH;
         GL11.glScaled(1, 1, SceneSpriteTransform.SCALE_Z);

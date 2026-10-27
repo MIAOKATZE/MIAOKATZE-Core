@@ -1,0 +1,33 @@
+{
+  "version": "0.1.26",
+  "sourceCommit": "f3e653dccba0d8e125fdaa576cfea63e826ef6b0",
+  "sourceTag": "v0.1.26",
+  "sourceClean": true,
+  "build": "build --no-configuration-cache PASS",
+  "recipeOrderFix": "after:etfuturum; retain required-before:gregtech",
+  "realForgeOrderValidation": "2 RC2 rosters, 26 permutations each, acyclic EFR < Core < GT",
+  "apiCompatibility": "Core24 987 old public/protected members retained; WorkGovernor 9 old classes identical",
+  "instanceTesting": "NOT_RUN_BY_USER_INSTRUCTION",
+  "artifacts": [
+    {
+      "file": "miaokatzecore-0.1.26-dev.jar",
+      "bytes": 340244,
+      "sha256": "bf65d42ed74b434c275f8f15fed9405188547b8f4ac050ad5b98c47f1d74d94d"
+    },
+    {
+      "file": "miaokatzecore-0.1.26-sources.jar",
+      "bytes": 177509,
+      "sha256": "dee5d7d4446c05f5c8088ba5f49f2afdbda27927fc33294bbeadb43a5d52a873"
+    },
+    {
+      "file": "miaokatzecore-0.1.26.jar",
+      "bytes": 345387,
+      "sha256": "76da2b34882267d1a89b746310305ba0d421a4f2cac42e8863182cf977ceeb4a"
+    },
+    {
+      "file": "miaokatzecore-0.1.26.pom",
+      "bytes": 537,
+      "sha256": "f58931b2403818cf3ef6b213c4e4fc73701ae588b1f7fabb31dfe65f84ce6b0a"
+    }
+  ]
+}

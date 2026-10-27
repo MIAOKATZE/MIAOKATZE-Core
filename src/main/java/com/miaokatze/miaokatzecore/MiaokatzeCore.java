@@ -1,10 +1,20 @@
 package com.miaokatze.miaokatzecore;
 
+import com.miaokatze.miaokatzecore.api.recipe.RecipeRegistrationLifecycle;
+
 import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.Mod;
+import cpw.mods.fml.common.event.FMLLoadCompleteEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 
-/** Common entry point deliberately does not reference client or optional adapter classes. */
+/**
+ * Common entry point deliberately does not reference client or optional adapter classes.
+ * The existing after:etfuturum / required-before:gregtech ordering addresses GT5U 5.09.54.205's preInit
+ * read of EFR's blast furnace on the GTNH 2.9 RC baseline; it does not establish a fault's root cause.
+ * This is independent of recipe scheduling. On GTNH/GT5U/EFR upgrades, review the call site and dependency
+ * graph again. An equivalent upstream fix only makes this constraint redundant and reviewable for removal;
+ * do not infer it from version numbers or silently ignore a dependency conflict.
+ */
 @Mod(
     modid = MiaokatzeCore.MODID,
     name = "MIAOKATZE Core",
@@ -14,6 +24,11 @@ import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 public final class MiaokatzeCore {
 
     public static final String MODID = "miaokatzecore";
+
+    @Mod.EventHandler
+    public void loadComplete(FMLLoadCompleteEvent event) {
+        RecipeRegistrationLifecycle.install(event.getSide());
+    }
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {

@@ -1,0 +1,30 @@
+{
+    "version":  "0.1.24",
+    "sourceCommit":  "0fb52c7fc8f10c351de07ceac68f30b9768cc535",
+    "sourceTag":  "v0.1.24",
+    "buildCommand":  ".\\gradlew.bat build --no-configuration-cache",
+    "sourceStatus":  "clean",
+    "runtimeSmoke":  "DEDICATED_START_WORLD_SAVE_EXIT_PASS; CLIENT_START_WORLD_TICK_SAVE_PASS; BLOODMAGIC_UNLOAD_ERROR_RECORDED",
+    "artifacts":  [
+                      {
+                          "file":  "miaokatzecore-0.1.24-dev.jar",
+                          "bytes":  333843,
+                          "sha256":  "d42eeb9891941d7087ceb63d582d562578262a1bf6a4922d943f1ab0975be793"
+                      },
+                      {
+                          "file":  "miaokatzecore-0.1.24-sources.jar",
+                          "bytes":  172666,
+                          "sha256":  "dfd4541119c4c94fea2e1cc92f8ca42f5fc91992adf09fdd699cda1fdd701631"
+                      },
+                      {
+                          "file":  "miaokatzecore-0.1.24.jar",
+                          "bytes":  338889,
+                          "sha256":  "c03cd0597de312fe66bcc618734db9609dfb4ea375ee8b14097fd3a68a904173"
+                      },
+                      {
+                          "file":  "miaokatzecore-0.1.24.pom",
+                          "bytes":  537,
+                          "sha256":  "a42d25c6a6a08dd037325e9a841a0805b29bd730c4f1aee6418c957c6368845f"
+                      }
+                  ]
+}

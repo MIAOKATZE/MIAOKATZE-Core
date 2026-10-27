@@ -10,7 +10,7 @@ import cpw.mods.fml.common.event.FMLPreInitializationEvent;
     name = "MIAOKATZE Core",
     version = Tags.RELEASE_VERSION,
     acceptedMinecraftVersions = "[1.7.10]",
-    dependencies = "required-before:gregtech;required-after:modularui2;required-after:gtnhlib")
+    dependencies = "required-before:gregtech;required-after:modularui2;required-after:gtnhlib;after:etfuturum")
 public final class MiaokatzeCore {
 
     public static final String MODID = "miaokatzecore";

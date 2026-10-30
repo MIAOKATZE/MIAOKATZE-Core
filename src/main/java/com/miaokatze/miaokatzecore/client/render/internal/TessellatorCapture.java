@@ -15,6 +15,12 @@ public final class TessellatorCapture {
 
     private TessellatorCapture() {}
 
+    public static boolean active(Tessellator tessellator) {
+        for (Session session = ACTIVE.get(); session != null; session = session.parent)
+            if (session.tessellator == tessellator) return true;
+        return false;
+    }
+
     public static Session begin(Tessellator tessellator, int startIndex) {
         Session session = new Session(tessellator, startIndex, ACTIVE.get());
         ACTIVE.set(session);

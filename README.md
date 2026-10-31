@@ -17,7 +17,7 @@ Minecraft 1.7.10 / Forge 10.13.4.1614 / Java 8 的模块化基础库。当前主
 
 以上为保留不变的 RC2 发布物，不是正式版下载入口。面向 GTNH 2.9.0 正式版的版本范围为 **0.2.0 ~ +**；当前 0.2.0 仍为待发布草稿，完成 Maven 发布后再使用下列精确集成坐标。
 
-客户端和服务端安装同一版 Core。同一 JAR 包含普通 Forge Mod 和极小的 FML early loader，复用整合包 UniMixins 启动机制，不携带另一套 Mixin bootstrap。专服不选择客户端 Mixin。通用数学与所有权契约不依赖 Minecraft/OpenGL；client 包只在客户端调用。当前适配面向 **GTNH 2.9.0 正式版**，精确开发依赖为 GT5U 5.09.54.265、MUI2 2.3.94、GTNHLib 0.11.54、NEI 2.8.171 与 Angelica 2.2.42；使用相应适配功能的 Mod 负责提供该依赖。
+客户端和服务端安装同一版 Core。同一 JAR 包含普通 Forge Mod 和极小的 FML early loader，复用整合包 UniMixins 启动机制，不携带另一套 Mixin bootstrap。专服不选择客户端 Mixin。通用数学与所有权契约不依赖 Minecraft/OpenGL；client 包只在客户端调用。当前适配面向 **GTNH 2.9.0 正式版**，精确开发依赖为 GT5U 5.09.54.265、MUI2 2.3.94、GTNHLib 0.11.54、NEI 2.8.171 与 Angelica 2.2.43；使用相应适配功能的 Mod 负责提供该依赖。
 
 Gradle 仓库：https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/
 

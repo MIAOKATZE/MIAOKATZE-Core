@@ -1,6 +1,6 @@
 def coreMuiVersion = providers.gradleProperty("coreMuiVersion").getOrElse("2.3.94-1.7.10")
 def coreLibVersion = providers.gradleProperty("coreLibVersion").getOrElse("0.11.54")
-def coreAngelicaVersion = providers.gradleProperty("coreAngelicaVersion").getOrElse("2.2.42")
+def coreAngelicaVersion = providers.gradleProperty("coreAngelicaVersion").getOrElse("2.2.43")
 
 dependencies {
     // Minimal common recipe-cache bridge for GTNH 2.9.0. Never bundled.

@@ -73,14 +73,19 @@ public final class ResourceOwner implements AutoCloseable {
         return failedReleases;
     }
 
-    /** Host must invoke on the owning resource context; a changed context is not permission to delete old GL IDs. */
+    /**
+     * Retire invalid bindings in reverse registration order. Invoke on their owning resource context; a changed context
+     * is not permission to delete old GL IDs.
+     */
     public void retireInvalidated() throws Exception {
         check();
         if (retiring) return;
         retiring = true;
         Throwable failure = null;
         try {
-            for (Handle<?> handle : new ArrayList<>(handles)) {
+            List<Handle<?>> pending = new ArrayList<>(handles);
+            for (int i = pending.size() - 1; i >= 0; i--) {
+                Handle<?> handle = pending.get(i);
                 if (handle.valid()) continue;
                 try {
                     handle.close();
@@ -161,13 +166,16 @@ public final class ResourceOwner implements AutoCloseable {
         }
     }
 
+    /** Fence the owner, then release bindings in reverse registration order. */
     @Override
     public void close() throws Exception {
         check();
         if (closed) return;
         closed = true;
         Throwable failure = null;
-        for (Handle<?> handle : new ArrayList<>(handles)) {
+        List<Handle<?>> pending = new ArrayList<>(handles);
+        for (int i = pending.size() - 1; i >= 0; i--) {
+            Handle<?> handle = pending.get(i);
             try {
                 handle.close();
             } catch (Exception | Error thrown) {

@@ -124,11 +124,19 @@ owned 对象，不影响新 generation，也不关闭 borrowed。资源回调必
 GL 整数 ID 拿到新 context 删除。`contextChanged()` 要在旧 context 销毁前显式调用；如果已经丢失 context，由宿主
 报告退休失败并安排其真实 context 退役协议。
 
+`retireInvalidated()` 与最终 `close()` 均按登记逆序（LIFO）处理其快照：先登记依赖 A，再登记使用 A 的 B，释放顺序
+为 B、A。退休只处理已失效 binding，跳过仍有效的新 generation；borrowed 只摘下 binding，不调用资源 close。
+最终关闭先 fence owner，每个句柄先 detach 再执行 owned close；回调重入和重复 close 不重复释放。
+
 关闭先摘下 Java binding，再调用精确 owned close，成功后才归还 reservation。单项抛异常仍尝试其余句柄；相同
 Exception 对象不 self-suppress，原失败不会被这个操作覆盖。失败的 close 不会自动重试，reservation 保持 active，
 `failedReleases()` 累计失败数；`activeHandles()==0` 不能解释为设备全部释放。调用者要保留必要的原 resource/lease
 以处理明确失败，不能无条件 `ledger.close()` 后宣称设备零泄漏。清理回调期间禁止登记新资源，防止旧 close 误释放
 重入新绑定的 reservation。
+
+CORE-03-01 修复将既有 FIFO 观察顺序改为上述 LIFO，公开签名和其他 ownership/计费语义不变。若多项抛不同异常，
+逆序中首先遇到的失败为主异常，其余为 suppressed。02/03/05/06 及实际宿主须使用修复后的源码/SDK hash 重新确认，
+尤其是依赖释放顺序的 adapter；旧 SDK 验收不能证明这一新顺序，01c 不因此自动关闭。
 
 ## 最窄显式宿主
 
@@ -199,12 +207,17 @@ SceneSnapshot/SceneBounds：100 个合法 body 接受、101 个拒绝，schema �
 不释放新 handle、失败保账和继续清理、同异常保真、重入拒绝/延迟关闭、编译预算拒绝保留旧 plan、窗口边界/0/缺失/loss、
 quality 迟滞与锁档、100/101 原生产边界。
 
-定向开发证据保留在 `build/runtime-evidence/`：`commands.txt`、`jdk.txt`、`compile.txt`、`run.txt`、`sources.txt` 和
+2026-10-31 首次冻结的定向开发证据保留在 `build/runtime-evidence/`：`commands.txt`、`jdk.txt`、`compile.txt`、`run.txt`、`sources.txt` 和
 `sources-sha256.json`（4209 assertions 的较早版本）。最终版随后补了 device binding 拒绝 CPU ticket 和资源退休回调
-重入 close 三项断言，由总集成 runner 编译/运行为 `RuntimeContracts PASS (4212 assertions)`；最终证据以
+重入 close 三项断言，由总集成 runner 编译/运行为 `RuntimeContracts PASS (4212 assertions)`；该次冻结证据以
 `build/animation-sdk/RuntimeContracts.txt`、`commands.json`、`manifest.json` 为准，九个 runtime/host/测试文件 hash
 已逐一核对与 manifest 一致。实际使用本机 JDK 8 `javac 1.8.0_482`，不使用 MC stub、不启动实例、不跑 Gradle。
 独立 SDK/消费者编译也由该总集成 runner 出具；本页不把推荐稿历史 PASS 或文本 import 扫描当成本轮真实类链接/GL 证据。
+
+CORE-03-01 LIFO 修复另存 `build/lifo-repair/before/` 与 `after/`，均记录实际命令、JDK 版本、源码 hash 和退出码。
+新增依赖测试在旧 FIFO 实现上失败；修复后的 JDK 8 定向编译及 `RuntimeContracts` 为 **4236 assertions PASS**，
+覆盖两种逆序清理、borrowed、跨 owner/重复登记拒绝、新 generation 保留、失败继续与保账、重入和重复 close。
+旧 `build/animation-sdk` 未覆盖，其 hash 不再代表这次修复；新的 SDK 综合验证及消费者按新 hash 复验另行登记。
 
 第七阶段仍需真实 FML client/dedicated-server 类链接、受审 adapter 白名单、world/camera 抢占回调、GL/context/atlas
 reload 与异常资源计数、音频 seek/close 主动回收、输入 capture 注销，以及等工作量性能观测。此处没有性能改善承诺。

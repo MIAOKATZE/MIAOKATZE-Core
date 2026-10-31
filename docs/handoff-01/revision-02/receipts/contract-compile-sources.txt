@@ -1,0 +1,2 @@
+"E:/CodeGT/.worktrees/core-contracts-runtime-20261031/src/test/java/com/miaokatze/miaokatzecore/api/animation/AnimationContracts.java"
+"E:/CodeGT/.worktrees/core-contracts-runtime-20261031/src/test/java/com/miaokatze/miaokatzecore/api/animation/RuntimeContracts.java"

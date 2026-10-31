@@ -35,6 +35,8 @@ public final class RuntimeContracts {
         lifecycle();
         ledger();
         resourceOwnership();
+        resourceReleaseOrder();
+        retirementFailureOrder();
         cleanupFailures();
         admission();
         metricWindows();
@@ -153,16 +155,23 @@ public final class RuntimeContracts {
         ResourceLedger ledger = smallLedger();
         Exception same = new Exception("same cleanup failure");
         Closing a = new Closing(), b = new Closing(), c = new Closing();
+        List<String> order = new ArrayList<>();
+        a.onClose = () -> order.add("a");
+        b.onClose = () -> order.add("b");
         a.failure = same;
         b.failure = same;
         ResourceLedger.Lease failed = ledger.reserve(0, 10, 1, 0, 0, 0);
         owner.own(fence.ticket(RuntimeGenerations.Purpose.GPU_UPLOAD), a, failed);
         owner.own(fence.ticket(RuntimeGenerations.Purpose.GPU_UPLOAD), b, ledger.reserve(0, 10, 1, 0, 0, 0));
-        c.onClose = owner::close;
+        c.onClose = () -> {
+            order.add("c");
+            owner.close();
+        };
         owner.own(fence.ticket(RuntimeGenerations.Purpose.GPU_UPLOAD), c, ledger.reserve(0, 10, 1, 0, 0, 0));
         Throwable thrown = expect(Exception.class, owner::close);
         check(thrown == same && same.getSuppressed().length == 0, "same exception not self-suppressed");
         check(a.closed == 1 && b.closed == 1 && c.closed == 1, "failure still cleans remaining resources");
+        check(order.equals(Arrays.asList("c", "b", "a")), "close keeps LIFO through reentry and middle failure");
         check(owner.activeHandles() == 0 && owner.failedReleases() == 2, "failed retirement visible");
         check(failed.active() && ledger.used(ResourceLedger.Dimension.GPU_BYTES) == 20,
             "failed device deletion does not fake zero accounting");
@@ -178,6 +187,86 @@ public final class RuntimeContracts {
         ResourceOwner.Handle<Closing> handle = reentrant.own(ticket, resource, lease);
         handle.close();
         check(!lease.active() && reentrant.activeHandles() == 0, "cleanup cannot rebind soon-to-be-released lease");
+    }
+
+    private static void resourceReleaseOrder() throws Exception {
+        for (boolean retire : new boolean[] { false, true }) {
+            RuntimeGenerations fence = new RuntimeGenerations();
+            ResourceOwner owner = new ResourceOwner(fence);
+            ResourceLedger ledger = smallLedger();
+            RuntimeGenerations.Ticket ticket = fence.ticket(RuntimeGenerations.Purpose.GPU_UPLOAD);
+            Closing a = new Closing(), b = new Closing(), borrowed = new Closing(), next = new Closing();
+            List<String> order = new ArrayList<>();
+            a.onClose = () -> order.add("a");
+            b.onClose = () -> {
+                check(a.closed == 0, "dependent b releases while its earlier a dependency remains alive");
+                check(owner.activeHandles() == (retire ? 3 : 2), "current binding detaches before release callback");
+                order.add("b");
+                owner.retireInvalidated();
+            };
+            ResourceLedger.Lease aLease = ledger.reserve(0, 10, 1, 0, 0, 0);
+            ResourceOwner.Handle<Closing> first = owner.own(ticket, a, aLease);
+            owner.borrow(ticket, borrowed);
+            owner.own(ticket, b, ledger.reserve(0, 10, 1, 0, 0, 0));
+            expect(IllegalArgumentException.class, () -> owner.borrow(ticket, a));
+            expect(IllegalArgumentException.class, () -> owner.own(ticket, new Closing(), aLease));
+            RuntimeGenerations other = new RuntimeGenerations();
+            expect(IllegalArgumentException.class,
+                () -> owner.borrow(other.ticket(RuntimeGenerations.Purpose.GPU_UPLOAD), new Object()));
+            if (retire) {
+                fence.reloadedAssets();
+                ResourceOwner.Handle<Closing> current = owner.own(fence.ticket(RuntimeGenerations.Purpose.GPU_UPLOAD),
+                    next, ledger.reserve(0, 10, 1, 0, 0, 0));
+                owner.retireInvalidated();
+                check(current.valid() && next.closed == 0 && ledger.used(ResourceLedger.Dimension.GPU_BYTES) == 10,
+                    "LIFO retirement skips current generation and preserves its reservation");
+                first.close();
+                check(current.valid(), "repeated stale close cannot touch current generation");
+            } else {
+                owner.close();
+            }
+            check(order.equals(Arrays.asList("b", "a")), "registered a then b releases b then a");
+            check(a.closed == 1 && b.closed == 1 && borrowed.closed == 0, "owned close once; borrowed never close");
+            owner.close();
+            owner.close();
+            check(a.closed == 1 && b.closed == 1 && next.closed == (retire ? 1 : 0)
+                && ledger.activeLeases() == 0, "repeat close preserves LIFO cleanup and accounting");
+        }
+    }
+
+    private static void retirementFailureOrder() throws Exception {
+        RuntimeGenerations fence = new RuntimeGenerations();
+        ResourceOwner owner = new ResourceOwner(fence);
+        ResourceLedger ledger = smallLedger();
+        RuntimeGenerations.Ticket ticket = fence.ticket(RuntimeGenerations.Purpose.GPU_UPLOAD);
+        List<String> order = new ArrayList<>();
+        Exception same = new Exception("same retirement failure");
+        Closing a = new Closing(), b = new Closing(), c = new Closing(), d = new Closing();
+        a.onClose = () -> order.add("a");
+        b.onClose = () -> order.add("b");
+        c.onClose = () -> order.add("c");
+        d.onClose = () -> {
+            order.add("d");
+            owner.retireInvalidated();
+        };
+        b.failure = same;
+        c.failure = same;
+        owner.own(ticket, a, ledger.reserve(0, 10, 1, 0, 0, 0));
+        ResourceLedger.Lease failedB = ledger.reserve(0, 10, 1, 0, 0, 0);
+        ResourceLedger.Lease failedC = ledger.reserve(0, 10, 1, 0, 0, 0);
+        owner.own(ticket, b, failedB);
+        owner.own(ticket, c, failedC);
+        owner.own(ticket, d, ledger.reserve(0, 10, 1, 0, 0, 0));
+        fence.reloadedAssets();
+        check(expect(Exception.class, owner::retireInvalidated) == same && same.getSuppressed().length == 0,
+            "retirement keeps same exception without self-suppression");
+        check(order.equals(Arrays.asList("d", "c", "b", "a")), "middle failures do not interrupt LIFO retirement");
+        check(owner.activeHandles() == 0 && owner.failedReleases() == 2 && failedB.active() && failedC.active()
+            && ledger.used(ResourceLedger.Dimension.GPU_BYTES) == 20, "failed LIFO releases remain billed");
+        owner.retireInvalidated();
+        owner.close();
+        owner.close();
+        check(a.closed == 1 && b.closed == 1 && c.closed == 1 && d.closed == 1, "failed retirement never retries callbacks");
     }
 
     private static void admission() throws Exception {

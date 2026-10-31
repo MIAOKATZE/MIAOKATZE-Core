@@ -1,0 +1,9 @@
+Exception in thread "main" java.lang.AssertionError: dependent b releases while its earlier a dependency remains alive
+	at com.miaokatze.miaokatzecore.api.animation.RuntimeContracts.check(RuntimeContracts.java:561)
+	at com.miaokatze.miaokatzecore.api.animation.RuntimeContracts.lambda$resourceReleaseOrder$12(RuntimeContracts.java:202)
+	at com.miaokatze.miaokatzecore.api.animation.RuntimeContracts$Closing.close(RuntimeContracts.java:502)
+	at com.miaokatze.miaokatzecore.client.animation.ResourceOwner$Handle.close(ResourceOwner.java:151)
+	at com.miaokatze.miaokatzecore.client.animation.ResourceOwner.close(ResourceOwner.java:172)
+	at com.miaokatze.miaokatzecore.api.animation.RuntimeContracts.resourceReleaseOrder(RuntimeContracts.java:226)
+	at com.miaokatze.miaokatzecore.api.animation.RuntimeContracts.run(RuntimeContracts.java:38)
+	at com.miaokatze.miaokatzecore.api.animation.RuntimeContracts.main(RuntimeContracts.java:29)

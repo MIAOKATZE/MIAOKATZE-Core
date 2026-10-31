@@ -1,0 +1,84 @@
+{
+  "cwd": "E:\\CodeGT\\.worktrees\\core-contracts-runtime-20261031",
+  "source_hashes": {
+    "src/main/java/com/miaokatze/miaokatzecore/api/animation/AnimationInstance.java": "139a2202b4db481aeef3a49a87dc1f3eb25b0916af39aaf1b33161acb78064b4",
+    "src/main/java/com/miaokatze/miaokatzecore/api/animation/AnimationV1.java": "25fd77ca0ddb0466357d437cf374bafe1594cb57bb004474750e0aa63998c0a2",
+    "src/main/java/com/miaokatze/miaokatzecore/api/animation/CompiledPlan.java": "02f4a75cae4f782f6f837adca5adfe32c6c52da3582f4bd07179a7e834b74fae",
+    "src/main/java/com/miaokatze/miaokatzecore/api/animation/EpochKey.java": "f8c936fb38de70ce6396bbf800902cc71546f727837c00d761002b3cb1e5c732",
+    "src/main/java/com/miaokatze/miaokatzecore/api/animation/EvaluationInput.java": "ef55efeee08937f58b25299064221de6d11d0092cbcf0fa33618b2302e5909be",
+    "src/main/java/com/miaokatze/miaokatzecore/api/animation/EventBudget.java": "09004cd5ee7dcefb1c59b6d15b64513f4cac8cc528f543ef47dbe5a664d9925b",
+    "src/main/java/com/miaokatze/miaokatzecore/api/animation/EventCursor.java": "7ffca85bf487127d7a6930ddadc262df01d189c657467e6e1ef226aa95b144c6",
+    "src/main/java/com/miaokatze/miaokatzecore/api/animation/LegacyScalarMigrator.java": "b927ad31e74ee5067f4bde1b8b0cf99d495622e46436b1be129f464daf43a34c",
+    "src/main/java/com/miaokatze/miaokatzecore/api/animation/ResourceId.java": "cac1a4585d9d188581fc61c9423f8b3637b35afab46801ddde881b7d57c6f7fc",
+    "src/main/java/com/miaokatze/miaokatzecore/api/animation/runtime/FeatureAdmission.java": "ccc032c119fc5bd7b6dc482f2f274447912e342583b5707d3e89bcf0fa2056ab",
+    "src/main/java/com/miaokatze/miaokatzecore/api/animation/runtime/MetricWindow.java": "fd4f76948aa1fb8e1e006cebe6e2d4e8aca493ae945ab469b76f2c196a3e54c9",
+    "src/main/java/com/miaokatze/miaokatzecore/api/animation/runtime/QualityGovernor.java": "ba8a806eb0518aee2c0e7c933c690993953be10651d1f3d68273fe73d032f39d",
+    "src/main/java/com/miaokatze/miaokatzecore/api/animation/runtime/ResourceLedger.java": "2c08169854391486562074cd05054e7e93dc1a544b5e874da1cc970e422b89d6",
+    "src/main/java/com/miaokatze/miaokatzecore/api/animation/runtime/RuntimeGenerations.java": "1abf636f227046356152bc28b54f79fcf436657dc8df7138adbfa97506d22cd5",
+    "src/main/java/com/miaokatze/miaokatzecore/api/animation/runtime/SessionLifecycle.java": "b33df5646cde4c0b9e04e336155690fc73bdae0d8f00dbf53fec0f66ea289d66",
+    "src/main/java/com/miaokatze/miaokatzecore/api/animation/SampledFrame.java": "a5dbb1450b36065441948682241c8c7c7a72691d38753303b0dfcc51bc3fc1f8",
+    "src/main/java/com/miaokatze/miaokatzecore/api/animation/Sampler.java": "bd6c15f57ed6321beb0116377cd31da3e5f35be352d57ccb6708a0c34d603c15",
+    "src/main/java/com/miaokatze/miaokatzecore/api/animation/StrictJsonCodec.java": "207a9e3a9981e3b171fb4b354fb8806a21e14d780f19aa2364ad0b365de40783",
+    "src/main/java/com/miaokatze/miaokatzecore/api/animation/TimelineTimebase.java": "ebcf19725495553ba0be7f6ee0d47ce652f4fe78fb950b54222fc24602f58dea",
+    "src/main/java/com/miaokatze/miaokatzecore/api/miaovision/SceneBody.java": "6d3850af9074bcc0fefa87ac3ec8d1621c86fd7e17f49dcf5c42f5a2637a8521",
+    "src/main/java/com/miaokatze/miaokatzecore/api/miaovision/SceneBounds.java": "176998a8078a43d4e651a9deb9d74be21101b4b2ad79c31fa720b99d031134a2",
+    "src/main/java/com/miaokatze/miaokatzecore/api/miaovision/ScenePresentation.java": "88f570e59d8689aebe93dc4072dc4896747635f23900353fcd63d4cecf06175b",
+    "src/main/java/com/miaokatze/miaokatzecore/api/miaovision/SceneSimulation.java": "d1c64d6f836d56e18a621be521cc237eeb4f5b9413984c1d82973d94dab1780f",
+    "src/main/java/com/miaokatze/miaokatzecore/api/miaovision/SceneSnapshot.java": "81124606f7e080ed5b553e85cb64662ae7689dcf50dcb527298d8088660fb707",
+    "src/main/java/com/miaokatze/miaokatzecore/client/animation/AnimationSession.java": "a10d50817556d81268b1c471ac68ed7cbdb624426490394ff6a39c34e748c224",
+    "src/main/java/com/miaokatze/miaokatzecore/client/animation/ResourceOwner.java": "6f0936dc3999f2795ebc0cd0c52d47f5fffaf556defa6fc09813424c1246ed28",
+    "src/test/java/com/miaokatze/miaokatzecore/api/animation/RuntimeContracts.java": "494f221210b2d93510a61facb300e26353a315fcd3c436a1c1fe8bb67ecbe85e"
+  },
+  "commands": [
+    {
+      "name": "java-version",
+      "command": [
+        "C:\\Users\\60158\\.gradle\\jdks\\azul_systems__inc_-8-amd64-windows.2\\bin\\java.exe",
+        "-version"
+      ],
+      "exit_code": 0,
+      "log_sha256": "12fe668dd0c6d7f1273741cd2b8ef77d3fce22651aff986a83c6b90983d6e5b0"
+    },
+    {
+      "name": "javac-version",
+      "command": [
+        "C:\\Users\\60158\\.gradle\\jdks\\azul_systems__inc_-8-amd64-windows.2\\bin\\javac.exe",
+        "-version"
+      ],
+      "exit_code": 0,
+      "log_sha256": "6a353794574ee901e3b10a16a37e2a342bdc095a1ee814cf5b9ffd172c8ec473"
+    },
+    {
+      "name": "compile",
+      "command": [
+        "C:\\Users\\60158\\.gradle\\jdks\\azul_systems__inc_-8-amd64-windows.2\\bin\\javac.exe",
+        "-J-Xmx512m",
+        "-encoding",
+        "UTF-8",
+        "-source",
+        "8",
+        "-target",
+        "8",
+        "-d",
+        "E:\\CodeGT\\.worktrees\\core-contracts-runtime-20261031\\build\\lifo-repair\\before\\classes",
+        "@E:\\CodeGT\\.worktrees\\core-contracts-runtime-20261031\\build\\lifo-repair\\before\\sources.txt"
+      ],
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "RuntimeContracts",
+      "command": [
+        "C:\\Users\\60158\\.gradle\\jdks\\azul_systems__inc_-8-amd64-windows.2\\bin\\java.exe",
+        "-Xmx256m",
+        "-cp",
+        "E:\\CodeGT\\.worktrees\\core-contracts-runtime-20261031\\build\\lifo-repair\\before\\classes",
+        "com.miaokatze.miaokatzecore.api.animation.RuntimeContracts"
+      ],
+      "exit_code": 1,
+      "log_sha256": "a9ef73c7659820dd9fea42066b9d0ed867b4f346d75a8e9e17cd26d8d24bc40b"
+    }
+  ],
+  "fml_gl_audio": "NOT-RUN",
+  "sources_unchanged": true
+}

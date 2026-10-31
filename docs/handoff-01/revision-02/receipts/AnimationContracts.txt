@@ -1,0 +1,1 @@
+AnimationContracts: PASS (13679 checks; scalar, strict codec, plans, events, timebase)

@@ -52,33 +52,62 @@ public final class CameraFrameStoreContracts {
             java.lang.reflect.Constructor<?> keyConstructor = keyType.getDeclaredConstructor(long.class);
             keyConstructor.setAccessible(true);
             java.lang.reflect.Method generate = Class
-                .forName("com.gtnewhorizons.angelica.glsm.ffp.GeometryShaderGenerator")
+                .forName("com.gtnewhorizons.angelica.glsm.ffp.VertexShaderGenerator")
                 .getMethod("generate", keyType);
             java.lang.reflect.Method patch = Class
                 .forName("com.miaokatze.miaokatzecore.client.camera.slice.SliceShaders")
-                .getMethod("geometrySource", String.class);
-            for (long flags : new long[] { 0L, -1L }) {
-                String nativeSource = (String) generate.invoke(null, keyConstructor.newInstance(flags));
-                String patched = (String) patch.invoke(null, nativeSource);
-                require(patched.contains("in vec3 v_CoreSliceEye_gs[];"), "wide-line input varying is declared");
-                require(patched.contains("out vec3 v_CoreSliceEye;"), "wide-line output varying is declared");
-                require(
-                    patched.split("v_CoreSliceEye = ", -1).length == 5,
-                    "all four native emitted vertices get slice coordinates");
-                if (nativeSource.contains("float t0")) {
-                    require(
-                        patched.contains("v_CoreSliceEye = mix(v_CoreSliceEye_gs[0], v_CoreSliceEye_gs[1], t0);"),
-                        "RC2 near-plane interpolation follows the native color interpolation");
-                } else {
-                    require(
-                        patched.contains("v_CoreSliceEye = v_CoreSliceEye_gs[0];")
-                            && patched.contains("v_CoreSliceEye = v_CoreSliceEye_gs[1];"),
-                        "RC1 endpoint passthrough does not introduce undefined interpolation variables");
+                .getMethod("vertexSource", String.class, boolean.class);
+            long lineQuads = shaderBit(keyType, "BIT_LINE_QUADS");
+            long features = shaderBit(keyType, "BIT_FOG") | shaderBit(keyType, "BIT_CLIP_PLANES")
+                | shaderBit(keyType, "BIT_LINE_STIPPLE")
+                | shaderBit(keyType, "BIT_HAS_VERTEX_COLOR")
+                | shaderBit(keyType, "BIT_HAS_VERTEX_TEX")
+                | shaderBit(keyType, "BIT_UNIT_TEX_BASE");
+            java.lang.reflect.Field instancingBit = keyType.getDeclaredField("BIT_INSTANCING");
+            instancingBit.setAccessible(true);
+            for (int instancing = 0; instancing < 5; instancing++) {
+                for (long options : new long[] { 0, features }) {
+                    for (boolean wideLine : new boolean[] { false, true }) {
+                        if (wideLine && instancing != 0) continue;
+                        long flags = ((long) instancing << instancingBit.getInt(null)) | options
+                            | (wideLine ? lineQuads : 0);
+                        String nativeSource = (String) generate.invoke(null, keyConstructor.newInstance(flags));
+                        String patched = (String) patch.invoke(null, nativeSource, true);
+                        require(patched.contains("out vec3 v_CoreSliceEye;"), "slice output varying is declared");
+                        require(patched.split("v_CoreSliceEye = ", -1).length == 2, "one slice coordinate per vertex");
+                        require(patched.equals(patch.invoke(null, patched, true)), "patch is idempotent");
+                        if (wideLine) {
+                            require(
+                                patched.indexOf("vec4 coreSliceLineThis = gl_Position;")
+                                    < patched.indexOf("gl_Position = angelica_lineQuad("),
+                                "capture the centerline before screen-space widening");
+                            require(
+                                patched.contains(
+                                    "mix(lineStart ? coreSliceLineThis : lineOther, lineStart ? lineOther : coreSliceLineThis, lineT)"),
+                                "both endpoints follow the native near-plane interpolation parameter");
+                            require(
+                                patched.contains("v_CoreSliceEye = (coreSliceLineCenter.xyz / coreSliceLineCenter.w)"),
+                                "slice height excludes line width and pixel alignment offsets");
+                            require(
+                                !patched.contains("v_CoreSliceEye = (gl_Position.xyz / gl_Position.w)"),
+                                "wide lines never reconstruct from expanded corners");
+                        } else {
+                            require(
+                                patched.contains("v_CoreSliceEye = (gl_Position.xyz / gl_Position.w)"),
+                                "ordinary, instanced, cube, particle and weather paths retain their final transform");
+                        }
+                    }
                 }
             }
         } catch (ReflectiveOperationException failure) {
             throw new AssertionError("native wide-line shader contract", failure);
         }
+    }
+
+    private static long shaderBit(Class<?> keyType, String name) throws ReflectiveOperationException {
+        java.lang.reflect.Field bit = keyType.getDeclaredField(name);
+        bit.setAccessible(true);
+        return 1L << bit.getInt(null);
     }
 
     private static void immediateSlicePicking() {

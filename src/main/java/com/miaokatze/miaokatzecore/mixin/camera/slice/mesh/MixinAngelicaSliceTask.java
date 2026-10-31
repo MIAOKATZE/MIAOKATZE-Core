@@ -13,6 +13,8 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 import com.gtnewhorizons.angelica.rendering.celeritas.AngelicaChunkBuildContext;
+import com.gtnewhorizons.angelica.rendering.celeritas.iris.ContextAwareChunkVertexEncoder;
+import com.gtnewhorizons.angelica.rendering.celeritas.world.WorldSlice;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -33,7 +35,7 @@ public abstract class MixinAngelicaSliceTask implements SliceMeshTask {
     }
 
     @WrapOperation(
-        method = "renderBlock",
+        method = "drawBlock",
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/RenderBlocks;renderBlockByRenderType(Lnet/minecraft/block/Block;III)Z",
@@ -54,37 +56,41 @@ public abstract class MixinAngelicaSliceTask implements SliceMeshTask {
         method = "renderBlock",
         at = @At(
             value = "INVOKE",
-            target = "Lcom/gtnewhorizons/angelica/rendering/celeritas/AngelicaChunkBuildContext;copyRawBuffer([II[I[ILorg/embeddedt/embeddium/impl/render/chunk/compile/ChunkBuildBuffers;Lorg/embeddedt/embeddium/impl/render/chunk/terrain/material/Material;ZZ)V"),
+            target = "Lcom/gtnewhorizons/angelica/rendering/celeritas/AngelicaChunkBuilderMeshingTask;encodeTessellated([III[I[ILnet/minecraft/block/Block;Lorg/embeddedt/embeddium/impl/render/chunk/compile/ChunkBuildBuffers;Lcom/gtnewhorizons/angelica/rendering/celeritas/AngelicaChunkBuildContext;Lorg/embeddedt/embeddium/impl/render/chunk/terrain/material/Material;ZLcom/gtnewhorizons/angelica/rendering/celeritas/iris/ContextAwareChunkVertexEncoder;)V"),
         remap = false)
-    private void core$nativeLightingScope(AngelicaChunkBuildContext context, int[] raw, int count, int[] states,
-        int[] ids, ChunkBuildBuffers buffers, Material material, boolean override, boolean smooth,
-        Operation<Void> original, @Local(argsOnly = true) RenderBlocks renderer,
+    private void core$nativeLightingScope(int[] raw, int vertexOffset, int count, int[] states, int[] ids, Block block,
+        ChunkBuildBuffers buffers, AngelicaChunkBuildContext context, Material material, boolean override,
+        ContextAwareChunkVertexEncoder encoder, Operation<Void> original, @Local(argsOnly = true) RenderBlocks renderer,
         @Local(argsOnly = true, ordinal = 1) int x, @Local(argsOnly = true, ordinal = 2) int y,
         @Local(argsOnly = true, ordinal = 3) int z) {
         try (SliceMeshes.FaceScope ignored = SliceMeshes.enter(core$sliceSnapshot, renderer.blockAccess, x, y, z)) {
-            original.call(context, raw, count, states, ids, buffers, material, override, smooth);
+            original.call(raw, vertexOffset, count, states, ids, block, buffers, context, material, override, encoder);
         }
     }
 
+    @WrapOperation(
+        method = "finishDeferred",
+        at = @At(
+            value = "INVOKE",
+            target = "Lcom/gtnewhorizons/angelica/rendering/celeritas/AngelicaChunkBuilderMeshingTask;encodeTessellated([III[I[ILnet/minecraft/block/Block;Lorg/embeddedt/embeddium/impl/render/chunk/compile/ChunkBuildBuffers;Lcom/gtnewhorizons/angelica/rendering/celeritas/AngelicaChunkBuildContext;Lorg/embeddedt/embeddium/impl/render/chunk/terrain/material/Material;ZLcom/gtnewhorizons/angelica/rendering/celeritas/iris/ContextAwareChunkVertexEncoder;)V"),
+        remap = false)
+    private void core$deferredLightingScope(int[] raw, int vertexOffset, int count, int[] states, int[] ids,
+        Block block, ChunkBuildBuffers buffers, AngelicaChunkBuildContext context, Material material, boolean override,
+        ContextAwareChunkVertexEncoder encoder, Operation<Void> original, @Local(name = "slice") WorldSlice slice,
+        @Local(name = "x") int x, @Local(name = "y") int y, @Local(name = "z") int z) {
+        try (SliceMeshes.FaceScope ignored = SliceMeshes.enter(core$sliceSnapshot, slice, x, y, z)) {
+            original.call(raw, vertexOffset, count, states, ids, block, buffers, context, material, override, encoder);
+        }
+    }
+
+    /** Both immediate builds and deferred completion publish through this finalization point. */
     @ModifyExpressionValue(
-        method = "execute",
+        method = "finalizeSection",
         at = @At(
             value = "NEW",
             target = "(Lorg/embeddedt/embeddium/impl/render/chunk/RenderSection;Lorg/embeddedt/embeddium/impl/render/chunk/data/BuiltRenderSectionData;Lit/unimi/dsi/fastutil/objects/Reference2ReferenceMap;I)Lorg/embeddedt/embeddium/impl/render/chunk/compile/ChunkBuildOutput;"),
         remap = false)
     private ChunkBuildOutput core$stampSliceOutput(ChunkBuildOutput output) {
-        return SliceMeshes.tag(output, core$sliceSnapshot);
-    }
-
-    /** RC2 hands deferred work off to a separate completion method; RC1 completes it inside execute. */
-    @ModifyExpressionValue(
-        method = "completeDeferred",
-        at = @At(
-            value = "NEW",
-            target = "(Lorg/embeddedt/embeddium/impl/render/chunk/RenderSection;Lorg/embeddedt/embeddium/impl/render/chunk/data/BuiltRenderSectionData;Lit/unimi/dsi/fastutil/objects/Reference2ReferenceMap;I)Lorg/embeddedt/embeddium/impl/render/chunk/compile/ChunkBuildOutput;"),
-        require = 0,
-        remap = false)
-    private ChunkBuildOutput core$stampDeferredSliceOutput(ChunkBuildOutput output) {
         return SliceMeshes.tag(output, core$sliceSnapshot);
     }
 

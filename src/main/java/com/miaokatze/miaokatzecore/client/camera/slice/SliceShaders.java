@@ -12,7 +12,7 @@ import com.miaokatze.miaokatzecore.api.camera.CameraPose;
 import com.miaokatze.miaokatzecore.api.camera.OrthographicProjection;
 import com.miaokatze.miaokatzecore.api.camera.SliceSurfaceRule;
 
-/** RC default-terrain and emulated-FFP slice bridge. Mutable state belongs to the render thread. */
+/** Default-terrain and emulated-FFP slice bridge. Mutable state belongs to the render thread. */
 public final class SliceShaders {
 
     public enum Domain {
@@ -102,7 +102,7 @@ public final class SliceShaders {
         if (owned && enabledPrograms != 0) Bridge.disableCurrentProgram();
     }
 
-    /** Null means the RC default shader path is available. Active shader packs are unsupported. */
+    /** Null means the default shader path is available. Active shader packs are unsupported. */
     public static String unsupportedReason() {
         try {
             return Bridge.unsupportedReason();
@@ -174,23 +174,35 @@ public final class SliceShaders {
         return source;
     }
 
-    /** Final gl_Position includes instancing, cube and weather transforms in every FFP variant. */
+    /** Use transformed centerline coordinates before wide-line screen-space expansion. */
     public static String vertexSource(String source, boolean fixedFunction) {
         if (source.contains("v_CoreSliceEye")) return source;
-        String varying = fixedFunction && source.contains("v_Color_gs") ? "v_CoreSliceEye_gs" : "v_CoreSliceEye";
-        String declarations = "out vec3 " + varying + ";\n";
+        String declarations = "out vec3 v_CoreSliceEye;\n";
         String assignment;
         if (fixedFunction) {
             declarations += "uniform vec4 u_CoreSliceInverseProjection;\n";
-            assignment = "\n  " + varying
-                + " = (gl_Position.xyz / gl_Position.w) * "
+            String position = "gl_Position";
+            if (source.contains("  gl_Position = angelica_lineQuad(")) {
+                String widening = "  gl_Position = angelica_lineQuad(gl_Position, lineOther, lineCorner, u_ViewportSize, u_LineWidth, lineT);";
+                if (!source.contains(widening)) throw new IllegalStateException("Unsupported wide-line vertex layout");
+                source = source.replace(
+                    widening,
+                    "  vec4 coreSliceLineThis = gl_Position;\n" + widening
+                        + "\n  vec4 coreSliceLineCenter = mix(lineStart ? coreSliceLineThis : lineOther, "
+                        + "lineStart ? lineOther : coreSliceLineThis, lineT);");
+                position = "coreSliceLineCenter";
+            }
+            assignment = "\n  v_CoreSliceEye = (" + position
+                + ".xyz / "
+                + position
+                + ".w) * "
                 + "u_CoreSliceInverseProjection.xyz + vec3(0.0, 0.0, u_CoreSliceInverseProjection.w);\n";
         } else {
-            assignment = "\n  " + varying + " = (u_ModelViewMatrix * vec4(position, 1.0)).xyz;\n";
+            assignment = "\n  v_CoreSliceEye = (u_ModelViewMatrix * vec4(position, 1.0)).xyz;\n";
         }
         int main = source.indexOf("void main() {");
         int end = source.lastIndexOf('}');
-        if (main < 0 || end < main) throw new IllegalStateException("Unsupported RC vertex shader layout");
+        if (main < 0 || end < main) throw new IllegalStateException("Unsupported vertex shader layout");
         return source.substring(0, main) + declarations
             + source.substring(main, end)
             + assignment
@@ -200,7 +212,7 @@ public final class SliceShaders {
     public static String fragmentSource(String source) {
         if (source.contains("coreSliceDiscard")) return source;
         int main = source.indexOf("void main() {");
-        if (main < 0) throw new IllegalStateException("Unsupported RC fragment shader layout");
+        if (main < 0) throw new IllegalStateException("Unsupported fragment shader layout");
         return source.substring(0, main) + FragmentSource.VALUE
             + source.substring(main)
                 .replace("void main() {", "void main() {\n  coreSliceDiscard();");

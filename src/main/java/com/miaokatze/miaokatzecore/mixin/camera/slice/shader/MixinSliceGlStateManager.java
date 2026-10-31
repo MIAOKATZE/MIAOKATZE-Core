@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.miaokatze.miaokatzecore.client.camera.slice.SliceShaders;
 
 @Pseudo
-@Mixin(targets = "com.gtnewhorizons.angelica.glsm.GLStateManager", remap = false)
+@Mixin(targets = "com.gtnewhorizons.angelica.glsm.GLSMPrograms", remap = false)
 public abstract class MixinSliceGlStateManager {
 
     @Inject(method = "glDeleteProgram(I)V", at = @At("HEAD"))

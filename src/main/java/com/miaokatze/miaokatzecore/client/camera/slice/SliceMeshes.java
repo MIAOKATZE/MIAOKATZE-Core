@@ -22,7 +22,7 @@ import org.embeddedt.embeddium.impl.util.task.CancellationToken;
 
 import com.miaokatze.miaokatzecore.api.camera.HeightSlice;
 
-/** RC2 boundary-only native remeshing. All scheduler methods run on the client render thread. */
+/** Angelica boundary-only native remeshing. All scheduler methods run on the client render thread. */
 public final class SliceMeshes {
 
     private static final int REBUILDS_PER_BUDGET = 4;
@@ -144,7 +144,7 @@ public final class SliceMeshes {
                 requested.enabled() ? State.UNSUPPORTED : State.DISABLED,
                 !requested.enabled(),
                 !requested.enabled(),
-                requested.enabled() ? "RC2 section manager is not attached to this world" : null);
+                requested.enabled() ? "Angelica section manager is not attached to this world" : null);
         }
         released = false;
         if (manager == null) {
@@ -152,7 +152,7 @@ public final class SliceMeshes {
                 requested.enabled() ? State.UNSUPPORTED : State.DISABLED,
                 !requested.enabled(),
                 !requested.enabled(),
-                requested.enabled() ? "RC2 boundary mesher is unavailable" : null);
+                requested.enabled() ? "Angelica boundary mesher is unavailable" : null);
         }
         if (target == null && !requested.enabled()) {
             displayTarget = requested;
@@ -328,7 +328,7 @@ public final class SliceMeshes {
                 refreshStatus();
             }
         } else if (task != null && snapshot != null && snapshot.slice.enabled()) {
-            failure = "Active RC2 task provider does not use the Angelica native mesher";
+            failure = "Active Angelica task provider does not use the Angelica native mesher";
             refreshStatus();
         }
     }

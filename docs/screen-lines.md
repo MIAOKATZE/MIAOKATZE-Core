@@ -24,6 +24,8 @@ if (!stream.begin(tessellator)) {
 
 资格限定为 idle、无待处理顶点的 exact vanilla Tessellator，Core 的字段桥接存在，GTNHLib 渲染线程，且无 Core/GTNHLib/Direct/DisplayList 捕获。要求 OpenGL 3.0 与可用 VAO。foreign/Direct、pending batch、捕获、未覆盖 GL/外部 shader、开启纹理或 lighting 的状态回退。不能把 GUI 当前 program 非零一概视作外部 shader：Angelica 2.2.28 的生成 FFP program 是物理绑定，其逻辑请求仍为零。当前实现支持启用缓存的 Angelica FFP、无 Iris shader pack；其实际初始化/链接失败不吞为兼容回退。没有 Angelica 时，只接受兼容上下文的无 shader 固定管线。
 
+Core 0.2.0 的开发基线为 GTNH 2.9.0 正式版、Angelica 2.2.42；逻辑 program 查询使用 `GLSMQueries`。0.1.28 的 RC2 发布包保留原样。此次迁移的构建和纯 JVM 合同不代表客户端 GL 或像素等价已经验收。
+
 Angelica 资格读其公开缓存的纹理单元、1D/2D/3D enables 与 client-active unit；不在 core-profile driver 上查询已移除的 `MAX_TEXTURE_UNITS`、`CLIENT_ACTIVE_TEXTURE` 或 `TEXTURE_CUBE_MAP`。兼容上下文按其合法的固定管线查询检查纹理。实际资格覆盖与像素等价需要目标客户端验证，不能以 accepted pass 单独代替 submitted vertex 证据。
 
 ## 几何与 Tessellator 状态

@@ -84,7 +84,7 @@ public final class SliceBackend {
         SliceMeshes.Status status = SliceMeshes.update(mc, ownerEpoch, displayed, displayedRevision);
         if (status.state() == SliceMeshes.State.UNSUPPORTED) {
             supported = false;
-            String reason = status.unavailableReason() == null ? "RC2 boundary mesher is unavailable"
+            String reason = status.unavailableReason() == null ? "Angelica boundary mesher is unavailable"
                 : status.unavailableReason();
             // Initial world attachment is transient. Only a confirmed unsupported native provider is latched.
             if (!status.retryableUnavailable()) meshUnavailableReason = reason;

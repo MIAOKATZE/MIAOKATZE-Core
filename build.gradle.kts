@@ -82,6 +82,7 @@ mapOf(
     "runCameraPointerContracts" to "com.miaokatze.miaokatzecore.client.camera.CameraPointerContracts",
     "runCameraHudContracts" to "com.miaokatze.miaokatzecore.client.camera.hud.CameraHudContracts",
     "runSliceMeshContracts" to "com.miaokatze.miaokatzecore.client.camera.slice.SliceMeshContracts",
+    "runAngelicaSliceContracts" to "com.miaokatze.miaokatzecore.client.camera.slice.AngelicaSliceContracts",
     "runTessellatorSliceContracts" to "com.miaokatze.miaokatzecore.client.render.TessellatorSliceContracts",
     "runScreenLineContracts" to "com.miaokatze.miaokatzecore.client.render.ScreenLineContracts",
     "runCameraRenderBoundaryContracts" to "com.miaokatze.miaokatzecore.mixin.camera.CameraRenderBoundaryContracts"
@@ -90,7 +91,7 @@ mapOf(
         group = "verification"
         mainClass = entryPoint
         classpath = sourceSets.getByName("test").runtimeClasspath
-        if (taskName == "runCameraFrameStoreContracts" || taskName == "runTessellatorSliceContracts" || taskName == "runScreenLineContracts") {
+        if (taskName == "runCameraFrameStoreContracts" || taskName == "runAngelicaSliceContracts" || taskName == "runTessellatorSliceContracts" || taskName == "runScreenLineContracts") {
             // Exercise the production slice click fence without launching Minecraft or an OpenGL context.
             classpath += sourceSets.getByName("main").compileClasspath
         }

@@ -263,7 +263,7 @@ public final class ScreenLineStream implements AutoCloseable {
                 && com.gtnewhorizons.angelica.glsm.ffp.ShaderManager.isEnabled()
                 && com.gtnewhorizons.angelica.glsm.ffp.ShaderManager.getInstance()
                     .isActive()
-                && com.gtnewhorizons.angelica.glsm.GLStateManager.glGetInteger(GL20.GL_CURRENT_PROGRAM) == 0
+                && com.gtnewhorizons.angelica.glsm.GLSMQueries.glGetInteger(GL20.GL_CURRENT_PROGRAM) == 0
                 && !com.gtnewhorizons.angelica.rendering.celeritas.api.IrisShaderProviderHolder.isActive();
         }
 
@@ -280,7 +280,7 @@ public final class ScreenLineStream implements AutoCloseable {
         }
 
         static boolean textured() {
-            // These are the texture targets represented by Angelica 2.2.28's FFP FragmentKey. Querying legacy
+            // These are the texture targets represented by Angelica 2.2.42's FFP FragmentKey. Querying legacy
             // MAX_TEXTURE_UNITS or TEXTURE_CUBE_MAP via the core-profile driver is not a valid substitute.
             int units = com.gtnewhorizons.angelica.glsm.GLStateManager.MAX_TEXTURE_UNITS;
             if (units <= 0) throw new IllegalStateException("Angelica FFP texture-unit count is invalid");

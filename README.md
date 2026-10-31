@@ -1,33 +1,31 @@
 # MIAOKATZE Core
 
-Minecraft 1.7.10 / Forge 10.13.4.1614 / Java 8 的模块化基础库。当前 API 基线为 **0.1.15**，原 Mod 继续拥有玩法、注册、配置、存档与测试维度。0.1.15 新增向下兼容的 [BoundedMru](docs/bounded-mru.md)，用于有界、去重的最近访问顺序；GTSR 2.0.8 的机器终端历史使用此接口。既有消费者不需要统一提高最低依赖版本。
+Minecraft 1.7.10 / Forge 10.13.4.1614 / Java 8 的模块化基础库。当前主线为面向 **GTNH 2.9.0 正式版的 0.2.0 候选**，保留既有公开 API 签名；原 Mod 继续拥有玩法、注册、配置、存档与测试维度。0.1.15 已实现向下兼容的 [BoundedMru](docs/bounded-mru.md)，用于有界、去重的最近访问顺序；GTSR 2.0.8 的机器终端历史使用此接口。
 
-本次 **0.1.23 候选**新增纯 Java 8 的 [`api.work.WorkGovernor`](docs/work-governor.md)：CPU/内存租约、精确键 singleflight 与跨域退休回收。由消费者显式创建或接入进程共享实例，不创建 worker 或事件监听；旧公开 API 保持兼容，既有消费者无需一并提高最低依赖。候选尚不等于已发布产物。
+0.1.23 已实现纯 Java 8 的 [`api.work.WorkGovernor`](docs/work-governor.md)：CPU/内存租约、精确键 singleflight 与跨域退休回收。由消费者显式创建或接入进程共享实例，不创建 worker 或事件监听。0.1.28 已实现有界 [ScreenLineStream](docs/screen-lines.md)。本次 0.2.0 迁移正式版的 GLSM 查询、程序生命周期、即时/deferred 网格和宽线 shader；源码候选不等于已发布产物或客户端验收通过。
 
 ## 安装与依赖
 
-[下载普通 JAR 0.1.15](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.15/miaokatzecore-0.1.15.jar) · [SHA-256](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.15/miaokatzecore-0.1.15.jar.sha256) · [dev JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.15/miaokatzecore-0.1.15-dev.jar) · [sources JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.15/miaokatzecore-0.1.15-sources.jar)
+[历史 RC2 普通 JAR 0.1.28](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.28/miaokatzecore-0.1.28.jar) · [SHA-256](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.28/miaokatzecore-0.1.28.jar.sha256) · [历史 dev JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.28/miaokatzecore-0.1.28-dev.jar) · [历史 sources JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.28/miaokatzecore-0.1.28-sources.jar)
 
-客户端和服务端安装同一版 Core。同一 JAR 包含普通 Forge Mod 和极小的 FML early loader，复用整合包 UniMixins 启动机制，不携带另一套 Mixin bootstrap。专服不选择客户端 Mixin。通用数学与所有权契约不依赖 Minecraft/OpenGL；client 包只在客户端调用。MUI2 适配面向 **GTNH 2.9.0 RC 版本**，使用相应适配功能的 Mod 负责提供该依赖。
+以上为保留不变的 RC2 发布物，不是正式版 0.2.0 下载入口。0.2.0 本轮仍为候选，完成正式 Tag/Maven 发布后再使用下列集成坐标。
+
+客户端和服务端安装同一版 Core。同一 JAR 包含普通 Forge Mod 和极小的 FML early loader，复用整合包 UniMixins 启动机制，不携带另一套 Mixin bootstrap。专服不选择客户端 Mixin。通用数学与所有权契约不依赖 Minecraft/OpenGL；client 包只在客户端调用。当前适配面向 **GTNH 2.9.0 正式版**，精确开发依赖为 GT5U 5.09.54.264、MUI2 2.3.94、GTNHLib 0.11.54、NEI 2.8.171 与 Angelica 2.2.42；使用相应适配功能的 Mod 负责提供该依赖。
 
 Gradle 仓库：https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/
 
 ~~~groovy
 repositories { maven { url = "https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/" } }
-dependencies { api("com.miaokatze.miaokatzecore:miaokatzecore:0.1.9:dev") { transitive = false } }
+dependencies { api("com.miaokatze.miaokatzecore:miaokatzecore:0.2.0:dev") { transitive = false } }
 ~~~
 
-Forge 最低依赖版本由调用 API 决定；两种写法均不设上限：
+正式版系列 Mod 统一以 0.2.0 为最低前置；范围不设上限：
 
 ~~~properties
-# 仅使用 Core 0.1.8 已有 API 的消费者可保留此范围
-required-after:miaokatzecore@[0.1.8,)
-
-# 使用 Core 0.1.9 新增 CanvasTransform / ViewportCoordinates 的消费者，例如 GTMB 0.1.37+
-required-after:miaokatzecore@[0.1.9,)
+required-after:miaokatzecore@[0.2.0,)
 ~~~
 
-系列 Mod 的 META-INF JSON 使用 FalsePatternLib 1.12.0+ 的 `modDependencies`。首次缺失时，精确请求的 Core 版本也由 API 使用范围决定：仅用 0.1.8 API 的消费者保留 0.1.8；使用 0.1.9 新坐标 API 的消费者（例如 GTMB 0.1.37+）请求 0.1.9。不要据此把所有系列 Mod 的最低版本都写成 0.1.9。需要安装 FalsePatternLib；离线部署请预先提供匹配所需版本的 Core。该机制不覆盖已加载旧 Jar、不解决任意版本组合，也不意味着自动追踪最新版。精确下载坐标不限制已安装 Core 的更高版本。0.1.8 的首次补下载历史行为：普通 LaunchWrapper 首次补下载带 early hooks 的 0.1.8 可能提示退出并需要再次启动；该观察仅对应 0.1.8，不外推至 0.1.9。RC 版本 RFB 对 0.1.8 的路径在 FML 扫描前下载，实际结果以启动日志为准。参见 [上游格式](https://github.com/FalsePattern/FalsePatternLib/blob/1.12.0/src/main/resources/DEPENDENCIES.md)。
+系列 Mod 的 META-INF JSON 使用 FalsePatternLib 1.12.0+ 的 `modDependencies`，正式版缺包请求坐标为 `com.miaokatze.miaokatzecore:miaokatzecore:0.2.0`。下载机制继续复用整合包的 DepLoader；离线部署请预先提供匹配版本的 Core。该机制不覆盖已加载旧 Jar、不解决任意版本组合，也不意味着自动追踪最新版；从 RC2 升级时应将旧 Core 成组替换，避免重复 Mod。精确下载坐标不限制已安装 Core 的更高版本。历史上普通 LaunchWrapper 首次补下载带 early hooks 的 Core 可能要求重启，RC2/RFB 路径也有在 FML 扫描前补下载的记录；这些旧记录不作为正式版启动证明。参见 [上游格式](https://github.com/FalsePattern/FalsePatternLib/blob/1.12.0/src/main/resources/DEPENDENCIES.md)。
 
 ## 模块
 
@@ -51,7 +49,7 @@ required-after:miaokatzecore@[0.1.9,)
 | client.camera.CameraSettings / CameraControls | 不可变具名策略及能力回调；准星、非模态控制条、平移旋转缩放与切层由消费者选择 |
 | client.camera.CameraFrame | 成功显示的只读帧、复用坐标基、requested/displayed/committed 切层与内容 revision |
 | api.camera.HeightSlice / SliceSurfaceRule | 整数上下高度区间、真实边界面及同像素渐变覆盖规则 |
-| client.camera.slice.SliceBackend | RC 版本默认地形与 TESR 裁切、局部边界补面和后台上传状态；不支持活动 Iris shaderpack |
+| client.camera.slice.SliceBackend | 正式版默认地形与 TESR 裁切、局部边界补面和后台上传状态；不支持活动 Iris shaderpack |
 | testkit.Deadline | 可注入单调时间戳的被动预算，处理 nanoTime 回绕，不注册维度或后台任务 |
 | api.work.WorkGovernor（since 0.1.23） | 显式共享 CPU/字节准入、资源租约、精确键 singleflight、owner guard 与被动观察器；无游戏依赖、自动线程或监听 |
 
@@ -70,7 +68,7 @@ ExtensionCatalog 回调同步执行于实例锁内，禁止等待另一个需要
 
 ## 兼容与演进
 
-0.1.x 保持已公开签名兼容；新增能力采用新入口或重载。破坏性变更进入 0.2 并先迁移消费者。客户端保护不能随意混用 raw GL 与带缓存的状态管理器：GTIT 保留自身状态路径，Core 仅输出轨迹。第三方预览清理为显式调用，仅在类存在时执行，不创建强制依赖。
+0.2.0 的平台迁移继续保留 0.1.x 已公开签名；新增能力采用新入口或重载。本轮不引入破坏性 API 变更，后续若需变更公开契约，应先规划消费者迁移。客户端保护不能随意混用 raw GL 与带缓存的状态管理器：GTIT 保留自身状态路径，Core 仅输出轨迹。第三方预览清理为显式调用，仅在类存在时执行，不创建强制依赖。
 
 本批已接入七仓，旧公开 renderer、scope 和注册句柄由原仓保留委托。原纹理路径、维度 ID、权限、NBT、配方和业务注册仍属原仓。堆叠/枢纽组合设施、完整 UI/预览引擎、更多 TestKit runner 与报表协议属于后续批次，参见 [迁移路线](docs/migration.md)。
 
@@ -84,4 +82,4 @@ AGPL-3.0。原有实现与资源来源见 [NOTICE](NOTICE.md)。
 
 ## Platform baseline
 
-支持 **GTNH 2.9.0 RC 版本**。公开的 0.1.x API 保持向后兼容；切片按已显示的裁切策略即时选点，边界补面与光照网格在后台更新。可选拖转阈值区分短点击与拖动，默认保留原有导航行为。可选集成保持静默隔离，持久化数据迁移仍由消费者负责。
+当前候选面向 **GTNH 2.9.0 正式版**，保留公开的 0.1.x API 签名；不提供 RC2 渲染路径分支。切片按已显示的裁切策略即时选点，边界补面与光照网格在后台更新。可选拖转阈值区分短点击与拖动，默认保留原有导航行为。可选集成保持静默隔离，持久化数据迁移仍由消费者负责。本轮未启动游戏，真实客户端渲染与完整 Mixin 组合仍待验收。

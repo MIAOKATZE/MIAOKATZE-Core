@@ -1,0 +1,22 @@
+{
+  "base": "f02dbdc2f4e9891b616bfd2c48b17f28305e44f0",
+  "tested_source_hashes_current": true,
+  "tested_files": 32,
+  "unchanged_preexisting_main_files": 133,
+  "existing_source_diff_command": [
+    "git",
+    "diff",
+    "--exit-code",
+    "f02dbdc2f4e9891b616bfd2c48b17f28305e44f0",
+    "--",
+    "src/main",
+    "dependencies.gradle",
+    "gradle.properties",
+    "settings.gradle.kts"
+  ],
+  "existing_source_diff_exit": 0,
+  "sdk_sha256": "6356ef07ecedbf86f62e5558eb25845f358d0aa065b3ae1d1f798c58166dae4d",
+  "gradle_full_build": "NOT-RUN",
+  "old_consumer_production_compile": "NOT-RUN",
+  "game_instances": "NOT-RUN"
+}

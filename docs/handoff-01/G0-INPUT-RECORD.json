@@ -1,0 +1,50 @@
+{
+  "task_id": "01",
+  "status": "COMPLETE",
+  "repo_path": "E:/CodeGT/MIAOKATZE-Core",
+  "actual_branch": "master",
+  "actual_head_sha": "f02dbdc2f4e9891b616bfd2c48b17f28305e44f0",
+  "confirmed_execution_base_sha": "f02dbdc2f4e9891b616bfd2c48b17f28305e44f0",
+  "dirty_changes_preserved": "Core initial status clean; main checkout remains untouched. Shared plan and local wiki contain unrelated existing changes; do not include them.",
+  "difference_from_research_pin": "none",
+  "applicable_AGENTS": [
+    "User-provided AGENTS.md instructions in conversation"
+  ],
+  "workflow_path_and_relevant_entries": "E:/CodeGT/plan/workflow/v0.2.0_20261031122914.md; vunreleased_20261031205021.md",
+  "sum_path_and_relevant_entries": "E:/CodeGT/plan/summary/011_gtnh-290-final-baseline-and-core-upgrade.md; 013_rc-release-version-correction.md. Literal C:/Users/60158/plan and sum are absent; no replacement directory created.",
+  "localwiki_evidence": [
+    "E:/CodeGT/MIAO_Wiki_For_GTNH/architecture/miaokatze-gtnh290-final-baseline.md"
+  ],
+  "target": "GTNH 2.9.0 final; user explicitly selected current final baseline, overriding batch RC requirement",
+  "GTNH_RC_exact_build": "not applicable after explicit target decision",
+  "Core_version": "0.2.0 (unchanged; task SDK is not a published version)",
+  "MUI2_actual_version": "2.3.94-1.7.10 (source default; native installation not inspected)",
+  "source_dependencies": {
+    "GT5U": "5.09.54.264",
+    "GTNHLib": "0.11.54",
+    "Angelica": "2.2.42",
+    "NEI": "2.8.171-GTNH",
+    "Forge": "10.13.4.1614",
+    "Minecraft": "1.7.10"
+  },
+  "JDK_and_runtime": "Pure production SDK compiled and executed on Zulu JDK/JRE 1.8.0_482; default PATH JDK26 not used; Gradle JDK25 not run",
+  "FML_Mixin_render_stack": "Existing CoreLoadingPlugin/UniMixins client selection retained. Real FML/GL/lwjgl3ify stack NOT-RUN; stage07.",
+  "detached_worktree_path": "E:/CodeGT/.worktrees/core-contracts-runtime-20261031",
+  "shared_heavy_resource_lock": "NOT-ACQUIRED: no Gradle/instance/heavy job. Stage07 must coordinate one shared lock; proposed Windows mutex Local\\MIAOKATZE-HeavyBuild is not proof other tasks honor it.",
+  "resource_budget_heap_RSS_workers": "Observed host ~31.7GiB physical/~15GiB available at G0. Small javac/java only initially; Gradle max-workers=1, heap<=2GiB if needed. No game heap/RSS measured.",
+  "models": "Separate search/implementation/recording agents use explicitly requested gpt-6-astra xhigh; Work not enabled",
+  "payload_sha256": "ff478cde31f038a2aeb73ce1853c995f51db91b02428275c4a0f232ab59ad87c",
+  "payload_validation": "verify_payload.py exit0; all 115 SHA256 entries and relative file links passed",
+  "owner_map": {
+    "api/animation (excluding runtime) and AnimationContracts": "01 animation_contract",
+    "api/animation/runtime, client/animation and RuntimeContracts": "01 runtime_contract",
+    "build integration, SDK consumer probes, docs/handoff-01, plan/wiki handoff": "01 root",
+    "consumer production code": "read-only; corresponding lanes own changes"
+  },
+  "dependency_freeze_receipts": [
+    "DEPENDENCY-FREEZE.md",
+    "receipts/manifest.json",
+    "receipts/final-static-check.json"
+  ],
+  "remaining_user_decisions": []
+}

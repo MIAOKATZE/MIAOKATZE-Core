@@ -30,6 +30,19 @@ tasks.register<JavaExec>("runCoreContracts") {
 }
 tasks.named("check") { dependsOn("runCoreContracts") }
 
+mapOf(
+    "runAnimationContracts" to "com.miaokatze.miaokatzecore.api.animation.AnimationContracts",
+    "runAnimationRuntimeContracts" to "com.miaokatze.miaokatzecore.api.animation.RuntimeContracts"
+).forEach { (taskName, entryPoint) ->
+    tasks.register<JavaExec>(taskName) {
+        group = "verification"
+        description = "Checks the opt-in animation SDK without a game or graphics context."
+        mainClass = entryPoint
+        classpath = sourceSets.getByName("test").runtimeClasspath
+    }
+    tasks.named("check") { dependsOn(taskName) }
+}
+
 tasks.register<JavaExec>("runMiaoVisionContracts") {
     group = "verification"
     description = "Checks opt-in MiaoVision simulation, snapshots, bounds and compatibility contracts."

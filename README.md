@@ -1,5 +1,9 @@
 # MIAOKATZE Core
 
+本地 01 线新增的动画合同候选见 [标量协议](docs/animation-contract.md)、
+[显式运行时](docs/animation-runtime.md) 与 [冻结及交接记录](docs/handoff-01/README.md)。
+它们尚未随已发布的 Core 版本提供；本轮 SDK 仅供对应 owner 接入验证，正式版本和游戏验收由第七阶段统一处理。
+
 Minecraft 1.7.10 / Forge 10.13.4.1614 / Java 8 的模块化基础库。当前主线为面向 **GTNH 2.9.0 正式版的 0.2.0 候选**，保留既有公开 API 签名；原 Mod 继续拥有玩法、注册、配置、存档与测试维度。0.1.15 已实现向下兼容的 [BoundedMru](docs/bounded-mru.md)，用于有界、去重的最近访问顺序；GTSR 2.0.8 的机器终端历史使用此接口。
 
 0.1.23 已实现纯 Java 8 的 [`api.work.WorkGovernor`](docs/work-governor.md)：CPU/内存租约、精确键 singleflight 与跨域退休回收。由消费者显式创建或接入进程共享实例，不创建 worker 或事件监听。0.1.28 已实现有界 [ScreenLineStream](docs/screen-lines.md)。本次 0.2.0 迁移正式版的 GLSM 查询、程序生命周期、即时/deferred 网格和宽线 shader；源码候选不等于已发布产物或客户端验收通过。

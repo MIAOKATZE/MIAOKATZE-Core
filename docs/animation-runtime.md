@@ -1,5 +1,11 @@
 # 标量动画 runtime 与显式宿主
 
+新增兼容入口 `QualityGovernor.Indexed(initialIndex, tierCount, downSeconds, upSeconds)` 供已有多档装饰策略消费。
+它只持有档位与持续压力/恢复计时，档位0为最高质量；`observeDemand(wantedIndex, canRecover, seconds)` 每次最多变一档。
+宿主保留过滤、负载阈值、计量与用户hard-off，不能把墙钟帧间隔称为CPU/GPU耗时。`setLocked` 清除计时并固定档位；
+锁定期间 `resetTier` 只清计时，不能改当前档。所有操作在创建线程，参数有限、秒数非负；原四档API及语义不变。
+Outpost五档由此同一状态机持有，保留原0.25秒降档/3秒恢复与100/70/45/25/15效果比例；截图取景token及宿主清理由消费者负责。
+
 本轮新增生产包 `com.miaokatze.miaokatzecore.api.animation.runtime` 与
 `com.miaokatze.miaokatzecore.client.animation`。它们使用唯一的 `api.animation` 文档、时间、资源 ID 和 epoch
 合同；不发布 `design.*`，不复制消费者 DTO。所有可变 runtime 对象均由构造线程驱动，不注册监听、不创建线程或

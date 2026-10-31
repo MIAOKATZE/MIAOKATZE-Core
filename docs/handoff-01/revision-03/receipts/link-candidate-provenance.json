@@ -1,0 +1,317 @@
+{
+  "kind": "compilation-only-assembled-candidate-not-release",
+  "baseline_core_sha": "522b63e9b2571d8e9164f9ba2fc473427b036800",
+  "baseline_jar": "E:\\CodeGT\\GT-Universal-Development-Kit\\plan\\handoff-02-20261031\\core-candidate-maven\\com\\miaokatze\\miaokatzecore\\miaokatzecore\\0.2.0-lane01-522b63e9\\miaokatzecore-0.2.0-lane01-522b63e9-dev.jar",
+  "baseline_jar_sha256": "16f5b4d2adbdf3ed5416a6bef714210f6e5bbd84814eeeddac93c864f989b693",
+  "sdk_sha256": "b0c353a8c892e23a7ce7684b4128515b488186c8b429cd8fcad2592b3f46479f",
+  "candidate": "E:\\CodeGT\\.worktrees\\core-contracts-runtime-20261031\\build\\core-link-candidate-r3\\miaokatzecore-gap-close-link-only.jar",
+  "candidate_sha256": "3ccd2ac167dc607a6e56af259f9cd2ac29cf8b39295138cdb1f566d1e4e4e634",
+  "native_manifest_sha256": "f5a9fd3a11ede3d6ba3729fe6669e87fe4805df3f497d258588a50545d20c9f0",
+  "recompiled_entries": {
+    "com/miaokatze/miaokatzecore/api/animation/AnimationInstance.class": {
+      "origin": "tested-sdk",
+      "sha256": "76735dd92c1cda61ac9e9d32566c43bc15e50d9316f8239668006fabdae37327"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/AnimationV1$Cue.class": {
+      "origin": "tested-sdk",
+      "sha256": "b0f3f3d2815f9caeeffd726b4e11bf725aefdb23074e5e1fa9ed2ddb59e11c40"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/AnimationV1$CueKind.class": {
+      "origin": "tested-sdk",
+      "sha256": "8a6903111c6f420948b4143fe26b78954c1667d98b93d2f7f812a5e70123a6e2"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/AnimationV1$Document.class": {
+      "origin": "tested-sdk",
+      "sha256": "4bb0aed44e2214a72e9fcfa5605e2bc426756e44f5e7f5ba41ba90d5b69a945f"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/AnimationV1$Interpolation.class": {
+      "origin": "tested-sdk",
+      "sha256": "7f93c4647514c71be2ed1cd85297eaa2b3cc3964a8531cc18dcfce6a2f0c892a"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/AnimationV1$Key.class": {
+      "origin": "tested-sdk",
+      "sha256": "ef11e4d894980ff9c482a7974cd476103bca1ac9a77046390e3df1a9f3d6b4cd"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/AnimationV1$LatePolicy.class": {
+      "origin": "tested-sdk",
+      "sha256": "5854623e458dd880e3eb29a86eed7e065d125f8948a0e93e59aafbe24169f396"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/AnimationV1$Property.class": {
+      "origin": "tested-sdk",
+      "sha256": "e461b8f388a0dacba71083b240867bf2e42cd76ae467a1ad7b3bef97cf2f444a"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/AnimationV1$Track.class": {
+      "origin": "tested-sdk",
+      "sha256": "69a2f1606f0ecd0d37fe9c38a074f848865d1cc7b5738a5a4f983d7a8a2b6dea"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/AnimationV1.class": {
+      "origin": "tested-sdk",
+      "sha256": "8bedd39c994f172800cb4ef633f1e004e8cdb3fc565a3e7a51fb9433b5fa8f23"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/CompiledPlan.class": {
+      "origin": "tested-sdk",
+      "sha256": "6e6ad15b6709bd656de18357fb26844cb3ef98d12f048ba786834dc2e0ff9e69"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/EpochKey.class": {
+      "origin": "tested-sdk",
+      "sha256": "19c361d4055f923d1ac03b61f397bad7c89f234ed46bdfb5dfeeee49f8204f63"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/EvaluationInput.class": {
+      "origin": "tested-sdk",
+      "sha256": "b005babebfb1a1ff44224a7623db03a7675cf8eddbdf1b5a56b5007e4e23b148"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/EventBudget.class": {
+      "origin": "tested-sdk",
+      "sha256": "0cd2aae1b95f939e90d75a26a1190f7a592d2513be3a53a8e29a2c8df005c74c"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/EventCursor$1.class": {
+      "origin": "tested-sdk",
+      "sha256": "3e02793f9d11973749fe681ca797a174e52fb550697f484465be7127a6f91359"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/EventCursor$Dispatch.class": {
+      "origin": "tested-sdk",
+      "sha256": "0783ce0ce283739666489b862337071cdd6894ae8766d46630081e15282c73a5"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/EventCursor$Occurrence.class": {
+      "origin": "tested-sdk",
+      "sha256": "dd410861298392f62aa2d5c9e686053d8fa549fc04d704f736aa5167a611b020"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/EventCursor.class": {
+      "origin": "tested-sdk",
+      "sha256": "3716ff518621845caaf1e95458791d20c63fddeb1064d8a2b84242efddd81d36"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/LegacyScalarMigrator$1.class": {
+      "origin": "tested-sdk",
+      "sha256": "fdf5b30530e24de2e0d38a4d0e8982da972c76e86ec563059312cb9951a689cd"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/LegacyScalarMigrator$Result.class": {
+      "origin": "tested-sdk",
+      "sha256": "64a2199bfecdf5a4d8b4aecddb515e263d6ab4b822f78683dc0109a961ae6bdb"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/LegacyScalarMigrator$TickKey.class": {
+      "origin": "tested-sdk",
+      "sha256": "b77d554b8f29c8f01a072072a047740c0bd3eb39d5fbb7576b27dc55a5d0cc4c"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/LegacyScalarMigrator.class": {
+      "origin": "tested-sdk",
+      "sha256": "ed2841fb67270a27cd1c19e6ee95e1660f5220b5b07511e6114a8e066fdd4414"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/ResourceId.class": {
+      "origin": "tested-sdk",
+      "sha256": "f133048b95fb6b4058006ba93ad06a7322383c2d67855fbac44390e6d568c32d"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/FeatureAdmission$1.class": {
+      "origin": "tested-sdk",
+      "sha256": "de1ecbd7aec009a6307c7d8b92f020e373f32f5ea20e0c1e9bf898e7b0941510"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/FeatureAdmission$Decision.class": {
+      "origin": "tested-sdk",
+      "sha256": "a7bb8ef345381048df3d29d170c31a7b0862eaca88dc1deb383348139b7bc1ae"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/FeatureAdmission$Status.class": {
+      "origin": "tested-sdk",
+      "sha256": "049756d7088803271f3c24ec5b77c80ee63894e8659a0cf914bb4c240ec76e1a"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/FeatureAdmission.class": {
+      "origin": "tested-sdk",
+      "sha256": "96b660c4b2be9576255ed5da70988bc7873a0046c4ded5ef5afb6df56e3f1702"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/MetricWindow$1.class": {
+      "origin": "tested-sdk",
+      "sha256": "79b567ad9681a072c3a8574c13f7b990642e8d908ae9ef8264b98e60880ebae5"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/MetricWindow$Snapshot.class": {
+      "origin": "tested-sdk",
+      "sha256": "f840f3176c109a78836b229bebe743f5a1b39728ad4ce1c014df2f4e5bbe7e81"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/MetricWindow.class": {
+      "origin": "tested-sdk",
+      "sha256": "870e83b40dc956fe767486f7bd6c88b464b43f57d06c970df6e9250bcfff578b"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/QualityGovernor$1.class": {
+      "origin": "tested-sdk",
+      "sha256": "d4f34f9b3b98890a9b6ba4088647eaf378307c9263d166f688b169c13cce831a"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/QualityGovernor$Decision.class": {
+      "origin": "tested-sdk",
+      "sha256": "0871e8c3906a2a14f6af25593c4060164efca4d67228796e9cc7fe18022c7ad6"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/QualityGovernor$Indexed.class": {
+      "origin": "tested-sdk",
+      "sha256": "11560dd708eccb275fafe07e3733c58ea2518133fbf12b0c99e38e0fcb980536"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/QualityGovernor$Reason.class": {
+      "origin": "tested-sdk",
+      "sha256": "a976bedf692e98784aa6d5e77a046bc427afa315c963fc5b7a520cacd52949bc"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/QualityGovernor$Tier.class": {
+      "origin": "tested-sdk",
+      "sha256": "18e41bcee42c9fac44aa47df51f928c9a150fae66270892e48303bc8ee28b66f"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/QualityGovernor.class": {
+      "origin": "tested-sdk",
+      "sha256": "874a01d3ee65ff1984cfe3b5465c8e58faa008bee06104b685ebf30f37ec023b"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/ResourceLedger$1.class": {
+      "origin": "tested-sdk",
+      "sha256": "50fe8d3df2514ff854e42bde236b7115968535cb7589a71213e8b8b3382d0b69"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/ResourceLedger$Dimension.class": {
+      "origin": "tested-sdk",
+      "sha256": "454b4963cb9aac5cf77a0c17a9977ea537c1642485eb218cafb41801d8f6602d"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/ResourceLedger$Lease.class": {
+      "origin": "tested-sdk",
+      "sha256": "955304e9fe2b517f1bb4880877f280f61604cd5712fb0cd63f4e54ac57e91672"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/ResourceLedger.class": {
+      "origin": "tested-sdk",
+      "sha256": "22004641a9847236f33efb98a1a649529d3996eb323d781771a75264963e7996"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/RuntimeGenerations$1.class": {
+      "origin": "tested-sdk",
+      "sha256": "49754eff2ff7be813b775d514285972db6e48d28d64baffae14f321c2523bc07"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/RuntimeGenerations$Purpose.class": {
+      "origin": "tested-sdk",
+      "sha256": "73ed1b64f463c9ea0736422510b432129cec6c7ec58615a1d973c034ce4ccbb7"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/RuntimeGenerations$Ticket.class": {
+      "origin": "tested-sdk",
+      "sha256": "71ba2662635ed1d46869d85602de261332030c7f3d59ed94b6ea77b48c3676c9"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/RuntimeGenerations.class": {
+      "origin": "tested-sdk",
+      "sha256": "6fcb390fca366cb9704d0cfde3d99929ba2df17e63d6f2cf287cc41423a99484"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/SessionLifecycle$1.class": {
+      "origin": "tested-sdk",
+      "sha256": "f3fc06b840e424a1f59d3c6b9b9c41d3e0f0f95a53858653a484a46613797603"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/SessionLifecycle$State.class": {
+      "origin": "tested-sdk",
+      "sha256": "aeac0adfa65823e128ed133741481bd032aa319e472528d15a0b411ad008f6c1"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/SessionLifecycle$Ticket.class": {
+      "origin": "tested-sdk",
+      "sha256": "779e6d6132b5f8a3b1cb0546ea888d13f8dac2ae75c8b7f5a7edd3de22926bd9"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/runtime/SessionLifecycle.class": {
+      "origin": "tested-sdk",
+      "sha256": "1cf85601a167d0f24d8746839334e5464e2a44196cc58139c198ebe3fec8fb0a"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/SampledFrame.class": {
+      "origin": "tested-sdk",
+      "sha256": "8669710e7742f0b733a2fc7934fc1e7c85745ef24b78d51a44735fba5a390946"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/Sampler.class": {
+      "origin": "tested-sdk",
+      "sha256": "d9cb454bcd5986b1cea26db17d876d97e60ea679466fc1acd2f3b4a409e85a9f"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/StrictJsonCodec$1.class": {
+      "origin": "tested-sdk",
+      "sha256": "d78687247659dffdd0d3e13d41649550d0af20943a73e83ac87da790f16f53a9"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/StrictJsonCodec$2.class": {
+      "origin": "tested-sdk",
+      "sha256": "82e12734193e2e0a9409c52a5d6c58e2ca5c9fb600e8a9ffef7d958c46b79089"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/StrictJsonCodec$CodecException.class": {
+      "origin": "tested-sdk",
+      "sha256": "36e3fea3a4e06eeaf5d6fc80f7ef022e88952946d80e0887632209e633cccfe3"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/StrictJsonCodec$Numeric.class": {
+      "origin": "tested-sdk",
+      "sha256": "490da8d7fc4377643a970eb6260d0ab98061c82acc5ed55ec986e3befc1fb030"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/StrictJsonCodec$Parser.class": {
+      "origin": "tested-sdk",
+      "sha256": "392318926a2861880ef8ce64cf26dd54197a1ed29aebbbb1e7c85b46639274f7"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/StrictJsonCodec.class": {
+      "origin": "tested-sdk",
+      "sha256": "d52187e131c0bc986d1acbc24a19e6436e2e018f456bbbd28f7b0278b579fd1a"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/TimelineTimebase.class": {
+      "origin": "tested-sdk",
+      "sha256": "0023db97c7c5c460dd9adce363f0bb9059aa9c22f26aa3336d107450300c572d"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/VisualClip$1.class": {
+      "origin": "tested-sdk",
+      "sha256": "d352b17c191f38c5ab8aba42e268610558d2a2656d033383b55d131102c0985e"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/VisualClip$Material.class": {
+      "origin": "tested-sdk",
+      "sha256": "4fd453732684d0e216e838af7eb21a0cd119f361acab6fbd2c36a44a0a3531c3"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/VisualClip$Target.class": {
+      "origin": "tested-sdk",
+      "sha256": "af14afe72f550bcc2d2d3f4ee61f57cf5897c05df4025563c0da94d535b0555d"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/VisualClip$Transform.class": {
+      "origin": "tested-sdk",
+      "sha256": "2a3bb96167583d7b73cbb98fee3852be003529816bafcf95b616611568216a5a"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/VisualClip.class": {
+      "origin": "tested-sdk",
+      "sha256": "1a866178adda53abacaa0751602724b871df5fe761de20253298eaf6dbad64c2"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/VisualClipCodec.class": {
+      "origin": "tested-sdk",
+      "sha256": "e50fc296e4febbf867f9cda7a57e6c25848a287f0f8ca69f4fc24834cf4e93a9"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/VisualFrame$TargetPose.class": {
+      "origin": "tested-sdk",
+      "sha256": "e1d29e4fc05ba7774cc30084000a5180493d2fb5518c3d3de99e3a6a677dd60d"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/VisualFrame.class": {
+      "origin": "tested-sdk",
+      "sha256": "4088b1e382c159a9ce1f7f9ac6e9a84fcb1e5066eb233c418f8ea591efa70a1d"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/VisualPlan$Binding.class": {
+      "origin": "tested-sdk",
+      "sha256": "d8722dda26b3ef93933ce160841273f73b3adb8a30c974dbc21f8f15cc484124"
+    },
+    "com/miaokatze/miaokatzecore/api/animation/VisualPlan.class": {
+      "origin": "tested-sdk",
+      "sha256": "1d428c9c863d12f30faed239d28c62ba4f55d17bf9508dcef8d8cea597446da8"
+    },
+    "com/miaokatze/miaokatzecore/client/animation/AnimationSession$TrustedHost.class": {
+      "origin": "tested-sdk",
+      "sha256": "e199a91ad834dd3650278cb41d4cae15becae7f6cd8602492bb3c4f205f69146"
+    },
+    "com/miaokatze/miaokatzecore/client/animation/AnimationSession.class": {
+      "origin": "tested-sdk",
+      "sha256": "0f5253f1caaab5f77dcb05c81b4538d920a82aa6c5a221374b3fcd89f328e6e3"
+    },
+    "com/miaokatze/miaokatzecore/client/animation/ResourceOwner$1.class": {
+      "origin": "tested-sdk",
+      "sha256": "4e34e5fe14e7fb3a126f2030c57c2f26461ec268428733d95efbacb10ef8c68d"
+    },
+    "com/miaokatze/miaokatzecore/client/animation/ResourceOwner$Handle.class": {
+      "origin": "tested-sdk",
+      "sha256": "ef94464924f7ad51c4b1596d2c8e48cea6936d8cc7f093b3605ff5a6dee961e0"
+    },
+    "com/miaokatze/miaokatzecore/client/animation/ResourceOwner.class": {
+      "origin": "tested-sdk",
+      "sha256": "7feb298a88bd78dee8149019921e3d3c8c73cb9b7a9dc60efca5f475abc69cf0"
+    },
+    "com/miaokatze/miaokatzecore/client/animation/render/SolidBoxRenderer$AngelicaFfp.class": {
+      "origin": "real-dependency-native-compile",
+      "sha256": "fb0485cf577b2aef49c3221059d32a0066eaaaa1fbfab70b426c393bd0c7e3ff"
+    },
+    "com/miaokatze/miaokatzecore/client/animation/render/SolidBoxRenderer$Draw.class": {
+      "origin": "real-dependency-native-compile",
+      "sha256": "627ac4e0bb2af731f493263deec79b37ce40237e5179d583a90f324c92f124f4"
+    },
+    "com/miaokatze/miaokatzecore/client/animation/render/SolidBoxRenderer.class": {
+      "origin": "real-dependency-native-compile",
+      "sha256": "7d3aeba8fe3211486ef3e74635a7d24dbfdf2c6a82df9537b22c825866fef0c2"
+    }
+  },
+  "unchanged_entries": 223,
+  "all_classes_major52": true,
+  "full_gradle_build": "NOT-RUN",
+  "game_runtime": "NOT-RUN",
+  "install_or_publish": false
+}

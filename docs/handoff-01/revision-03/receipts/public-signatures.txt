@@ -1,0 +1,649 @@
+Compiled from "AnimationInstance.java"
+public final class com.miaokatze.miaokatzecore.api.animation.AnimationInstance implements java.lang.AutoCloseable {
+  public final java.lang.String instanceId;
+  public final long playbackGeneration;
+  public com.miaokatze.miaokatzecore.api.animation.AnimationInstance(java.lang.String, long, com.miaokatze.miaokatzecore.api.animation.CompiledPlan);
+  public com.miaokatze.miaokatzecore.api.animation.CompiledPlan plan();
+  public com.miaokatze.miaokatzecore.api.animation.SampledFrame evaluate(com.miaokatze.miaokatzecore.api.animation.EvaluationInput);
+  public void replace(com.miaokatze.miaokatzecore.api.animation.CompiledPlan);
+  public void replaceFrom(java.io.InputStream) throws java.io.IOException;
+  public void close();
+}
+Compiled from "AnimationV1.java"
+public final class com.miaokatze.miaokatzecore.api.animation.AnimationV1$Cue {
+  public final java.lang.String id;
+  public final long timeMs;
+  public final long validForMs;
+  public final com.miaokatze.miaokatzecore.api.animation.AnimationV1$CueKind kind;
+  public final com.miaokatze.miaokatzecore.api.animation.AnimationV1$LatePolicy latePolicy;
+  public final com.miaokatze.miaokatzecore.api.animation.ResourceId resource;
+  public com.miaokatze.miaokatzecore.api.animation.AnimationV1$Cue(java.lang.String, long, com.miaokatze.miaokatzecore.api.animation.AnimationV1$CueKind, com.miaokatze.miaokatzecore.api.animation.AnimationV1$LatePolicy, long, com.miaokatze.miaokatzecore.api.animation.ResourceId);
+}
+Compiled from "AnimationV1.java"
+public final class com.miaokatze.miaokatzecore.api.animation.AnimationV1$CueKind extends java.lang.Enum<com.miaokatze.miaokatzecore.api.animation.AnimationV1$CueKind> {
+  public static final com.miaokatze.miaokatzecore.api.animation.AnimationV1$CueKind SOUND;
+  public static final com.miaokatze.miaokatzecore.api.animation.AnimationV1$CueKind CAMERA_IMPULSE;
+  public static com.miaokatze.miaokatzecore.api.animation.AnimationV1$CueKind[] values();
+  public static com.miaokatze.miaokatzecore.api.animation.AnimationV1$CueKind valueOf(java.lang.String);
+}
+Compiled from "AnimationV1.java"
+public final class com.miaokatze.miaokatzecore.api.animation.AnimationV1$Document {
+  public final java.lang.String id;
+  public final int schemaMinor;
+  public final long durationMs;
+  public final long seed;
+  public final java.util.List<com.miaokatze.miaokatzecore.api.animation.AnimationV1$Track> tracks;
+  public final java.util.List<com.miaokatze.miaokatzecore.api.animation.AnimationV1$Cue> cues;
+  public final java.util.Set<com.miaokatze.miaokatzecore.api.animation.ResourceId> resources;
+  public com.miaokatze.miaokatzecore.api.animation.AnimationV1$Document(java.lang.String, int, long, long, java.util.List<com.miaokatze.miaokatzecore.api.animation.AnimationV1$Track>, java.util.List<com.miaokatze.miaokatzecore.api.animation.AnimationV1$Cue>, java.util.Set<com.miaokatze.miaokatzecore.api.animation.ResourceId>);
+}
+Compiled from "AnimationV1.java"
+public final class com.miaokatze.miaokatzecore.api.animation.AnimationV1$Interpolation extends java.lang.Enum<com.miaokatze.miaokatzecore.api.animation.AnimationV1$Interpolation> {
+  public static final com.miaokatze.miaokatzecore.api.animation.AnimationV1$Interpolation STEP;
+  public static final com.miaokatze.miaokatzecore.api.animation.AnimationV1$Interpolation LINEAR;
+  public static final com.miaokatze.miaokatzecore.api.animation.AnimationV1$Interpolation SMOOTHSTEP;
+  public static com.miaokatze.miaokatzecore.api.animation.AnimationV1$Interpolation[] values();
+  public static com.miaokatze.miaokatzecore.api.animation.AnimationV1$Interpolation valueOf(java.lang.String);
+}
+Compiled from "AnimationV1.java"
+public final class com.miaokatze.miaokatzecore.api.animation.AnimationV1$Key {
+  public final long timeMs;
+  public final double value;
+  public final com.miaokatze.miaokatzecore.api.animation.AnimationV1$Interpolation interpolation;
+  public com.miaokatze.miaokatzecore.api.animation.AnimationV1$Key(long, double, com.miaokatze.miaokatzecore.api.animation.AnimationV1$Interpolation);
+}
+Compiled from "AnimationV1.java"
+public final class com.miaokatze.miaokatzecore.api.animation.AnimationV1$LatePolicy extends java.lang.Enum<com.miaokatze.miaokatzecore.api.animation.AnimationV1$LatePolicy> {
+  public static final com.miaokatze.miaokatzecore.api.animation.AnimationV1$LatePolicy DROP;
+  public static final com.miaokatze.miaokatzecore.api.animation.AnimationV1$LatePolicy LATEST;
+  public static final com.miaokatze.miaokatzecore.api.animation.AnimationV1$LatePolicy ONCE_IF_CURRENT;
+  public static com.miaokatze.miaokatzecore.api.animation.AnimationV1$LatePolicy[] values();
+  public static com.miaokatze.miaokatzecore.api.animation.AnimationV1$LatePolicy valueOf(java.lang.String);
+}
+Compiled from "AnimationV1.java"
+public final class com.miaokatze.miaokatzecore.api.animation.AnimationV1$Property extends java.lang.Enum<com.miaokatze.miaokatzecore.api.animation.AnimationV1$Property> {
+  public static final com.miaokatze.miaokatzecore.api.animation.AnimationV1$Property X;
+  public static final com.miaokatze.miaokatzecore.api.animation.AnimationV1$Property Y;
+  public static final com.miaokatze.miaokatzecore.api.animation.AnimationV1$Property Z;
+  public static final com.miaokatze.miaokatzecore.api.animation.AnimationV1$Property SCALE;
+  public static final com.miaokatze.miaokatzecore.api.animation.AnimationV1$Property OPACITY;
+  public static final com.miaokatze.miaokatzecore.api.animation.AnimationV1$Property BRIGHTNESS;
+  public static final com.miaokatze.miaokatzecore.api.animation.AnimationV1$Property ROTATION_DEGREES;
+  public static final com.miaokatze.miaokatzecore.api.animation.AnimationV1$Property VISIBILITY;
+  public static final com.miaokatze.miaokatzecore.api.animation.AnimationV1$Property FOV_DEGREES;
+  public final double min;
+  public final double max;
+  public final java.lang.String unit;
+  public static com.miaokatze.miaokatzecore.api.animation.AnimationV1$Property[] values();
+  public static com.miaokatze.miaokatzecore.api.animation.AnimationV1$Property valueOf(java.lang.String);
+  public boolean supports(com.miaokatze.miaokatzecore.api.animation.AnimationV1$Interpolation);
+}
+Compiled from "AnimationV1.java"
+public final class com.miaokatze.miaokatzecore.api.animation.AnimationV1$Track {
+  public final java.lang.String id;
+  public final java.lang.String targetId;
+  public final com.miaokatze.miaokatzecore.api.animation.AnimationV1$Property property;
+  public final java.util.List<com.miaokatze.miaokatzecore.api.animation.AnimationV1$Key> keys;
+  public com.miaokatze.miaokatzecore.api.animation.AnimationV1$Track(java.lang.String, java.lang.String, com.miaokatze.miaokatzecore.api.animation.AnimationV1$Property, java.util.List<com.miaokatze.miaokatzecore.api.animation.AnimationV1$Key>);
+}
+Compiled from "AnimationV1.java"
+public final class com.miaokatze.miaokatzecore.api.animation.AnimationV1 {
+  public static final int MAX_TRACKS;
+  public static final int MAX_KEYS;
+  public static final int MAX_KEYS_PER_TRACK;
+  public static final int MAX_CUES;
+  public static final int MAX_RESOURCES;
+  public static final long MAX_DURATION_MS;
+  public static final long MAX_AGE_MS;
+}
+Compiled from "CompiledPlan.java"
+public final class com.miaokatze.miaokatzecore.api.animation.CompiledPlan {
+  public final com.miaokatze.miaokatzecore.api.animation.AnimationV1$Document document;
+  public final java.lang.String contentHash;
+  public static com.miaokatze.miaokatzecore.api.animation.CompiledPlan compile(com.miaokatze.miaokatzecore.api.animation.AnimationV1$Document);
+  public com.miaokatze.miaokatzecore.api.animation.SampledFrame sample(com.miaokatze.miaokatzecore.api.animation.EvaluationInput);
+}
+Compiled from "EpochKey.java"
+public final class com.miaokatze.miaokatzecore.api.animation.EpochKey {
+  public final long connectionEpoch;
+  public final long worldEpoch;
+  public final long sessionEpoch;
+  public com.miaokatze.miaokatzecore.api.animation.EpochKey(long, long, long);
+  public boolean equals(java.lang.Object);
+  public int hashCode();
+}
+Compiled from "EvaluationInput.java"
+public final class com.miaokatze.miaokatzecore.api.animation.EvaluationInput {
+  public final long localTimeMs;
+  public com.miaokatze.miaokatzecore.api.animation.EvaluationInput(long);
+}
+Compiled from "EventBudget.java"
+public final class com.miaokatze.miaokatzecore.api.animation.EventBudget {
+  public final int maxPerFrame;
+  public final int maxPerSecond;
+  public com.miaokatze.miaokatzecore.api.animation.EventBudget(int, int);
+}
+Compiled from "EventCursor.java"
+class com.miaokatze.miaokatzecore.api.animation.EventCursor$1 implements java.util.Comparator<com.miaokatze.miaokatzecore.api.animation.EventCursor$Occurrence> {
+  public int compare(com.miaokatze.miaokatzecore.api.animation.EventCursor$Occurrence, com.miaokatze.miaokatzecore.api.animation.EventCursor$Occurrence);
+  public int compare(java.lang.Object, java.lang.Object);
+}
+Compiled from "EventCursor.java"
+public final class com.miaokatze.miaokatzecore.api.animation.EventCursor$Dispatch {
+  public final java.util.List<com.miaokatze.miaokatzecore.api.animation.EventCursor$Occurrence> events;
+  public final int scanned;
+  public final int expired;
+  public final int policyDropped;
+  public final int budgetDropped;
+}
+Compiled from "EventCursor.java"
+public final class com.miaokatze.miaokatzecore.api.animation.EventCursor$Occurrence {
+  public final com.miaokatze.miaokatzecore.api.animation.EpochKey epoch;
+  public final java.lang.String instanceId;
+  public final java.lang.String cueId;
+  public final long playbackGeneration;
+  public final long loopOccurrence;
+  public final long absoluteTimeMs;
+  public final com.miaokatze.miaokatzecore.api.animation.AnimationV1$Cue cue;
+}
+Compiled from "EventCursor.java"
+public final class com.miaokatze.miaokatzecore.api.animation.EventCursor implements java.lang.AutoCloseable {
+  public final com.miaokatze.miaokatzecore.api.animation.EpochKey epoch;
+  public final java.lang.String instanceId;
+  public final long playbackGeneration;
+  public com.miaokatze.miaokatzecore.api.animation.EventCursor(com.miaokatze.miaokatzecore.api.animation.EpochKey, java.lang.String, long, com.miaokatze.miaokatzecore.api.animation.AnimationV1$Document, boolean, com.miaokatze.miaokatzecore.api.animation.EventBudget, com.miaokatze.miaokatzecore.api.animation.EventBudget);
+  public com.miaokatze.miaokatzecore.api.animation.EventCursor$Dispatch start(long, boolean, long, long);
+  public com.miaokatze.miaokatzecore.api.animation.EventCursor$Dispatch advance(long, long, long);
+  public void seekSilently(long);
+  public void close();
+}
+Compiled from "LegacyScalarMigrator.java"
+class com.miaokatze.miaokatzecore.api.animation.LegacyScalarMigrator$1 {
+}
+Compiled from "LegacyScalarMigrator.java"
+public final class com.miaokatze.miaokatzecore.api.animation.LegacyScalarMigrator$Result {
+  public final com.miaokatze.miaokatzecore.api.animation.AnimationV1$Document document;
+  public final java.util.List<java.lang.String> warnings;
+}
+Compiled from "LegacyScalarMigrator.java"
+public final class com.miaokatze.miaokatzecore.api.animation.LegacyScalarMigrator$TickKey {
+  public final long tick;
+  public final double value;
+  public com.miaokatze.miaokatzecore.api.animation.LegacyScalarMigrator$TickKey(long, double);
+}
+Compiled from "LegacyScalarMigrator.java"
+public final class com.miaokatze.miaokatzecore.api.animation.LegacyScalarMigrator {
+  public static com.miaokatze.miaokatzecore.api.animation.LegacyScalarMigrator$Result migrateBrightness(java.lang.String, long, long, java.util.List<com.miaokatze.miaokatzecore.api.animation.LegacyScalarMigrator$TickKey>);
+}
+Compiled from "ResourceId.java"
+public final class com.miaokatze.miaokatzecore.api.animation.ResourceId {
+  public static com.miaokatze.miaokatzecore.api.animation.ResourceId parse(java.lang.String);
+  public java.lang.String toString();
+  public int hashCode();
+  public boolean equals(java.lang.Object);
+}
+Compiled from "FeatureAdmission.java"
+class com.miaokatze.miaokatzecore.api.animation.runtime.FeatureAdmission$1 {
+}
+Compiled from "FeatureAdmission.java"
+public final class com.miaokatze.miaokatzecore.api.animation.runtime.FeatureAdmission$Decision {
+  public final com.miaokatze.miaokatzecore.api.animation.runtime.FeatureAdmission$Status status;
+  public final java.util.Set<com.miaokatze.miaokatzecore.api.animation.ResourceId> missingRequired;
+  public final java.util.Set<com.miaokatze.miaokatzecore.api.animation.ResourceId> omittedOptional;
+}
+Compiled from "FeatureAdmission.java"
+public final class com.miaokatze.miaokatzecore.api.animation.runtime.FeatureAdmission$Status extends java.lang.Enum<com.miaokatze.miaokatzecore.api.animation.runtime.FeatureAdmission$Status> {
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.FeatureAdmission$Status SUPPORTED;
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.FeatureAdmission$Status DEGRADED;
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.FeatureAdmission$Status REJECTED;
+  public static com.miaokatze.miaokatzecore.api.animation.runtime.FeatureAdmission$Status[] values();
+  public static com.miaokatze.miaokatzecore.api.animation.runtime.FeatureAdmission$Status valueOf(java.lang.String);
+}
+Compiled from "FeatureAdmission.java"
+public final class com.miaokatze.miaokatzecore.api.animation.runtime.FeatureAdmission {
+  public static com.miaokatze.miaokatzecore.api.animation.runtime.FeatureAdmission$Decision evaluate(java.util.Set<com.miaokatze.miaokatzecore.api.animation.ResourceId>, java.util.Set<com.miaokatze.miaokatzecore.api.animation.ResourceId>, java.util.Set<com.miaokatze.miaokatzecore.api.animation.ResourceId>);
+}
+Compiled from "MetricWindow.java"
+class com.miaokatze.miaokatzecore.api.animation.runtime.MetricWindow$1 {
+}
+Compiled from "MetricWindow.java"
+public final class com.miaokatze.miaokatzecore.api.animation.runtime.MetricWindow$Snapshot {
+  public final long endNanos;
+  public final long windowNanos;
+  public final long coveredSpanNanos;
+  public final long observations;
+  public final long capacityEvictions;
+  public final long timeExpirations;
+  public final long upstreamDropped;
+  public final int samples;
+  public final long p50;
+  public final long p95;
+  public final long p99;
+  public final long max;
+}
+Compiled from "MetricWindow.java"
+public final class com.miaokatze.miaokatzecore.api.animation.runtime.MetricWindow {
+  public com.miaokatze.miaokatzecore.api.animation.runtime.MetricWindow(long, int);
+  public void record(long, long);
+  public void noteUpstreamDropped(long);
+  public com.miaokatze.miaokatzecore.api.animation.runtime.MetricWindow$Snapshot snapshot(long);
+}
+Compiled from "QualityGovernor.java"
+class com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$1 {
+}
+Compiled from "QualityGovernor.java"
+public final class com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Decision {
+  public final com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Tier tier;
+  public final com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Reason reason;
+  public final boolean changed;
+}
+Compiled from "QualityGovernor.java"
+public final class com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Indexed {
+  public com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Indexed(int, int, double, double);
+  public int tierIndex();
+  public void resetTier(int);
+  public void setLocked(boolean);
+  public int observeDemand(int, boolean, double);
+}
+Compiled from "QualityGovernor.java"
+public final class com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Reason extends java.lang.Enum<com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Reason> {
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Reason HELD;
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Reason OVER_BUDGET;
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Reason HEADROOM;
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Reason MISSING_OR_LOSSY;
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Reason TOO_FEW_SAMPLES;
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Reason COOLDOWN;
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Reason LOCKED;
+  public static com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Reason[] values();
+  public static com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Reason valueOf(java.lang.String);
+}
+Compiled from "QualityGovernor.java"
+public final class com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Tier extends java.lang.Enum<com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Tier> {
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Tier OFF;
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Tier LOW;
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Tier MEDIUM;
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Tier HIGH;
+  public static com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Tier[] values();
+  public static com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Tier valueOf(java.lang.String);
+}
+Compiled from "QualityGovernor.java"
+public final class com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor {
+  public com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor(com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Tier, long, long, int, int, int, long);
+  public void setLocked(boolean);
+  public com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor$Decision observe(long, long, long, int, boolean);
+}
+Compiled from "ResourceLedger.java"
+class com.miaokatze.miaokatzecore.api.animation.runtime.ResourceLedger$1 {
+}
+Compiled from "ResourceLedger.java"
+public final class com.miaokatze.miaokatzecore.api.animation.runtime.ResourceLedger$Dimension extends java.lang.Enum<com.miaokatze.miaokatzecore.api.animation.runtime.ResourceLedger$Dimension> {
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.ResourceLedger$Dimension CPU_BYTES;
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.ResourceLedger$Dimension GPU_BYTES;
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.ResourceLedger$Dimension HANDLES;
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.ResourceLedger$Dimension DECODE_PIXELS;
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.ResourceLedger$Dimension VERTICES;
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.ResourceLedger$Dimension JOBS;
+  public static com.miaokatze.miaokatzecore.api.animation.runtime.ResourceLedger$Dimension[] values();
+  public static com.miaokatze.miaokatzecore.api.animation.runtime.ResourceLedger$Dimension valueOf(java.lang.String);
+}
+Compiled from "ResourceLedger.java"
+public final class com.miaokatze.miaokatzecore.api.animation.runtime.ResourceLedger$Lease implements java.lang.AutoCloseable {
+  public boolean active();
+  public void close();
+}
+Compiled from "ResourceLedger.java"
+public final class com.miaokatze.miaokatzecore.api.animation.runtime.ResourceLedger implements java.lang.AutoCloseable {
+  public static final int MAX_LEASES;
+  public com.miaokatze.miaokatzecore.api.animation.runtime.ResourceLedger(long...);
+  public com.miaokatze.miaokatzecore.api.animation.runtime.ResourceLedger$Lease reserve(long...);
+  public long used(com.miaokatze.miaokatzecore.api.animation.runtime.ResourceLedger$Dimension);
+  public int activeLeases();
+  public void close();
+}
+Compiled from "RuntimeGenerations.java"
+class com.miaokatze.miaokatzecore.api.animation.runtime.RuntimeGenerations$1 {
+}
+Compiled from "RuntimeGenerations.java"
+public final class com.miaokatze.miaokatzecore.api.animation.runtime.RuntimeGenerations$Purpose extends java.lang.Enum<com.miaokatze.miaokatzecore.api.animation.runtime.RuntimeGenerations$Purpose> {
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.RuntimeGenerations$Purpose CPU_DECODE;
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.RuntimeGenerations$Purpose GPU_UPLOAD;
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.RuntimeGenerations$Purpose PRESENTATION;
+  public static com.miaokatze.miaokatzecore.api.animation.runtime.RuntimeGenerations$Purpose[] values();
+  public static com.miaokatze.miaokatzecore.api.animation.runtime.RuntimeGenerations$Purpose valueOf(java.lang.String);
+}
+Compiled from "RuntimeGenerations.java"
+public final class com.miaokatze.miaokatzecore.api.animation.runtime.RuntimeGenerations$Ticket {
+  public final com.miaokatze.miaokatzecore.api.animation.runtime.RuntimeGenerations$Purpose purpose;
+  public final long definitionGeneration;
+  public final long assetGeneration;
+  public final long instanceGeneration;
+  public final long contextGeneration;
+}
+Compiled from "RuntimeGenerations.java"
+public final class com.miaokatze.miaokatzecore.api.animation.runtime.RuntimeGenerations implements java.lang.AutoCloseable {
+  public com.miaokatze.miaokatzecore.api.animation.runtime.RuntimeGenerations();
+  public com.miaokatze.miaokatzecore.api.animation.runtime.RuntimeGenerations$Ticket ticket(com.miaokatze.miaokatzecore.api.animation.runtime.RuntimeGenerations$Purpose);
+  public boolean accepts(com.miaokatze.miaokatzecore.api.animation.runtime.RuntimeGenerations$Ticket);
+  public void changedDefinition();
+  public void reloadedAssets();
+  public void replacedInstance();
+  public void changedContext();
+  public void close();
+}
+Compiled from "SessionLifecycle.java"
+class com.miaokatze.miaokatzecore.api.animation.runtime.SessionLifecycle$1 {
+}
+Compiled from "SessionLifecycle.java"
+public final class com.miaokatze.miaokatzecore.api.animation.runtime.SessionLifecycle$State extends java.lang.Enum<com.miaokatze.miaokatzecore.api.animation.runtime.SessionLifecycle$State> {
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.SessionLifecycle$State ACTIVE;
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.SessionLifecycle$State SUSPENDED;
+  public static final com.miaokatze.miaokatzecore.api.animation.runtime.SessionLifecycle$State CLOSED;
+  public static com.miaokatze.miaokatzecore.api.animation.runtime.SessionLifecycle$State[] values();
+  public static com.miaokatze.miaokatzecore.api.animation.runtime.SessionLifecycle$State valueOf(java.lang.String);
+}
+Compiled from "SessionLifecycle.java"
+public final class com.miaokatze.miaokatzecore.api.animation.runtime.SessionLifecycle$Ticket {
+  public final com.miaokatze.miaokatzecore.api.animation.EpochKey epoch;
+  public final long resourceEpoch;
+  public final long documentRevision;
+  public final long jobGeneration;
+}
+Compiled from "SessionLifecycle.java"
+public final class com.miaokatze.miaokatzecore.api.animation.runtime.SessionLifecycle implements java.lang.AutoCloseable {
+  public com.miaokatze.miaokatzecore.api.animation.runtime.SessionLifecycle(com.miaokatze.miaokatzecore.api.animation.EpochKey);
+  public com.miaokatze.miaokatzecore.api.animation.runtime.SessionLifecycle$Ticket ticket();
+  public boolean canPublish(com.miaokatze.miaokatzecore.api.animation.runtime.SessionLifecycle$Ticket);
+  public void changedDocument();
+  public void resourceReload();
+  public void suspend();
+  public void resume();
+  public com.miaokatze.miaokatzecore.api.animation.runtime.SessionLifecycle$State state();
+  public boolean mayRender();
+  public void close();
+}
+Compiled from "SampledFrame.java"
+public final class com.miaokatze.miaokatzecore.api.animation.SampledFrame {
+  public final java.lang.String documentId;
+  public final long localTimeMs;
+  public final java.util.Map<java.lang.String, java.lang.Double> valuesByTrack;
+  public boolean sampledFrom(com.miaokatze.miaokatzecore.api.animation.AnimationV1$Document);
+  public double value(java.lang.String);
+}
+Compiled from "Sampler.java"
+public final class com.miaokatze.miaokatzecore.api.animation.Sampler {
+  public static strictfp com.miaokatze.miaokatzecore.api.animation.SampledFrame sample(com.miaokatze.miaokatzecore.api.animation.AnimationV1$Document, long);
+  public static strictfp double randomUnit(long, java.lang.String, long);
+}
+Compiled from "StrictJsonCodec.java"
+final class com.miaokatze.miaokatzecore.api.animation.StrictJsonCodec$1 implements java.util.Comparator<com.miaokatze.miaokatzecore.api.animation.AnimationV1$Track> {
+  public int compare(com.miaokatze.miaokatzecore.api.animation.AnimationV1$Track, com.miaokatze.miaokatzecore.api.animation.AnimationV1$Track);
+  public int compare(java.lang.Object, java.lang.Object);
+}
+Compiled from "StrictJsonCodec.java"
+final class com.miaokatze.miaokatzecore.api.animation.StrictJsonCodec$2 implements java.util.Comparator<com.miaokatze.miaokatzecore.api.animation.AnimationV1$Cue> {
+  public int compare(com.miaokatze.miaokatzecore.api.animation.AnimationV1$Cue, com.miaokatze.miaokatzecore.api.animation.AnimationV1$Cue);
+  public int compare(java.lang.Object, java.lang.Object);
+}
+Compiled from "StrictJsonCodec.java"
+public final class com.miaokatze.miaokatzecore.api.animation.StrictJsonCodec$CodecException extends java.lang.IllegalArgumentException {
+  public final java.lang.String path;
+  public final java.lang.String code;
+}
+Compiled from "StrictJsonCodec.java"
+final class com.miaokatze.miaokatzecore.api.animation.StrictJsonCodec$Numeric {
+}
+Compiled from "StrictJsonCodec.java"
+final class com.miaokatze.miaokatzecore.api.animation.StrictJsonCodec$Parser {
+}
+Compiled from "StrictJsonCodec.java"
+public final class com.miaokatze.miaokatzecore.api.animation.StrictJsonCodec {
+  public static final int MAX_BYTES;
+  public static final int MAX_DEPTH;
+  public static final int MAX_STRING;
+  public static final int MAX_NUMBER;
+  public static final int MAX_VALUES;
+  public static final java.lang.String FORMAT;
+  public static com.miaokatze.miaokatzecore.api.animation.AnimationV1$Document decode(java.io.InputStream) throws java.io.IOException;
+  public static com.miaokatze.miaokatzecore.api.animation.AnimationV1$Document decode(byte[]);
+  public static byte[] encode(com.miaokatze.miaokatzecore.api.animation.AnimationV1$Document);
+  public static java.lang.String contentHash(com.miaokatze.miaokatzecore.api.animation.AnimationV1$Document);
+}
+Compiled from "TimelineTimebase.java"
+public final class com.miaokatze.miaokatzecore.api.animation.TimelineTimebase {
+  public static final long UNITS_PER_SECOND;
+  public static final long UNITS_PER_MILLISECOND;
+  public static final long UNITS_PER_LEGACY_TICK_20HZ;
+  public static long fromMilliseconds(long);
+  public static long fromLegacyTicks20(long);
+  public static long toMillisecondsFloor(long);
+  public static long toMillisecondsExact(long);
+  public static long frameTimeFloor(long, long, long);
+  public static long frameCountCeiling(long, long, long);
+}
+Compiled from "VisualClip.java"
+class com.miaokatze.miaokatzecore.api.animation.VisualClip$1 {
+}
+Compiled from "VisualClip.java"
+public final class com.miaokatze.miaokatzecore.api.animation.VisualClip$Material {
+  public final java.lang.String id;
+  public final int rgb;
+  public final double opacity;
+  public strictfp com.miaokatze.miaokatzecore.api.animation.VisualClip$Material(java.lang.String, int, double);
+}
+Compiled from "VisualClip.java"
+public final class com.miaokatze.miaokatzecore.api.animation.VisualClip$Target {
+  public final java.lang.String id;
+  public final java.lang.String materialId;
+  public final com.miaokatze.miaokatzecore.api.animation.VisualClip$Transform transform;
+  public strictfp com.miaokatze.miaokatzecore.api.animation.VisualClip$Target(java.lang.String, java.lang.String, com.miaokatze.miaokatzecore.api.animation.VisualClip$Transform);
+}
+Compiled from "VisualClip.java"
+public final class com.miaokatze.miaokatzecore.api.animation.VisualClip$Transform {
+  public final double x;
+  public final double y;
+  public final double z;
+  public final double qx;
+  public final double qy;
+  public final double qz;
+  public final double qw;
+  public final double scaleX;
+  public final double scaleY;
+  public final double scaleZ;
+  public strictfp com.miaokatze.miaokatzecore.api.animation.VisualClip$Transform(double, double, double, double, double, double, double, double, double, double);
+}
+Compiled from "VisualClip.java"
+public final class com.miaokatze.miaokatzecore.api.animation.VisualClip {
+  public static final int MAX_TARGETS;
+  public static final int MAX_MATERIALS;
+  public static final double MAX_SCALE;
+  public static final java.lang.String PRIMITIVE;
+  public static final java.lang.String MATERIAL_KIND;
+  public final com.miaokatze.miaokatzecore.api.animation.AnimationV1$Document scalar;
+  public final java.util.List<com.miaokatze.miaokatzecore.api.animation.VisualClip$Target> targets;
+  public final java.util.List<com.miaokatze.miaokatzecore.api.animation.VisualClip$Material> materials;
+  public strictfp com.miaokatze.miaokatzecore.api.animation.VisualClip(com.miaokatze.miaokatzecore.api.animation.AnimationV1$Document, java.util.List<com.miaokatze.miaokatzecore.api.animation.VisualClip$Target>, java.util.List<com.miaokatze.miaokatzecore.api.animation.VisualClip$Material>);
+  public static strictfp boolean supports(com.miaokatze.miaokatzecore.api.animation.AnimationV1$Property);
+}
+Compiled from "VisualClipCodec.java"
+public final class com.miaokatze.miaokatzecore.api.animation.VisualClipCodec {
+  public static final java.lang.String FORMAT;
+  public static final int MAX_BYTES;
+  public static com.miaokatze.miaokatzecore.api.animation.VisualClip decode(java.io.InputStream) throws java.io.IOException;
+  public static com.miaokatze.miaokatzecore.api.animation.VisualClip decode(byte[]);
+  public static byte[] encode(com.miaokatze.miaokatzecore.api.animation.VisualClip);
+  public static java.lang.String contentHash(com.miaokatze.miaokatzecore.api.animation.VisualClip);
+}
+Compiled from "VisualFrame.java"
+public final class com.miaokatze.miaokatzecore.api.animation.VisualFrame$TargetPose {
+  public final java.lang.String targetId;
+  public final java.lang.String materialId;
+  public final double x;
+  public final double y;
+  public final double z;
+  public final double qx;
+  public final double qy;
+  public final double qz;
+  public final double qw;
+  public final double scaleX;
+  public final double scaleY;
+  public final double scaleZ;
+  public final int rgb;
+  public final double opacity;
+  public final boolean visible;
+  public strictfp double[] matrix();
+}
+Compiled from "VisualFrame.java"
+public final class com.miaokatze.miaokatzecore.api.animation.VisualFrame {
+  public final java.lang.String documentId;
+  public final long localTimeMs;
+  public final java.util.List<com.miaokatze.miaokatzecore.api.animation.VisualFrame$TargetPose> targets;
+  public strictfp boolean sampledFrom(com.miaokatze.miaokatzecore.api.animation.VisualClip);
+}
+Compiled from "VisualPlan.java"
+final class com.miaokatze.miaokatzecore.api.animation.VisualPlan$Binding {
+}
+Compiled from "VisualPlan.java"
+public final class com.miaokatze.miaokatzecore.api.animation.VisualPlan {
+  public final com.miaokatze.miaokatzecore.api.animation.VisualClip clip;
+  public final java.lang.String contentHash;
+  public static strictfp com.miaokatze.miaokatzecore.api.animation.VisualPlan compile(com.miaokatze.miaokatzecore.api.animation.VisualClip);
+  public strictfp com.miaokatze.miaokatzecore.api.animation.VisualFrame evaluate(com.miaokatze.miaokatzecore.api.animation.SampledFrame);
+}
+Compiled from "SceneBody.java"
+public final class com.miaokatze.miaokatzecore.api.miaovision.SceneBody {
+  public final java.lang.String id;
+  public final double halfX;
+  public final double halfY;
+  public final double halfZ;
+  public final double x;
+  public final double y;
+  public final double z;
+  public final double qx;
+  public final double qy;
+  public final double qz;
+  public final double qw;
+  public final double vx;
+  public final double vy;
+  public final double vz;
+  public final double wx;
+  public final double wy;
+  public final double wz;
+  public final boolean sleeping;
+  public final int quietTicks;
+  public com.miaokatze.miaokatzecore.api.miaovision.SceneBody(java.lang.String, double, double, double, double, double, double);
+  public com.miaokatze.miaokatzecore.api.miaovision.SceneBody(java.lang.String, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, boolean);
+  public com.miaokatze.miaokatzecore.api.miaovision.SceneBody(java.lang.String, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, boolean, int);
+  public com.miaokatze.miaokatzecore.api.miaovision.SceneBody withPosition(double, double, double);
+  public com.miaokatze.miaokatzecore.api.miaovision.SceneBody withVelocity(double, double, double, double, double, double);
+  public com.miaokatze.miaokatzecore.api.miaovision.SceneBody withRotation(double, double, double, double);
+  public com.miaokatze.miaokatzecore.api.miaovision.SceneBody withSleeping(boolean);
+  public com.miaokatze.miaokatzecore.api.miaovision.SceneBody withQuietTicks(int);
+  public double extentX();
+  public double extentY();
+  public double extentZ();
+}
+Compiled from "SceneBounds.java"
+public final class com.miaokatze.miaokatzecore.api.miaovision.SceneBounds {
+  public final double minX;
+  public final double minY;
+  public final double minZ;
+  public final double maxX;
+  public final double maxY;
+  public final double maxZ;
+  public com.miaokatze.miaokatzecore.api.miaovision.SceneBounds(double, double, double, double, double, double);
+  public void validate(com.miaokatze.miaokatzecore.api.miaovision.SceneBody);
+}
+Compiled from "ScenePresentation.java"
+final class com.miaokatze.miaokatzecore.api.miaovision.ScenePresentation$1 implements com.miaokatze.miaokatzecore.api.miaovision.ScenePresentation {
+}
+Compiled from "ScenePresentation.java"
+public interface com.miaokatze.miaokatzecore.api.miaovision.ScenePresentation {
+  public static final com.miaokatze.miaokatzecore.api.miaovision.ScenePresentation VISIBLE;
+  public boolean visible(java.lang.String);
+  public float opacity(java.lang.String);
+}
+Compiled from "SceneSimulation.java"
+public final class com.miaokatze.miaokatzecore.api.miaovision.SceneSimulation$ContactModel extends java.lang.Enum<com.miaokatze.miaokatzecore.api.miaovision.SceneSimulation$ContactModel> {
+  public static final com.miaokatze.miaokatzecore.api.miaovision.SceneSimulation$ContactModel CONSERVATIVE_AABB;
+  public static final com.miaokatze.miaokatzecore.api.miaovision.SceneSimulation$ContactModel ORIENTED_BOX;
+  public static strictfp com.miaokatze.miaokatzecore.api.miaovision.SceneSimulation$ContactModel[] values();
+  public static strictfp com.miaokatze.miaokatzecore.api.miaovision.SceneSimulation$ContactModel valueOf(java.lang.String);
+}
+Compiled from "SceneSimulation.java"
+final class com.miaokatze.miaokatzecore.api.miaovision.SceneSimulation$Moving {
+}
+Compiled from "SceneSimulation.java"
+public final class com.miaokatze.miaokatzecore.api.miaovision.SceneSimulation {
+  public strictfp com.miaokatze.miaokatzecore.api.miaovision.SceneSimulation(java.lang.String, com.miaokatze.miaokatzecore.api.miaovision.SceneBounds);
+  public strictfp com.miaokatze.miaokatzecore.api.miaovision.SceneSimulation(java.lang.String, com.miaokatze.miaokatzecore.api.miaovision.SceneBounds, com.miaokatze.miaokatzecore.api.miaovision.SceneSimulation$ContactModel);
+  public strictfp void setEnabled(boolean);
+  public strictfp boolean isEnabled();
+  public strictfp boolean isSettled();
+  public strictfp int size();
+  public strictfp long revision();
+  public strictfp long tick();
+  public strictfp com.miaokatze.miaokatzecore.api.miaovision.SceneBounds bounds();
+  public strictfp void put(com.miaokatze.miaokatzecore.api.miaovision.SceneBody);
+  public strictfp boolean remove(java.lang.String);
+  public strictfp void wake();
+  public strictfp boolean step();
+  public strictfp com.miaokatze.miaokatzecore.api.miaovision.SceneSnapshot snapshot();
+  public strictfp void restore(com.miaokatze.miaokatzecore.api.miaovision.SceneSnapshot);
+}
+Compiled from "SceneSnapshot.java"
+public final class com.miaokatze.miaokatzecore.api.miaovision.SceneSnapshot {
+  public static final int SCHEMA_VERSION;
+  public static final int MAX_BODIES;
+  public final int schemaVersion;
+  public final java.lang.String layoutId;
+  public final long revision;
+  public final long tick;
+  public final java.util.List<com.miaokatze.miaokatzecore.api.miaovision.SceneBody> bodies;
+  public com.miaokatze.miaokatzecore.api.miaovision.SceneSnapshot(java.lang.String, long, long, java.util.List<com.miaokatze.miaokatzecore.api.miaovision.SceneBody>);
+  public com.miaokatze.miaokatzecore.api.miaovision.SceneSnapshot(int, java.lang.String, long, long, java.util.List<com.miaokatze.miaokatzecore.api.miaovision.SceneBody>);
+  public boolean isNewerThan(com.miaokatze.miaokatzecore.api.miaovision.SceneSnapshot);
+}
+Compiled from "AnimationSession.java"
+public interface com.miaokatze.miaokatzecore.client.animation.AnimationSession$TrustedHost extends java.lang.AutoCloseable {
+  public abstract void present(com.miaokatze.miaokatzecore.api.animation.SampledFrame) throws java.lang.Exception;
+  public abstract void stopTransientEffects() throws java.lang.Exception;
+  public abstract void close() throws java.lang.Exception;
+}
+Compiled from "AnimationSession.java"
+public final class com.miaokatze.miaokatzecore.client.animation.AnimationSession implements java.lang.AutoCloseable {
+  public com.miaokatze.miaokatzecore.client.animation.AnimationSession(com.miaokatze.miaokatzecore.api.animation.EpochKey, com.miaokatze.miaokatzecore.api.animation.AnimationV1$Document, com.miaokatze.miaokatzecore.client.animation.AnimationSession$TrustedHost);
+  public com.miaokatze.miaokatzecore.api.animation.runtime.SessionLifecycle$State state();
+  public com.miaokatze.miaokatzecore.api.animation.runtime.RuntimeGenerations$Ticket ticket(com.miaokatze.miaokatzecore.api.animation.runtime.RuntimeGenerations$Purpose);
+  public boolean accepts(com.miaokatze.miaokatzecore.api.animation.runtime.RuntimeGenerations$Ticket);
+  public com.miaokatze.miaokatzecore.client.animation.ResourceOwner resources();
+  public com.miaokatze.miaokatzecore.api.animation.SampledFrame presentedFrame();
+  public boolean present(long) throws java.lang.Exception;
+  public boolean seek(long) throws java.lang.Exception;
+  public void suspend() throws java.lang.Exception;
+  public void resume();
+  public void replaceDocument(com.miaokatze.miaokatzecore.api.animation.AnimationV1$Document) throws java.lang.Exception;
+  public void resourceReload() throws java.lang.Exception;
+  public void contextChanged() throws java.lang.Exception;
+  public void close() throws java.lang.Exception;
+}
+Compiled from "ResourceOwner.java"
+class com.miaokatze.miaokatzecore.client.animation.ResourceOwner$1 {
+}
+Compiled from "ResourceOwner.java"
+public final class com.miaokatze.miaokatzecore.client.animation.ResourceOwner$Handle<T> implements java.lang.AutoCloseable {
+  public boolean owned();
+  public boolean valid();
+  public T get();
+  public void close() throws java.lang.Exception;
+}
+Compiled from "ResourceOwner.java"
+public final class com.miaokatze.miaokatzecore.client.animation.ResourceOwner implements java.lang.AutoCloseable {
+  public static final int MAX_HANDLES;
+  public com.miaokatze.miaokatzecore.client.animation.ResourceOwner(com.miaokatze.miaokatzecore.api.animation.runtime.RuntimeGenerations);
+  public <T extends java.lang.AutoCloseable> com.miaokatze.miaokatzecore.client.animation.ResourceOwner$Handle<T> own(com.miaokatze.miaokatzecore.api.animation.runtime.RuntimeGenerations$Ticket, T, com.miaokatze.miaokatzecore.api.animation.runtime.ResourceLedger$Lease);
+  public <T> com.miaokatze.miaokatzecore.client.animation.ResourceOwner$Handle<T> borrow(com.miaokatze.miaokatzecore.api.animation.runtime.RuntimeGenerations$Ticket, T);
+  public int activeHandles();
+  public int failedReleases();
+  public void retireInvalidated() throws java.lang.Exception;
+  public void close() throws java.lang.Exception;
+}

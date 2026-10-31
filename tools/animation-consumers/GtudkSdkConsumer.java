@@ -7,6 +7,10 @@ import com.miaokatze.miaokatzecore.api.animation.SampledFrame;
 import com.miaokatze.miaokatzecore.api.animation.Sampler;
 import com.miaokatze.miaokatzecore.api.animation.StrictJsonCodec;
 import com.miaokatze.miaokatzecore.api.animation.TimelineTimebase;
+import com.miaokatze.miaokatzecore.api.animation.VisualClip;
+import com.miaokatze.miaokatzecore.api.animation.VisualClipCodec;
+import com.miaokatze.miaokatzecore.api.animation.VisualFrame;
+import com.miaokatze.miaokatzecore.api.animation.VisualPlan;
 
 /** Independent editor/export client of the one SDK; no shadow Core types. */
 public final class GtudkSdkConsumer {
@@ -28,6 +32,18 @@ public final class GtudkSdkConsumer {
         if (!StrictJsonCodec.contentHash(draft).equals(StrictJsonCodec.contentHash(reopened))) {
             throw new AssertionError("Save/reopen changed canonical content");
         }
-        System.out.println("PASS GTUDK SDK save/reopen, exact seed, 60fps sample and definition identity");
+        VisualClip visual = new VisualClip(reopened,
+            Collections.singletonList(new VisualClip.Target("ring", "paint",
+                new VisualClip.Transform(0, 0, 0, 0, 0, 0, 1, 1, 1, 1))),
+            Collections.singletonList(new VisualClip.Material("paint", 0x33aaff, 1.0)));
+        VisualClip visualReopened = VisualClipCodec.decode(VisualClipCodec.encode(visual));
+        if (!VisualClipCodec.contentHash(visual).equals(VisualClipCodec.contentHash(visualReopened))) {
+            throw new AssertionError("Visual save/reopen changed canonical content");
+        }
+        VisualFrame visualFrame = VisualPlan.compile(visual).evaluate(frame);
+        if (!visualFrame.sampledFrom(visual) || visualFrame.sampledFrom(visualReopened)) {
+            throw new AssertionError("Visual frame lost exact complete definition identity");
+        }
+        System.out.println("PASS GTUDK SDK scalar/visual save/reopen, exact seed, absolute time and definition identity");
     }
 }

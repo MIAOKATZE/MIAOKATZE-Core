@@ -3,6 +3,7 @@ import java.util.Collections;
 import com.miaokatze.miaokatzecore.api.animation.ResourceId;
 import com.miaokatze.miaokatzecore.api.animation.runtime.FeatureAdmission;
 import com.miaokatze.miaokatzecore.api.animation.runtime.MetricWindow;
+import com.miaokatze.miaokatzecore.api.animation.runtime.QualityGovernor;
 import com.miaokatze.miaokatzecore.api.animation.runtime.RuntimeGenerations;
 
 /** Independent presentation/diagnostic client; no authority, world or network mutations. */
@@ -26,7 +27,13 @@ public final class OutpostSdkConsumer {
         if (window.snapshot(0).p95 != -1) throw new AssertionError("Missing sample reported as zero");
         window.record(1, 0);
         if (window.snapshot(1).p95 != 0) throw new AssertionError("True zero lost");
+        QualityGovernor.Indexed quality = new QualityGovernor.Indexed(0, 5, 0.25, 3);
+        if (quality.observeDemand(4, false, 0.25) != 1) throw new AssertionError("Five-tier step changed");
+        quality.setLocked(true);
+        if (quality.observeDemand(4, false, 10) != 1) throw new AssertionError("Capture quality was not frozen");
+        quality.setLocked(false);
+        if (quality.observeDemand(0, true, 3) != 0) throw new AssertionError("Recovery window changed");
         generations.close();
-        System.out.println("PASS Outpost SDK capability gate, generation fence and missing/zero distinction");
+        System.out.println("PASS Outpost SDK capability, generation, missing/zero and five-tier capture quality");
     }
 }

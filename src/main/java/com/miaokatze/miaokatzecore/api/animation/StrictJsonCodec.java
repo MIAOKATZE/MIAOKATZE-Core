@@ -56,6 +56,10 @@ public final class StrictJsonCodec {
      * allocates DTOs before EOF.
      */
     public static AnimationV1.Document decode(InputStream input) throws IOException {
+        return decode(readBounded(input));
+    }
+
+    static byte[] readBounded(InputStream input) throws IOException {
         if (input == null)
             throw error("$", "BYTE_LIMIT", "missing input");
         ByteArrayOutputStream bytes = new ByteArrayOutputStream(8192);
@@ -64,7 +68,7 @@ public final class StrictJsonCodec {
         while (true) {
             int read = input.read(chunk, 0, Math.min(chunk.length, MAX_BYTES - total + 1));
             if (read == -1)
-                return decode(bytes.toByteArray());
+                return bytes.toByteArray();
             if (read == 0)
                 throw new IOException("input stream made no progress");
             total += read;
@@ -75,6 +79,10 @@ public final class StrictJsonCodec {
     }
 
     public static AnimationV1.Document decode(byte[] bytes) {
+        return decodeParsed(parse(bytes));
+    }
+
+    static Object parse(byte[] bytes) {
         if (bytes == null || bytes.length > MAX_BYTES)
             throw error("$", "BYTE_LIMIT", "missing or oversized input");
         String text;
@@ -84,7 +92,11 @@ public final class StrictJsonCodec {
         } catch (CharacterCodingException e) {
             throw error("$", "UTF8", "malformed UTF-8");
         }
-        Map<String, Object> root = object(new Parser(text).parse(), "$");
+        return new Parser(text).parse();
+    }
+
+    static AnimationV1.Document decodeParsed(Object parsed) {
+        Map<String, Object> root = object(parsed, "$");
         fields(root, "$", "format", "schemaVersion", "id", "durationMs", "seed", "resources", "tracks", "cues");
         if (!FORMAT.equals(string(root.get("format"), "$.format")))
             throw error("$.format", "FORMAT", "not the V0 scalar format");
@@ -250,8 +262,12 @@ public final class StrictJsonCodec {
     }
 
     public static String contentHash(AnimationV1.Document document) {
+        return sha256(encode(document));
+    }
+
+    static String sha256(byte[] bytes) {
         try {
-            byte[] digest = MessageDigest.getInstance("SHA-256").digest(encode(document));
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(bytes);
             StringBuilder out = new StringBuilder(64);
             for (byte b : digest) {
                 out.append(Character.forDigit((b >>> 4) & 15, 16));
@@ -263,7 +279,7 @@ public final class StrictJsonCodec {
         }
     }
 
-    private static void quote(StringBuilder out, String value) {
+    static void quote(StringBuilder out, String value) {
         out.append('"');
         for (int i = 0; i < value.length(); i++) {
             char c = value.charAt(i);
@@ -286,14 +302,14 @@ public final class StrictJsonCodec {
     }
 
     @SuppressWarnings("unchecked")
-    private static Map<String, Object> object(Object value, String path) {
+    static Map<String, Object> object(Object value, String path) {
         if (!(value instanceof Map))
             throw error(path, "TYPE", "object required");
         return (Map<String, Object>) value;
     }
 
     @SuppressWarnings("unchecked")
-    private static List<Object> array(Object value, String path, int max) {
+    static List<Object> array(Object value, String path, int max) {
         if (!(value instanceof List))
             throw error(path, "TYPE", "array required");
         List<Object> a = (List<Object>) value;
@@ -302,13 +318,13 @@ public final class StrictJsonCodec {
         return a;
     }
 
-    private static String string(Object value, String path) {
+    static String string(Object value, String path) {
         if (!(value instanceof String))
             throw error(path, "TYPE", "string required");
         return (String) value;
     }
 
-    private static void fields(Map<String, Object> map, String path, String... fields) {
+    static void fields(Map<String, Object> map, String path, String... fields) {
         Set<String> expected = new HashSet<String>(Arrays.asList(fields));
         for (String key : map.keySet())
             if (!expected.contains(key))
@@ -328,7 +344,7 @@ public final class StrictJsonCodec {
         }
     }
 
-    private static long integer(Object value, String path) {
+    static long integer(Object value, String path) {
         if (!(value instanceof Numeric))
             throw error(path, "TYPE", "integer required");
         String token = ((Numeric) value).text;
@@ -341,7 +357,7 @@ public final class StrictJsonCodec {
         }
     }
 
-    private static double decimal(Object value, String path) {
+    static double decimal(Object value, String path) {
         if (!(value instanceof Numeric))
             throw error(path, "TYPE", "number required");
         double n = Double.parseDouble(((Numeric) value).text);

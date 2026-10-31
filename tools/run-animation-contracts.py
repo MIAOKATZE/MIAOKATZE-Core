@@ -49,8 +49,11 @@ if b'"1.8.' not in version:
     raise SystemExit("This receipt requires an actual JDK/JRE 8; choose --jdk-home explicitly.")
 run("javac-version", [tool("javac"), "-version"])
 base = "src/main/java/com/miaokatze/miaokatzecore/"
-sources = sorted(p for directory in ["api/animation", "client/animation", "api/miaovision"]
-                 for p in (ROOT / (base + directory)).rglob("*.java"))
+# Native renderers under client/animation/render require real Minecraft/LWJGL dependencies.
+# This SDK contains only pure models and the direct, owner-driven client lifecycle seams.
+sources = sorted([p for directory in ["api/animation", "api/miaovision"]
+                  for p in (ROOT / (base + directory)).rglob("*.java")]
+                 + list((ROOT / (base + "client/animation")).glob("*.java")))
 test_root = ROOT / "src/test/java/com/miaokatze/miaokatzecore/api/animation"
 tests = sorted(test_root.rglob("*.java"))
 if not sources or not tests:
@@ -82,7 +85,7 @@ with zipfile.ZipFile(sdk, "w", compression=zipfile.ZIP_DEFLATED) as archive:
 test_classes = output / "test-classes"
 compile_sources("contract-compile", tests, test_classes, sdk)
 classpath = str(sdk) + os.pathsep + str(test_classes)
-for suite in ["AnimationContracts", "RuntimeContracts"]:
+for suite in ["AnimationContracts", "RuntimeContracts", "VisualContracts", "QualityDemandContracts"]:
     run(suite, [tool("java"), "-Xmx256m", "-cp", classpath,
                 "com.miaokatze.miaokatzecore.api.animation." + suite])
 consumer_sources = sorted((ROOT / "tools/animation-consumers").glob("*.java"))

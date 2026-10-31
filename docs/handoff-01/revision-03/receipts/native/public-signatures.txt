@@ -1,0 +1,6 @@
+Compiled from "SolidBoxRenderer.java"
+public final class com.miaokatze.miaokatzecore.client.animation.render.SolidBoxRenderer implements java.lang.AutoCloseable {
+  public com.miaokatze.miaokatzecore.client.animation.render.SolidBoxRenderer();
+  public void render(com.miaokatze.miaokatzecore.api.animation.VisualFrame, com.miaokatze.miaokatzecore.client.miaovision.SceneViewport, com.miaokatze.miaokatzecore.api.camera.CameraPose, com.miaokatze.miaokatzecore.api.camera.OrthographicProjection);
+  public void close();
+}

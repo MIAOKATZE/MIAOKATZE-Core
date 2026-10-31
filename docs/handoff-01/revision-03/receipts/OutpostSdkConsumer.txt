@@ -1,0 +1,1 @@
+PASS Outpost SDK capability, generation, missing/zero and five-tier capture quality

@@ -1,0 +1,1 @@
+QualityDemandContracts PASS (42 assertions)

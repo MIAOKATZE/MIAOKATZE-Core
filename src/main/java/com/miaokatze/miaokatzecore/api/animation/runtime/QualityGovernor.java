@@ -20,6 +20,90 @@ public final class QualityGovernor {
         }
     }
 
+    /**
+     * Host-defined decorative tiers, ordered from highest quality (index 0) to lowest.
+     * The host supplies its filtered demand and recovery gate; this instance alone owns
+     * the tier and sustained-pressure/recovery timers. It does not interpret frame intervals
+     * as CPU/GPU measurements. The existing four-tier window policy is independent and unchanged.
+     */
+    public static final class Indexed {
+
+        private final Thread owner = Thread.currentThread();
+        private final int tierCount;
+        private final double downSeconds, upSeconds;
+        private int tier;
+        private boolean locked;
+        private double pressureSeconds, recoverySeconds;
+
+        public Indexed(int initialIndex, int tierCount, double downSeconds, double upSeconds) {
+            if (tierCount < 1 || initialIndex < 0 || initialIndex >= tierCount
+                || !Double.isFinite(downSeconds) || downSeconds <= 0
+                || !Double.isFinite(upSeconds) || upSeconds <= 0)
+                throw new IllegalArgumentException("indexed quality policy");
+            tier = initialIndex;
+            this.tierCount = tierCount;
+            this.downSeconds = downSeconds;
+            this.upSeconds = upSeconds;
+        }
+
+        public int tierIndex() {
+            checkOwner();
+            return tier;
+        }
+
+        /** Clears both timers. A lock preserves the current tier even across host resets. */
+        public void resetTier(int index) {
+            checkOwner();
+            checkIndex(index);
+            if (!locked) tier = index;
+            pressureSeconds = recoverySeconds = 0;
+        }
+
+        /** Locks/unlocks the current tier and discards both timers; no pressure is carried across a lock. */
+        public void setLocked(boolean value) {
+            checkOwner();
+            locked = value;
+            pressureSeconds = recoverySeconds = 0;
+        }
+
+        /**
+         * One step at most per observation; excess elapsed time is discarded after a step.
+         * Recovery requires demand at or below the current tier and the host recovery gate.
+         * Seconds are finite and nonnegative; missing/invalid samples must instead reset the
+         * host history and call resetTier(tierIndex()). Locked observations never accumulate time.
+         */
+        public int observeDemand(int wantedIndex, boolean canRecover, double seconds) {
+            checkOwner();
+            checkIndex(wantedIndex);
+            if (!Double.isFinite(seconds) || seconds < 0) throw new IllegalArgumentException("quality seconds");
+            if (locked) return tier;
+            if (wantedIndex > tier) {
+                recoverySeconds = 0;
+                pressureSeconds += seconds;
+                if (pressureSeconds >= downSeconds) {
+                    tier++;
+                    pressureSeconds = 0;
+                }
+            } else {
+                pressureSeconds = 0;
+                recoverySeconds = tier > 0 && canRecover ? recoverySeconds + seconds : 0;
+                if (recoverySeconds >= upSeconds) {
+                    tier--;
+                    recoverySeconds = 0;
+                }
+            }
+            return tier;
+        }
+
+        private void checkIndex(int index) {
+            if (index < 0 || index >= tierCount) throw new IllegalArgumentException("quality tier index");
+        }
+
+        private void checkOwner() {
+            if (Thread.currentThread() != owner) throw new IllegalStateException("owner thread required");
+        }
+    }
+
     private final Thread owner = Thread.currentThread();
     private final long lowNanos, highNanos, cooldownNanos;
     private final int minimumSamples, downWindows, upWindows;

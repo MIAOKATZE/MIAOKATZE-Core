@@ -32,7 +32,9 @@ tasks.named("check") { dependsOn("runCoreContracts") }
 
 mapOf(
     "runAnimationContracts" to "com.miaokatze.miaokatzecore.api.animation.AnimationContracts",
-    "runAnimationRuntimeContracts" to "com.miaokatze.miaokatzecore.api.animation.RuntimeContracts"
+    "runAnimationRuntimeContracts" to "com.miaokatze.miaokatzecore.api.animation.RuntimeContracts",
+    "runVisualAnimationContracts" to "com.miaokatze.miaokatzecore.api.animation.VisualContracts",
+    "runQualityDemandContracts" to "com.miaokatze.miaokatzecore.api.animation.QualityDemandContracts"
 ).forEach { (taskName, entryPoint) ->
     tasks.register<JavaExec>(taskName) {
         group = "verification"

@@ -8,7 +8,7 @@ Minecraft 1.7.10 / Forge 10.13.4.1614 / Java 8 的模块化基础库。当前主
 
 [历史 RC2 普通 JAR 0.1.28](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.28/miaokatzecore-0.1.28.jar) · [SHA-256](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.28/miaokatzecore-0.1.28.jar.sha256) · [历史 dev JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.28/miaokatzecore-0.1.28-dev.jar) · [历史 sources JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.28/miaokatzecore-0.1.28-sources.jar)
 
-以上为保留不变的 RC2 发布物，不是正式版 0.2.0 下载入口。0.2.0 本轮仍为候选，完成正式 Tag/Maven 发布后再使用下列集成坐标。
+以上为保留不变的 RC2 发布物，不是正式版下载入口。面向 GTNH 2.9.0 正式版的版本范围为 **0.2.0 ~ +**；当前 0.2.0 仍为待发布草稿，完成 Maven 发布后再使用下列精确集成坐标。
 
 客户端和服务端安装同一版 Core。同一 JAR 包含普通 Forge Mod 和极小的 FML early loader，复用整合包 UniMixins 启动机制，不携带另一套 Mixin bootstrap。专服不选择客户端 Mixin。通用数学与所有权契约不依赖 Minecraft/OpenGL；client 包只在客户端调用。当前适配面向 **GTNH 2.9.0 正式版**，精确开发依赖为 GT5U 5.09.54.264、MUI2 2.3.94、GTNHLib 0.11.54、NEI 2.8.171 与 Angelica 2.2.42；使用相应适配功能的 Mod 负责提供该依赖。
 
@@ -19,7 +19,7 @@ repositories { maven { url = "https://raw.githubusercontent.com/MIAOKATZE/MIAOKA
 dependencies { api("com.miaokatze.miaokatzecore:miaokatzecore:0.2.0:dev") { transitive = false } }
 ~~~
 
-正式版系列 Mod 统一以 0.2.0 为最低前置；范围不设上限：
+正式版系列 Mod 的 Core 前置版本范围统一为 **0.2.0 ~ +**（最低 0.2.0，不设上限）：
 
 ~~~properties
 required-after:miaokatzecore@[0.2.0,)

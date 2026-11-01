@@ -18,6 +18,7 @@ public final class RecipeRegistrationContracts {
 
     public static void main(String[] args) {
         orderAndOnce();
+        fixedGtStages();
         invalidAndLate();
         failure("recipes");
         failure("derived");
@@ -28,6 +29,50 @@ public final class RecipeRegistrationContracts {
         failedAdapterUnregisters();
         publicApi();
         System.out.println("RecipeRegistrationContracts: PASS (order, once, failure, empty, FML tick sides, API)");
+    }
+
+    private static void fixedGtStages() {
+        RecipeRegistrationEngine engine = new RecipeRegistrationEngine();
+        List<String> calls = new ArrayList<>();
+        engine.register("first", () -> calls.add("first-main"), () -> calls.add("first-derived"));
+        engine.register("second", () -> calls.add("second-main"), () -> calls.add("second-derived"));
+        Runnable before = () -> calls.add("gt-before"), derived = () -> calls.add("gt-derived"),
+            finish = () -> calls.add("finish");
+        engine.run(before, derived, finish);
+        engine.run(before, derived, finish);
+        check(
+            calls.equals(
+                Arrays.asList(
+                    "gt-before",
+                    "first-main",
+                    "second-main",
+                    "gt-derived",
+                    "first-derived",
+                    "second-derived",
+                    "finish")),
+            "fixed GT stages preserve all-main/derived/finalizer order once");
+        for (String phase : Arrays.asList("gt-before-main", "gt-derived")) {
+            RecipeRegistrationEngine broken = new RecipeRegistrationEngine();
+            List<String> after = new ArrayList<>();
+            RuntimeException cause = new RuntimeException(phase);
+            broken.register("owner", () -> after.add("main"), () -> after.add("derived"));
+            Runnable failure = () -> { throw cause; };
+            IllegalStateException error = expect(
+                IllegalStateException.class,
+                () -> broken.run(
+                    phase.equals("gt-before-main") ? failure : () -> {},
+                    phase.equals("gt-derived") ? failure : () -> {},
+                    () -> after.add("finish")));
+            check(
+                error.getCause() == cause && error.getMessage()
+                    .contains("phase=" + phase),
+                "GT stage failure identity");
+            check(
+                !broken.isComplete() && !after.contains("derived") && !after.contains("finish"),
+                "GT stage failure stops downstream work");
+            broken.run(before, derived, finish);
+            check(!broken.isComplete(), "failed GT stage cannot replay");
+        }
     }
 
     private static void orderAndOnce() {

@@ -3,11 +3,11 @@ package com.miaokatze.miaokatzecore.api.recipe;
 import com.miaokatze.miaokatzecore.api.items.ItemOrderCatalog;
 
 import cpw.mods.fml.common.FMLCommonHandler;
+import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.eventhandler.EventBus;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.relauncher.Side;
-import gregtech.GTMod;
 
 /** Internal FML adapter, separate from the consumer API and free of client-only class references. */
 public final class RecipeRegistrationLifecycle {
@@ -17,12 +17,19 @@ public final class RecipeRegistrationLifecycle {
     private final Side physicalSide;
     private final EventBus bus;
     private final Runnable finalizer;
+    private final boolean autoGtRecipes;
 
     RecipeRegistrationLifecycle(RecipeRegistrationEngine engine, Side physicalSide, EventBus bus, Runnable finalizer) {
+        this(engine, physicalSide, bus, finalizer, false);
+    }
+
+    RecipeRegistrationLifecycle(RecipeRegistrationEngine engine, Side physicalSide, EventBus bus, Runnable finalizer,
+        boolean autoGtRecipes) {
         this.engine = engine;
         this.physicalSide = physicalSide;
         this.bus = bus;
         this.finalizer = finalizer;
+        this.autoGtRecipes = autoGtRecipes;
     }
 
     /** Called once from Core's loadComplete; later loadComplete handlers may still submit callbacks. */
@@ -33,8 +40,8 @@ public final class RecipeRegistrationLifecycle {
         installed = new RecipeRegistrationLifecycle(RecipeRegistration.ENGINE, physicalSide, bus, () -> {
             ItemOrderCatalog.invalidate();
             // GT's common proxy is a no-op on dedicated servers; no NEI client types are linked here.
-            GTMod.proxy.reloadNEICache();
-        });
+            if (Loader.isModLoaded("gregtech")) GTNonCellRecipes.reloadRecipeCache();
+        }, true);
         bus.register(installed);
     }
 
@@ -50,7 +57,11 @@ public final class RecipeRegistrationLifecycle {
 
     private void run() {
         try {
-            engine.run(finalizer);
+            if (autoGtRecipes && Loader.isModLoaded("gregtech")) {
+                // Snapshot only on the real execution tick, after every mod's loadComplete has finished.
+                GTNonCellRecipes gt = new GTNonCellRecipes();
+                engine.run(gt::beforeMain, gt::derive, finalizer);
+            } else engine.run(finalizer);
         } finally {
             bus.unregister(this);
         }

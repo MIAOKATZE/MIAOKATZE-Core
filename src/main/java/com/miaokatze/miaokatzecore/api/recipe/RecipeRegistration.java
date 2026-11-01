@@ -4,7 +4,8 @@ import java.util.List;
 
 /**
  * Process-wide recipe registration. Register callbacks during mod loading; registration never executes them.
- * All main callbacks run in registration order before any derived callbacks, also in registration order.
+ * All main callbacks run in registration order. With GT loaded, Core then derives only their newly added
+ * NonCell recipes using the native GT converter; consumer derived callbacks follow in registration order.
  * Callbacks run synchronously once per JVM, not once per world. Item, block and machine registration stays in
  * the consumer's existing early lifecycle. IDs are stable consumer IDs such as {@code gtit}.
  *

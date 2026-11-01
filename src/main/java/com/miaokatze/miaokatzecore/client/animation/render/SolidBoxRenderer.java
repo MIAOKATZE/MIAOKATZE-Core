@@ -47,6 +47,15 @@ public final class SolidBoxRenderer implements AutoCloseable {
     public SolidBoxRenderer() {}
 
     /**
+     * Reconciles the optional Angelica derived fixed-function program after a caller-owned render scope. Call on the
+     * render thread with its GL context current, after restoring raw GL attributes, matrices and program. This does not
+     * restore raw state and is a no-op when the supported Angelica fixed-function path is not active.
+     */
+    public static void restoreFixedFunctionState() {
+        if (Loader.isModLoaded("angelica") && AngelicaFfp.supported()) AngelicaFfp.restore();
+    }
+
+    /**
      * Clears depth inside the intersection of viewport and enclosing scissor, never color. The caller owns target size,
      * background, MSAA, readback and alpha conversion. Input must be between Tessellator batches with logical FFP
      * program

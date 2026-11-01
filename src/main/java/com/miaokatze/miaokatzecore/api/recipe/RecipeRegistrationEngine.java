@@ -39,6 +39,11 @@ final class RecipeRegistrationEngine {
     }
 
     void run(Runnable finalizeRecipes) {
+        run(null, null, finalizeRecipes);
+    }
+
+    /** Fixed internal GT stages; the lifecycle-independent entry above remains GT-free. */
+    void run(Runnable beforeMain, Runnable gtDerived, Runnable finalizeRecipes) {
         List<Entry> batch;
         synchronized (this) {
             if (state != State.OPEN) return;
@@ -49,7 +54,9 @@ final class RecipeRegistrationEngine {
         boolean complete = false;
         try {
             // External callbacks do not hold the monitor: diagnostics remain readable from worker threads.
+            if (!batch.isEmpty() && beforeMain != null) execute("miaokatzecore", "gt-before-main", beforeMain);
             for (Entry entry : batch) execute(entry.id, "recipes", entry.recipes);
+            if (!batch.isEmpty() && gtDerived != null) execute("miaokatzecore", "gt-derived", gtDerived);
             for (Entry entry : batch) if (entry.derived != null) execute(entry.id, "derived", entry.derived);
             if (!batch.isEmpty()) execute("miaokatzecore", "finalize", finalizeRecipes);
             complete = true;

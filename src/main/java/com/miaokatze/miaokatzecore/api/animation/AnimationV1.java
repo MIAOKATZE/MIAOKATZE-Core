@@ -12,17 +12,24 @@ import java.util.Set;
  * milliseconds.
  */
 public final class AnimationV1 {
+
     public static final int MAX_TRACKS = 512, MAX_KEYS = 65536, MAX_KEYS_PER_TRACK = 4096;
     public static final int MAX_CUES = 128, MAX_RESOURCES = 256;
     public static final long MAX_DURATION_MS = 3600000L, MAX_AGE_MS = 315360000000L;
 
-    private AnimationV1() {
-    }
+    private AnimationV1() {}
 
     public enum Property {
-        X(-1000000, 1000000, "block"), Y(-1000000, 1000000, "block"), Z(-1000000, 1000000, "block"),
-        SCALE(0, 1024, "ratio"), OPACITY(0, 1, "ratio"), BRIGHTNESS(0, 16, "linear"),
-        ROTATION_DEGREES(-360000, 360000, "degree"), VISIBILITY(0, 1, "boolean"), FOV_DEGREES(10, 150, "degree");
+
+        X(-1000000, 1000000, "block"),
+        Y(-1000000, 1000000, "block"),
+        Z(-1000000, 1000000, "block"),
+        SCALE(0, 1024, "ratio"),
+        OPACITY(0, 1, "ratio"),
+        BRIGHTNESS(0, 16, "linear"),
+        ROTATION_DEGREES(-360000, 360000, "degree"),
+        VISIBILITY(0, 1, "boolean"),
+        FOV_DEGREES(10, 150, "degree");
 
         public final double min, max;
         public final String unit;
@@ -39,18 +46,24 @@ public final class AnimationV1 {
     }
 
     public enum Interpolation {
-        STEP, LINEAR, SMOOTHSTEP
+        STEP,
+        LINEAR,
+        SMOOTHSTEP
     }
 
     public enum CueKind {
-        SOUND, CAMERA_IMPULSE
+        SOUND,
+        CAMERA_IMPULSE
     }
 
     public enum LatePolicy {
-        DROP, LATEST, ONCE_IF_CURRENT
+        DROP,
+        LATEST,
+        ONCE_IF_CURRENT
     }
 
     public static final class Key {
+
         public final long timeMs;
         public final double value;
         public final Interpolation interpolation;
@@ -66,6 +79,7 @@ public final class AnimationV1 {
     }
 
     public static final class Track {
+
         public final String id, targetId;
         public final Property property;
         public final List<Key> keys;
@@ -82,8 +96,9 @@ public final class AnimationV1 {
                 require(key != null && key.timeMs > previous, "keys must be strictly ascending");
                 require(key.value >= property.min && key.value <= property.max, "property range");
                 require(property.supports(key.interpolation), "interpolation unsupported by property");
-                require(property != Property.VISIBILITY || key.value == 0 || key.value == 1,
-                        "visibility must be 0 or 1");
+                require(
+                    property != Property.VISIBILITY || key.value == 0 || key.value == 1,
+                    "visibility must be 0 or 1");
                 previous = key.timeMs;
                 copy.add(key);
             }
@@ -92,6 +107,7 @@ public final class AnimationV1 {
     }
 
     public static final class Cue {
+
         public final String id;
         public final long timeMs, validForMs;
         public final CueKind kind;
@@ -114,6 +130,7 @@ public final class AnimationV1 {
     }
 
     public static final class Document {
+
         public final String id;
         public final int schemaMinor;
         public final long durationMs, seed;
@@ -122,8 +139,9 @@ public final class AnimationV1 {
         public final Set<ResourceId> resources;
 
         public Document(String id, int schemaMinor, long durationMs, long seed, List<Track> tracks, List<Cue> cues,
-                Set<ResourceId> resources) {
-            this.id = ResourceId.parse(id).toString();
+            Set<ResourceId> resources) {
+            this.id = ResourceId.parse(id)
+                .toString();
             require(schemaMinor == 0, "unsupported schema minor / required features");
             require(durationMs >= 1 && durationMs <= MAX_DURATION_MS, "duration");
             require(tracks != null && tracks.size() <= MAX_TRACKS, "track count");
@@ -164,7 +182,6 @@ public final class AnimationV1 {
     }
 
     static void require(boolean condition, String message) {
-        if (!condition)
-            throw new IllegalArgumentException(message);
+        if (!condition) throw new IllegalArgumentException(message);
     }
 }

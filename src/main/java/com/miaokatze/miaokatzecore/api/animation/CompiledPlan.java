@@ -25,8 +25,7 @@ public final class CompiledPlan {
      * and reverse.
      */
     public SampledFrame sample(EvaluationInput input) {
-        if (input == null)
-            throw new IllegalArgumentException("evaluation input");
+        if (input == null) throw new IllegalArgumentException("evaluation input");
         return Sampler.sample(document, input.localTimeMs);
     }
 }

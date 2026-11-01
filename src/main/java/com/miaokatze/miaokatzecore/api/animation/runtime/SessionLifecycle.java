@@ -5,7 +5,11 @@ import com.miaokatze.miaokatzecore.api.animation.EpochKey;
 /** Pure owner state. The host remains responsible for listener, input, audio and device cleanup. */
 public final class SessionLifecycle implements AutoCloseable {
 
-    public enum State { ACTIVE, SUSPENDED, CLOSED }
+    public enum State {
+        ACTIVE,
+        SUSPENDED,
+        CLOSED
+    }
 
     private final Thread owner = Thread.currentThread();
     private final EpochKey epoch;
@@ -40,8 +44,11 @@ public final class SessionLifecycle implements AutoCloseable {
     /** A suspended owner may accept pure cache results, but may not render. */
     public boolean canPublish(Ticket ticket) {
         check();
-        return state != State.CLOSED && ticket != null && ticket.source == this && epoch.equals(ticket.epoch)
-            && resourceEpoch == ticket.resourceEpoch && documentRevision == ticket.documentRevision
+        return state != State.CLOSED && ticket != null
+            && ticket.source == this
+            && epoch.equals(ticket.epoch)
+            && resourceEpoch == ticket.resourceEpoch
+            && documentRevision == ticket.documentRevision
             && jobGeneration == ticket.jobGeneration;
     }
 

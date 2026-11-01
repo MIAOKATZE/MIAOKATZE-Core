@@ -10,6 +10,7 @@ import java.util.List;
  * represented here.
  */
 public final class EventCursor implements AutoCloseable {
+
     private final Thread owner = Thread.currentThread();
     public final EpochKey epoch;
     public final String instanceId;
@@ -21,10 +22,11 @@ public final class EventCursor implements AutoCloseable {
     private long highWatermark = -1, lastFrame = -1, lastWall = -1;
 
     public EventCursor(EpochKey epoch, String instanceId, long generation, AnimationV1.Document document,
-            boolean looping, EventBudget instanceBudget, EventBudget ownerBudget) {
+        boolean looping, EventBudget instanceBudget, EventBudget ownerBudget) {
         AnimationV1.require(epoch != null && document != null && generation >= 0, "cursor identity");
-        AnimationV1.require(instanceBudget != null && ownerBudget != null && instanceBudget != ownerBudget,
-                "distinct instance/owner budgets");
+        AnimationV1.require(
+            instanceBudget != null && ownerBudget != null && instanceBudget != ownerBudget,
+            "distinct instance/owner budgets");
         this.epoch = epoch;
         this.instanceId = AnimationV1.id(instanceId);
         playbackGeneration = generation;
@@ -32,12 +34,12 @@ public final class EventCursor implements AutoCloseable {
         loop = looping;
         localBudget = instanceBudget;
         this.ownerBudget = ownerBudget;
-        if (loop)
-            for (AnimationV1.Cue cue : document.cues)
-                AnimationV1.require(cue.timeMs < document.durationMs, "loop cue must be in [0,duration)");
+        if (loop) for (AnimationV1.Cue cue : document.cues)
+            AnimationV1.require(cue.timeMs < document.durationMs, "loop cue must be in [0,duration)");
     }
 
     public static final class Occurrence {
+
         public final EpochKey epoch;
         public final String instanceId, cueId;
         public final long playbackGeneration, loopOccurrence, absoluteTimeMs;
@@ -55,6 +57,7 @@ public final class EventCursor implements AutoCloseable {
     }
 
     public static final class Dispatch {
+
         public final List<Occurrence> events;
         public final int scanned, expired, policyDropped, budgetDropped;
 
@@ -82,8 +85,7 @@ public final class EventCursor implements AutoCloseable {
         check(ageMs, frameId, monotonicMs);
         // After a backward silent seek, cue side effects remain behind their high
         // watermark.
-        if (ageMs <= highWatermark)
-            return new Dispatch(Collections.<Occurrence>emptyList(), 0, 0, 0, 0);
+        if (ageMs <= highWatermark) return new Dispatch(Collections.<Occurrence>emptyList(), 0, 0, 0, 0);
         return collect(ageMs, frameId, monotonicMs, false, false);
     }
 
@@ -97,8 +99,9 @@ public final class EventCursor implements AutoCloseable {
 
     private void check(long age, long frame, long wall) {
         AnimationV1.require(age >= 0 && age <= AnimationV1.MAX_AGE_MS, "age range");
-        AnimationV1.require(frame >= lastFrame && frame >= 0 && wall >= lastWall && wall >= 0,
-                "regressing presentation clock");
+        AnimationV1.require(
+            frame >= lastFrame && frame >= 0 && wall >= lastWall && wall >= 0,
+            "regressing presentation clock");
         // Validate both budget clocks before committing cursor state.
         localBudget.validateClock(frame, wall);
         ownerBudget.validateClock(frame, wall);
@@ -114,25 +117,21 @@ public final class EventCursor implements AutoCloseable {
         long previous = highWatermark;
         for (AnimationV1.Cue cue : document.cues) {
             scanned++;
-            if (age < cue.timeMs)
-                continue;
+            if (age < cue.timeMs) continue;
             long occurrence = loop ? (age - cue.timeMs) / document.durationMs : 0;
             long absolute = occurrence * document.durationMs + cue.timeMs;
-            if (absolute <= previous)
-                continue;
+            if (absolute <= previous) continue;
             if (age - absolute > cue.validForMs) {
                 expired++;
                 continue;
             }
             boolean discard = false;
-            if (initial && !fresh && cue.latePolicy == AnimationV1.LatePolicy.DROP)
-                discard = true;
+            if (initial && !fresh && cue.latePolicy == AnimationV1.LatePolicy.DROP) discard = true;
             if (loop && cue.latePolicy == AnimationV1.LatePolicy.ONCE_IF_CURRENT
-                    && occurrence != age / document.durationMs)
-                discard = true;
-            if (loop && !initial && cue.latePolicy == AnimationV1.LatePolicy.DROP
-                    && age - previous >= document.durationMs)
-                discard = true;
+                && occurrence != age / document.durationMs) discard = true;
+            if (loop && !initial
+                && cue.latePolicy == AnimationV1.LatePolicy.DROP
+                && age - previous >= document.durationMs) discard = true;
             if (discard) {
                 policyDropped++;
                 continue;
@@ -142,6 +141,7 @@ public final class EventCursor implements AutoCloseable {
         // O(cue-count log cue-count), never O(skipped loops). Stable ties do not depend
         // on import order.
         Collections.sort(candidates, new Comparator<Occurrence>() {
+
             public int compare(Occurrence a, Occurrence b) {
                 int byTime = Long.compare(a.absoluteTimeMs, b.absoluteTimeMs);
                 return byTime != 0 ? byTime : a.cueId.compareTo(b.cueId);
@@ -154,16 +154,14 @@ public final class EventCursor implements AutoCloseable {
                 localBudget.consume(wall);
                 ownerBudget.consume(wall);
                 delivered.add(event);
-            } else
-                dropped++;
+            } else dropped++;
         }
         highWatermark = age; // Dropped occurrences are never queued for a later burst.
         return new Dispatch(delivered, scanned, expired, policyDropped, dropped);
     }
 
     private void ownerThread() {
-        if (Thread.currentThread() != owner)
-            throw new IllegalStateException("event cursor owner thread");
+        if (Thread.currentThread() != owner) throw new IllegalStateException("event cursor owner thread");
     }
 
     @Override

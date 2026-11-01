@@ -5,6 +5,7 @@ package com.miaokatze.miaokatzecore.api.animation;
  * loop counter.
  */
 public final class EpochKey {
+
     public final long connectionEpoch, worldEpoch, sessionEpoch;
 
     public EpochKey(long connectionEpoch, long worldEpoch, long sessionEpoch) {
@@ -16,8 +17,7 @@ public final class EpochKey {
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof EpochKey))
-            return false;
+        if (!(o instanceof EpochKey)) return false;
         EpochKey k = (EpochKey) o;
         return connectionEpoch == k.connectionEpoch && worldEpoch == k.worldEpoch && sessionEpoch == k.sessionEpoch;
     }

@@ -50,7 +50,14 @@ public final class MetricWindow {
         for (int i = 0; i < count; i++) sorted[i] = values[(head + i) % times.length];
         Arrays.sort(sorted);
         long span = count < 2 ? 0 : times[(head + count - 1) % times.length] - times[head];
-        return new Snapshot(elapsedNanos, windowNanos, sorted, span, observations, capacityEvictions, timeExpirations,
+        return new Snapshot(
+            elapsedNanos,
+            windowNanos,
+            sorted,
+            span,
+            observations,
+            capacityEvictions,
+            timeExpirations,
             upstreamDropped);
     }
 

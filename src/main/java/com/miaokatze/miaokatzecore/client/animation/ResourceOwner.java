@@ -51,7 +51,8 @@ public final class ResourceOwner implements AutoCloseable {
     private void checkAdmission(RuntimeGenerations.Ticket ticket, Object resource) {
         check();
         if (closed || retiring) throw new IllegalStateException("resource owner unavailable");
-        if (resource == null || identities.containsKey(resource)) throw new IllegalArgumentException("resource identity");
+        if (resource == null || identities.containsKey(resource))
+            throw new IllegalArgumentException("resource identity");
         if (!generations.accepts(ticket) || ticket.purpose == RuntimeGenerations.Purpose.CPU_DECODE)
             throw new IllegalArgumentException("current device resource ticket required");
         if (handles.size() >= MAX_HANDLES) throw new IllegalStateException("resource handle capacity");

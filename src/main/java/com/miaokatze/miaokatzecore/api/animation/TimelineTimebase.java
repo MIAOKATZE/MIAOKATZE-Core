@@ -7,13 +7,13 @@ import java.math.BigInteger;
  * milliseconds.
  */
 public final class TimelineTimebase {
+
     public static final long UNITS_PER_SECOND = 120000L;
     public static final long UNITS_PER_MILLISECOND = 120L;
     public static final long UNITS_PER_LEGACY_TICK_20HZ = 6000L;
     private static final BigInteger LONG_MAX = BigInteger.valueOf(Long.MAX_VALUE);
 
-    private TimelineTimebase() {
-    }
+    private TimelineTimebase() {}
 
     public static long fromMilliseconds(long milliseconds) {
         return multiply(milliseconds, UNITS_PER_MILLISECOND);
@@ -33,8 +33,7 @@ public final class TimelineTimebase {
 
     public static long toMillisecondsExact(long units) {
         nonnegative(units);
-        if (units % UNITS_PER_MILLISECOND != 0)
-            throw new IllegalArgumentException("sub-millisecond value");
+        if (units % UNITS_PER_MILLISECOND != 0) throw new IllegalArgumentException("sub-millisecond value");
         return units / UNITS_PER_MILLISECOND;
     }
 
@@ -45,8 +44,11 @@ public final class TimelineTimebase {
     public static long frameTimeFloor(long frameIndex, long fpsNumerator, long fpsDenominator) {
         nonnegative(frameIndex);
         rate(fpsNumerator, fpsDenominator);
-        return checked(BigInteger.valueOf(frameIndex).multiply(BigInteger.valueOf(UNITS_PER_SECOND))
-                .multiply(BigInteger.valueOf(fpsDenominator)).divide(BigInteger.valueOf(fpsNumerator)));
+        return checked(
+            BigInteger.valueOf(frameIndex)
+                .multiply(BigInteger.valueOf(UNITS_PER_SECOND))
+                .multiply(BigInteger.valueOf(fpsDenominator))
+                .divide(BigInteger.valueOf(fpsNumerator)));
     }
 
     /**
@@ -56,15 +58,19 @@ public final class TimelineTimebase {
     public static long frameCountCeiling(long durationUnits, long fpsNumerator, long fpsDenominator) {
         nonnegative(durationUnits);
         rate(fpsNumerator, fpsDenominator);
-        BigInteger divisor = BigInteger.valueOf(UNITS_PER_SECOND).multiply(BigInteger.valueOf(fpsDenominator));
-        BigInteger numerator = BigInteger.valueOf(durationUnits).multiply(BigInteger.valueOf(fpsNumerator));
-        return checked(numerator.add(divisor).subtract(BigInteger.ONE).divide(divisor));
+        BigInteger divisor = BigInteger.valueOf(UNITS_PER_SECOND)
+            .multiply(BigInteger.valueOf(fpsDenominator));
+        BigInteger numerator = BigInteger.valueOf(durationUnits)
+            .multiply(BigInteger.valueOf(fpsNumerator));
+        return checked(
+            numerator.add(divisor)
+                .subtract(BigInteger.ONE)
+                .divide(divisor));
     }
 
     private static long multiply(long value, long scale) {
         nonnegative(value);
-        if (value > Long.MAX_VALUE / scale)
-            throw new IllegalArgumentException("time overflow");
+        if (value > Long.MAX_VALUE / scale) throw new IllegalArgumentException("time overflow");
         return value * scale;
     }
 
@@ -75,12 +81,10 @@ public final class TimelineTimebase {
     }
 
     private static void rate(long p, long q) {
-        if (p <= 0 || q <= 0)
-            throw new IllegalArgumentException("positive rational frame rate required");
+        if (p <= 0 || q <= 0) throw new IllegalArgumentException("positive rational frame rate required");
     }
 
     private static void nonnegative(long value) {
-        if (value < 0)
-            throw new IllegalArgumentException("nonnegative time/index required");
+        if (value < 0) throw new IllegalArgumentException("nonnegative time/index required");
     }
 }

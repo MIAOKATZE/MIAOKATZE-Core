@@ -76,12 +76,27 @@ public strictfp final class VisualPlan {
             double norm = StrictMath.sqrt(qx * qx + qy * qy + qz * qz + qw * qw);
             double opacity = binding.material.opacity * binding.value(frame, AnimationV1.Property.OPACITY, 1);
             double scaleX = base.scaleX * scale, scaleY = base.scaleY * scale, scaleZ = base.scaleZ * scale;
-            boolean visible = scaleX > 0 && scaleY > 0 && scaleZ > 0 && opacity > 0
+            boolean visible = scaleX > 0 && scaleY > 0
+                && scaleZ > 0
+                && opacity > 0
                 && binding.value(frame, AnimationV1.Property.VISIBILITY, 1) == 1;
-            poses.add(new VisualFrame.TargetPose(binding.target.id, binding.target.materialId, x, y, z,
-                qx / norm, qy / norm, qz / norm, qw / norm,
-                scaleX, scaleY, scaleZ,
-                binding.material.rgb, opacity, visible));
+            poses.add(
+                new VisualFrame.TargetPose(
+                    binding.target.id,
+                    binding.target.materialId,
+                    x,
+                    y,
+                    z,
+                    qx / norm,
+                    qy / norm,
+                    qz / norm,
+                    qw / norm,
+                    scaleX,
+                    scaleY,
+                    scaleZ,
+                    binding.material.rgb,
+                    opacity,
+                    visible));
         }
         return new VisualFrame(clip, frame.localTimeMs, poses);
     }

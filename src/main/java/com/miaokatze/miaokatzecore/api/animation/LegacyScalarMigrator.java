@@ -10,10 +10,11 @@ import java.util.List;
  * particle/project/rod formats.
  */
 public final class LegacyScalarMigrator {
-    private LegacyScalarMigrator() {
-    }
+
+    private LegacyScalarMigrator() {}
 
     public static final class TickKey {
+
         public final long tick;
         public final double value;
 
@@ -24,6 +25,7 @@ public final class LegacyScalarMigrator {
     }
 
     public static final class Result {
+
         public final AnimationV1.Document document;
         public final List<String> warnings;
 
@@ -44,13 +46,23 @@ public final class LegacyScalarMigrator {
                 throw new IllegalArgumentException("legacy tick");
             keys.add(new AnimationV1.Key(key.tick * 50, key.value, AnimationV1.Interpolation.LINEAR));
         }
-        AnimationV1.Track track = new AnimationV1.Track("legacy-brightness", "legacy-target",
-                AnimationV1.Property.BRIGHTNESS, keys);
+        AnimationV1.Track track = new AnimationV1.Track(
+            "legacy-brightness",
+            "legacy-target",
+            AnimationV1.Property.BRIGHTNESS,
+            keys);
         return new Result(
-                new AnimationV1.Document(id, 0, durationTicks * 50, seed, Collections.singletonList(track),
-                        Collections.<AnimationV1.Cue>emptyList(), Collections.<ResourceId>emptySet()),
-                Arrays.asList("Typed legacy fade mapped to BRIGHTNESS, not OPACITY; no source file was modified.",
-                        "Caller must verify old easing and renderer brightness mapping before approving visual parity.",
-                        "Only this supplied scalar stream was migrated; unrepresented legacy behaviors are not silently claimed."));
+            new AnimationV1.Document(
+                id,
+                0,
+                durationTicks * 50,
+                seed,
+                Collections.singletonList(track),
+                Collections.<AnimationV1.Cue>emptyList(),
+                Collections.<ResourceId>emptySet()),
+            Arrays.asList(
+                "Typed legacy fade mapped to BRIGHTNESS, not OPACITY; no source file was modified.",
+                "Caller must verify old easing and renderer brightness mapping before approving visual parity.",
+                "Only this supplied scalar stream was migrated; unrepresented legacy behaviors are not silently claimed."));
     }
 }

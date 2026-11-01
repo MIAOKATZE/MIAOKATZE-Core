@@ -8,7 +8,14 @@ import java.util.Set;
 /** Pre-allocation accounting only. Neither a device allocator nor a measurement of driver memory. */
 public final class ResourceLedger implements AutoCloseable {
 
-    public enum Dimension { CPU_BYTES, GPU_BYTES, HANDLES, DECODE_PIXELS, VERTICES, JOBS }
+    public enum Dimension {
+        CPU_BYTES,
+        GPU_BYTES,
+        HANDLES,
+        DECODE_PIXELS,
+        VERTICES,
+        JOBS
+    }
 
     public static final int MAX_LEASES = 4096;
     private final Thread owner = Thread.currentThread();
@@ -21,8 +28,7 @@ public final class ResourceLedger implements AutoCloseable {
             throw new IllegalArgumentException("dimension count");
         this.limits = limits.clone();
         used = new long[limits.length];
-        for (long limit : this.limits)
-            if (limit < 0) throw new IllegalArgumentException("negative limit");
+        for (long limit : this.limits) if (limit < 0) throw new IllegalArgumentException("negative limit");
     }
 
     /** Nonblocking, all dimensions or none. Null means capacity refusal, not malformed input. */
@@ -30,11 +36,9 @@ public final class ResourceLedger implements AutoCloseable {
         check();
         if (closed) throw new IllegalStateException("ledger closed");
         if (amounts == null || amounts.length != limits.length) throw new IllegalArgumentException("dimension count");
-        for (long amount : amounts)
-            if (amount < 0) throw new IllegalArgumentException("negative reservation");
+        for (long amount : amounts) if (amount < 0) throw new IllegalArgumentException("negative reservation");
         if (leases.size() >= MAX_LEASES) return null;
-        for (int i = 0; i < amounts.length; i++)
-            if (amounts[i] > limits[i] - used[i]) return null;
+        for (int i = 0; i < amounts.length; i++) if (amounts[i] > limits[i] - used[i]) return null;
         Lease lease = new Lease(amounts.clone());
         for (int i = 0; i < amounts.length; i++) used[i] += amounts[i];
         leases.add(lease);

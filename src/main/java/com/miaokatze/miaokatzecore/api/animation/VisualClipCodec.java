@@ -65,8 +65,11 @@ public final class VisualClipCodec {
             long rgb = integer(material.get("rgb"), path + ".rgb");
             if (rgb < 0 || rgb > 0xffffff) throw error(path + ".rgb", "RANGE", "RGB outside [0,16777215]");
             try {
-                materials.add(new VisualClip.Material(string(material.get("id"), path + ".id"),
-                    (int) rgb, decimal(material.get("opacity"), path + ".opacity")));
+                materials.add(
+                    new VisualClip.Material(
+                        string(material.get("id"), path + ".id"),
+                        (int) rgb,
+                        decimal(material.get("opacity"), path + ".opacity")));
             } catch (StrictJsonCodec.CodecException invalid) {
                 throw invalid;
             } catch (IllegalArgumentException invalid) {
@@ -88,14 +91,26 @@ public final class VisualClipCodec {
             double[] scale = vector(transform.get("scale"), path + ".transform.scale", 3);
             VisualClip.Transform pose;
             try {
-                pose = new VisualClip.Transform(position[0], position[1], position[2],
-                    rotation[0], rotation[1], rotation[2], rotation[3], scale[0], scale[1], scale[2]);
+                pose = new VisualClip.Transform(
+                    position[0],
+                    position[1],
+                    position[2],
+                    rotation[0],
+                    rotation[1],
+                    rotation[2],
+                    rotation[3],
+                    scale[0],
+                    scale[1],
+                    scale[2]);
             } catch (IllegalArgumentException invalid) {
                 throw error(path + ".transform", "TRANSFORM", invalid.getMessage());
             }
             try {
-                targets.add(new VisualClip.Target(string(target.get("id"), path + ".id"),
-                    string(target.get("materialId"), path + ".materialId"), pose));
+                targets.add(
+                    new VisualClip.Target(
+                        string(target.get("id"), path + ".id"),
+                        string(target.get("materialId"), path + ".materialId"),
+                        pose));
             } catch (StrictJsonCodec.CodecException invalid) {
                 throw invalid;
             } catch (IllegalArgumentException invalid) {
@@ -147,10 +162,15 @@ public final class VisualClipCodec {
             quote(out, material.id);
             out.append(",\"kind\":");
             quote(out, VisualClip.MATERIAL_KIND);
-            out.append(",\"rgb\":").append(material.rgb).append(",\"opacity\":").append(material.opacity).append('}');
+            out.append(",\"rgb\":")
+                .append(material.rgb)
+                .append(",\"opacity\":")
+                .append(material.opacity)
+                .append('}');
         }
         out.append("]}");
-        byte[] bytes = out.toString().getBytes(StandardCharsets.UTF_8);
+        byte[] bytes = out.toString()
+            .getBytes(StandardCharsets.UTF_8);
         if (bytes.length > MAX_BYTES) throw error("$", "BYTE_LIMIT", "canonical visual clip exceeds portable limit");
         return bytes;
     }

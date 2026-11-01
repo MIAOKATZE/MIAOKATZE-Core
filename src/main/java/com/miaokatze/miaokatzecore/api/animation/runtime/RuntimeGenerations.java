@@ -3,7 +3,11 @@ package com.miaokatze.miaokatzecore.api.animation.runtime;
 /** Owner-thread publication fence. Owns no assets, world objects, executors or device context. */
 public final class RuntimeGenerations implements AutoCloseable {
 
-    public enum Purpose { CPU_DECODE, GPU_UPLOAD, PRESENTATION }
+    public enum Purpose {
+        CPU_DECODE,
+        GPU_UPLOAD,
+        PRESENTATION
+    }
 
     private final Thread owner = Thread.currentThread();
     private long definition, asset, instance, context;
@@ -33,7 +37,9 @@ public final class RuntimeGenerations implements AutoCloseable {
 
     public boolean accepts(Ticket ticket) {
         check();
-        if (closed || ticket == null || ticket.source != this || ticket.definitionGeneration != definition
+        if (closed || ticket == null
+            || ticket.source != this
+            || ticket.definitionGeneration != definition
             || ticket.assetGeneration != asset) return false;
         if (ticket.purpose != Purpose.CPU_DECODE && ticket.contextGeneration != context) return false;
         return ticket.purpose != Purpose.PRESENTATION || ticket.instanceGeneration == instance;

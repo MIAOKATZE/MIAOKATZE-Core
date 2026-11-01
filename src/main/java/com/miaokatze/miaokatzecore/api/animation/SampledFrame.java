@@ -6,6 +6,7 @@ import java.util.Map;
 
 /** Values keyed by stable track ID; consumer owns immutable target bindings. */
 public final class SampledFrame {
+
     private final AnimationV1.Document source;
     public final String documentId;
     public final long localTimeMs;
@@ -24,8 +25,7 @@ public final class SampledFrame {
 
     public double value(String trackId) {
         Double value = valuesByTrack.get(trackId);
-        if (value == null)
-            throw new IllegalArgumentException("unknown track: " + trackId);
+        if (value == null) throw new IllegalArgumentException("unknown track: " + trackId);
         return value.doubleValue();
     }
 }

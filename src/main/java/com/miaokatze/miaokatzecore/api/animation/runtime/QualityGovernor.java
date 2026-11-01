@@ -3,9 +3,22 @@ package com.miaokatze.miaokatzecore.api.animation.runtime;
 /** Explicit decorative-only hysteresis. No listeners, execution callbacks or authority over gameplay. */
 public final class QualityGovernor {
 
-    public enum Tier { OFF, LOW, MEDIUM, HIGH }
+    public enum Tier {
+        OFF,
+        LOW,
+        MEDIUM,
+        HIGH
+    }
 
-    public enum Reason { HELD, OVER_BUDGET, HEADROOM, MISSING_OR_LOSSY, TOO_FEW_SAMPLES, COOLDOWN, LOCKED }
+    public enum Reason {
+        HELD,
+        OVER_BUDGET,
+        HEADROOM,
+        MISSING_OR_LOSSY,
+        TOO_FEW_SAMPLES,
+        COOLDOWN,
+        LOCKED
+    }
 
     public static final class Decision {
 
@@ -36,10 +49,12 @@ public final class QualityGovernor {
         private double pressureSeconds, recoverySeconds;
 
         public Indexed(int initialIndex, int tierCount, double downSeconds, double upSeconds) {
-            if (tierCount < 1 || initialIndex < 0 || initialIndex >= tierCount
-                || !Double.isFinite(downSeconds) || downSeconds <= 0
-                || !Double.isFinite(upSeconds) || upSeconds <= 0)
-                throw new IllegalArgumentException("indexed quality policy");
+            if (tierCount < 1 || initialIndex < 0
+                || initialIndex >= tierCount
+                || !Double.isFinite(downSeconds)
+                || downSeconds <= 0
+                || !Double.isFinite(upSeconds)
+                || upSeconds <= 0) throw new IllegalArgumentException("indexed quality policy");
             tier = initialIndex;
             this.tierCount = tierCount;
             this.downSeconds = downSeconds;
@@ -114,8 +129,12 @@ public final class QualityGovernor {
 
     public QualityGovernor(Tier initial, long lowNanos, long highNanos, int minimumSamples, int downWindows,
         int upWindows, long cooldownNanos) {
-        if (initial == null || lowNanos < 0 || highNanos <= lowNanos || minimumSamples < 1 || downWindows < 1
-            || upWindows < 1 || cooldownNanos < 0) throw new IllegalArgumentException("quality policy");
+        if (initial == null || lowNanos < 0
+            || highNanos <= lowNanos
+            || minimumSamples < 1
+            || downWindows < 1
+            || upWindows < 1
+            || cooldownNanos < 0) throw new IllegalArgumentException("quality policy");
         tier = initial;
         this.lowNanos = lowNanos;
         this.highNanos = highNanos;
@@ -135,7 +154,10 @@ public final class QualityGovernor {
     /** Host proves usable coverage; unsupported, pending, lossy or invalid windows must set usable=false. */
     public Decision observe(long windowId, long elapsedNanos, long p95Nanos, int samples, boolean usable) {
         check();
-        if (windowId < 0 || windowId <= lastWindow || elapsedNanos < 0 || elapsedNanos < lastNow || samples < 0
+        if (windowId < 0 || windowId <= lastWindow
+            || elapsedNanos < 0
+            || elapsedNanos < lastNow
+            || samples < 0
             || (usable && (samples == 0 || p95Nanos < 0))) throw new IllegalArgumentException("window identity/data");
         lastWindow = windowId;
         lastNow = elapsedNanos;

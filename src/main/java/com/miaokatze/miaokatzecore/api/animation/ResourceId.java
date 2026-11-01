@@ -5,6 +5,7 @@ package com.miaokatze.miaokatzecore.api.animation;
  * access.
  */
 public final class ResourceId {
+
     private final String text;
 
     private ResourceId(String text) {
@@ -18,8 +19,7 @@ public final class ResourceId {
         if (path.startsWith("/") || path.endsWith("/") || path.contains("//"))
             throw new IllegalArgumentException("invalid resource path");
         for (String part : path.split("/"))
-            if (part.equals(".") || part.equals(".."))
-                throw new IllegalArgumentException("resource traversal");
+            if (part.equals(".") || part.equals("..")) throw new IllegalArgumentException("resource traversal");
         return new ResourceId(text);
     }
 

@@ -25,8 +25,8 @@ public strictfp final class VisualClip {
 
         public final double x, y, z, qx, qy, qz, qw, scaleX, scaleY, scaleZ;
 
-        public Transform(double x, double y, double z, double qx, double qy, double qz, double qw,
-            double scaleX, double scaleY, double scaleZ) {
+        public Transform(double x, double y, double z, double qx, double qy, double qz, double qw, double scaleX,
+            double scaleY, double scaleZ) {
             bounded(x, -1000000, 1000000, "position x");
             bounded(y, -1000000, 1000000, "position y");
             bounded(z, -1000000, 1000000, "position z");
@@ -34,7 +34,8 @@ public strictfp final class VisualClip {
             bounded(qy, -1.00001, 1.00001, "quaternion y");
             bounded(qz, -1.00001, 1.00001, "quaternion z");
             bounded(qw, -1.00001, 1.00001, "quaternion w");
-            AnimationV1.require(Math.abs(qx * qx + qy * qy + qz * qz + qw * qw - 1) <= 0.00001,
+            AnimationV1.require(
+                Math.abs(qx * qx + qy * qy + qz * qz + qw * qw - 1) <= 0.00001,
                 "quaternion must be normalized");
             bounded(scaleX, 0, MAX_SCALE, "scale x");
             bounded(scaleY, 0, MAX_SCALE, "scale y");
@@ -85,7 +86,8 @@ public strictfp final class VisualClip {
 
     public VisualClip(AnimationV1.Document scalar, List<Target> targets, List<Material> materials) {
         AnimationV1.require(scalar != null, "scalar document");
-        AnimationV1.require(scalar.cues.isEmpty() && scalar.resources.isEmpty(),
+        AnimationV1.require(
+            scalar.cues.isEmpty() && scalar.resources.isEmpty(),
             "visual profile does not support cues or external resources");
         AnimationV1.require(targets != null && targets.size() <= MAX_TARGETS, "target count");
         AnimationV1.require(materials != null && materials.size() <= MAX_MATERIALS, "material count");
@@ -107,8 +109,8 @@ public strictfp final class VisualClip {
             AnimationV1.require(target != null, "undeclared scalar target");
             AnimationV1.require(supports(track.property), "unsupported visual property: " + track.property);
             if (track.property == AnimationV1.Property.SCALE) {
-                double largestAxis = Math.max(target.transform.scaleX,
-                    Math.max(target.transform.scaleY, target.transform.scaleZ));
+                double largestAxis = Math
+                    .max(target.transform.scaleX, Math.max(target.transform.scaleY, target.transform.scaleZ));
                 // All V0 interpolators remain within endpoint extrema, so keys bound the complete curve.
                 for (AnimationV1.Key key : track.keys)
                     AnimationV1.require(largestAxis * key.value <= MAX_SCALE, "sampled scale exceeds visual bound");

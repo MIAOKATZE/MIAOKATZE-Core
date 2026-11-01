@@ -98,7 +98,8 @@ public final class RuntimeContracts {
         check(old != null, "exact long reservation");
         check(ledger.reserve(1, 0, 0, 0, 0, 0) == null, "addition cannot overflow quota");
         check(ledger.reserve(0, 41, 0, 0, 0, 0) == null, "old/new overlap charged");
-        check(ledger.activeLeases() == 1 && ledger.used(ResourceLedger.Dimension.GPU_BYTES) == 60,
+        check(
+            ledger.activeLeases() == 1 && ledger.used(ResourceLedger.Dimension.GPU_BYTES) == 60,
             "atomic refusal preserves all dimensions");
         ResourceLedger.Lease next = ledger.reserve(0, 40, 1, 0, 0, 0);
         check(next != null && ledger.used(ResourceLedger.Dimension.GPU_BYTES) == 100, "old plus new peak");
@@ -125,7 +126,8 @@ public final class RuntimeContracts {
         Closing borrowed = new Closing(), old = new Closing(), replacement = new Closing();
         RuntimeGenerations.Ticket ticket = fence.ticket(RuntimeGenerations.Purpose.GPU_UPLOAD);
         ResourceOwner.Handle<Closing> atlas = owner.borrow(ticket, borrowed);
-        expect(IllegalArgumentException.class,
+        expect(
+            IllegalArgumentException.class,
             () -> owner.borrow(fence.ticket(RuntimeGenerations.Purpose.CPU_DECODE), new Object()));
         ResourceOwner.Handle<Closing> first = owner.own(ticket, old, ledger.reserve(0, 10, 1, 0, 0, 0));
         check(atlas.get() == borrowed && !atlas.owned() && first.owned(), "explicit owned versus borrowed");
@@ -133,8 +135,8 @@ public final class RuntimeContracts {
         check(!atlas.valid() && !first.valid(), "reload invalid immediately before retirement");
         expect(IllegalStateException.class, atlas::get);
         expect(IllegalArgumentException.class, () -> owner.borrow(ticket, new Object()));
-        ResourceOwner.Handle<Closing> second = owner.own(fence.ticket(RuntimeGenerations.Purpose.GPU_UPLOAD),
-            replacement, ledger.reserve(0, 10, 1, 0, 0, 0));
+        ResourceOwner.Handle<Closing> second = owner
+            .own(fence.ticket(RuntimeGenerations.Purpose.GPU_UPLOAD), replacement, ledger.reserve(0, 10, 1, 0, 0, 0));
         check(ledger.used(ResourceLedger.Dimension.GPU_BYTES) == 20, "both generations remain billed");
         owner.retireInvalidated();
         check(old.closed == 1 && borrowed.closed == 0 && replacement.closed == 0, "retirement owns only old resource");
@@ -173,7 +175,8 @@ public final class RuntimeContracts {
         check(a.closed == 1 && b.closed == 1 && c.closed == 1, "failure still cleans remaining resources");
         check(order.equals(Arrays.asList("c", "b", "a")), "close keeps LIFO through reentry and middle failure");
         check(owner.activeHandles() == 0 && owner.failedReleases() == 2, "failed retirement visible");
-        check(failed.active() && ledger.used(ResourceLedger.Dimension.GPU_BYTES) == 20,
+        check(
+            failed.active() && ledger.used(ResourceLedger.Dimension.GPU_BYTES) == 20,
             "failed device deletion does not fake zero accounting");
         owner.close();
         check(a.closed == 1 && c.closed == 1, "no implicit cleanup retries");
@@ -182,8 +185,7 @@ public final class RuntimeContracts {
         Closing resource = new Closing();
         ResourceLedger.Lease lease = ledger.reserve(0, 1, 1, 0, 0, 0);
         RuntimeGenerations.Ticket ticket = fence.ticket(RuntimeGenerations.Purpose.GPU_UPLOAD);
-        resource.onClose = () -> expect(IllegalStateException.class,
-            () -> reentrant.own(ticket, resource, lease));
+        resource.onClose = () -> expect(IllegalStateException.class, () -> reentrant.own(ticket, resource, lease));
         ResourceOwner.Handle<Closing> handle = reentrant.own(ticket, resource, lease);
         handle.close();
         check(!lease.active() && reentrant.activeHandles() == 0, "cleanup cannot rebind soon-to-be-released lease");
@@ -211,14 +213,16 @@ public final class RuntimeContracts {
             expect(IllegalArgumentException.class, () -> owner.borrow(ticket, a));
             expect(IllegalArgumentException.class, () -> owner.own(ticket, new Closing(), aLease));
             RuntimeGenerations other = new RuntimeGenerations();
-            expect(IllegalArgumentException.class,
+            expect(
+                IllegalArgumentException.class,
                 () -> owner.borrow(other.ticket(RuntimeGenerations.Purpose.GPU_UPLOAD), new Object()));
             if (retire) {
                 fence.reloadedAssets();
-                ResourceOwner.Handle<Closing> current = owner.own(fence.ticket(RuntimeGenerations.Purpose.GPU_UPLOAD),
-                    next, ledger.reserve(0, 10, 1, 0, 0, 0));
+                ResourceOwner.Handle<Closing> current = owner
+                    .own(fence.ticket(RuntimeGenerations.Purpose.GPU_UPLOAD), next, ledger.reserve(0, 10, 1, 0, 0, 0));
                 owner.retireInvalidated();
-                check(current.valid() && next.closed == 0 && ledger.used(ResourceLedger.Dimension.GPU_BYTES) == 10,
+                check(
+                    current.valid() && next.closed == 0 && ledger.used(ResourceLedger.Dimension.GPU_BYTES) == 10,
                     "LIFO retirement skips current generation and preserves its reservation");
                 first.close();
                 check(current.valid(), "repeated stale close cannot touch current generation");
@@ -229,8 +233,9 @@ public final class RuntimeContracts {
             check(a.closed == 1 && b.closed == 1 && borrowed.closed == 0, "owned close once; borrowed never close");
             owner.close();
             owner.close();
-            check(a.closed == 1 && b.closed == 1 && next.closed == (retire ? 1 : 0)
-                && ledger.activeLeases() == 0, "repeat close preserves LIFO cleanup and accounting");
+            check(
+                a.closed == 1 && b.closed == 1 && next.closed == (retire ? 1 : 0) && ledger.activeLeases() == 0,
+                "repeat close preserves LIFO cleanup and accounting");
         }
     }
 
@@ -258,22 +263,30 @@ public final class RuntimeContracts {
         owner.own(ticket, c, failedC);
         owner.own(ticket, d, ledger.reserve(0, 10, 1, 0, 0, 0));
         fence.reloadedAssets();
-        check(expect(Exception.class, owner::retireInvalidated) == same && same.getSuppressed().length == 0,
+        check(
+            expect(Exception.class, owner::retireInvalidated) == same && same.getSuppressed().length == 0,
             "retirement keeps same exception without self-suppression");
         check(order.equals(Arrays.asList("d", "c", "b", "a")), "middle failures do not interrupt LIFO retirement");
-        check(owner.activeHandles() == 0 && owner.failedReleases() == 2 && failedB.active() && failedC.active()
-            && ledger.used(ResourceLedger.Dimension.GPU_BYTES) == 20, "failed LIFO releases remain billed");
+        check(
+            owner.activeHandles() == 0 && owner.failedReleases() == 2
+                && failedB.active()
+                && failedC.active()
+                && ledger.used(ResourceLedger.Dimension.GPU_BYTES) == 20,
+            "failed LIFO releases remain billed");
         owner.retireInvalidated();
         owner.close();
         owner.close();
-        check(a.closed == 1 && b.closed == 1 && c.closed == 1 && d.closed == 1, "failed retirement never retries callbacks");
+        check(
+            a.closed == 1 && b.closed == 1 && c.closed == 1 && d.closed == 1,
+            "failed retirement never retries callbacks");
     }
 
     private static void admission() throws Exception {
         ResourceId a = ResourceId.parse("core:a"), b = ResourceId.parse("core:b"), c = ResourceId.parse("core:c");
         Set<ResourceId> required = set(b, a), optional = set(c), supported = set(a);
         FeatureAdmission.Decision result = FeatureAdmission.evaluate(required, optional, supported);
-        check(result.status == FeatureAdmission.Status.REJECTED && result.missingRequired.equals(set(b)),
+        check(
+            result.status == FeatureAdmission.Status.REJECTED && result.missingRequired.equals(set(b)),
             "required feature rejects");
         check(result.omittedOptional.equals(set(c)), "optional omission reported even on rejection");
         required.clear();
@@ -281,16 +294,20 @@ public final class RuntimeContracts {
         supported.clear();
         check(result.missingRequired.equals(set(b)), "decision snapshots inputs");
         expect(UnsupportedOperationException.class, () -> result.missingRequired.clear());
-        check(FeatureAdmission.evaluate(set(a), set(b), set(a)).status == FeatureAdmission.Status.DEGRADED,
+        check(
+            FeatureAdmission.evaluate(set(a), set(b), set(a)).status == FeatureAdmission.Status.DEGRADED,
             "optional omission degrades");
-        check(FeatureAdmission.evaluate(set(a), set(b), set(a, b)).status == FeatureAdmission.Status.SUPPORTED,
+        check(
+            FeatureAdmission.evaluate(set(a), set(b), set(a, b)).status == FeatureAdmission.Status.SUPPORTED,
             "all supported");
         expect(IllegalArgumentException.class, () -> FeatureAdmission.evaluate(set(a), set(a), set(a)));
         Set<ResourceId> oversized = new HashSet<>();
         for (int i = 0; i < 129; i++) oversized.add(ResourceId.parse("core:f" + i));
         expect(IllegalArgumentException.class, () -> FeatureAdmission.evaluate(oversized, set(), set()));
-        check(new ArrayList<>(FeatureAdmission.evaluate(set(c, a, b), set(), set()).missingRequired)
-            .equals(Arrays.asList(a, b, c)), "stable ID order");
+        check(
+            new ArrayList<>(FeatureAdmission.evaluate(set(c, a, b), set(), set()).missingRequired)
+                .equals(Arrays.asList(a, b, c)),
+            "stable ID order");
     }
 
     private static void metricWindows() throws Exception {
@@ -302,7 +319,8 @@ public final class RuntimeContracts {
         window.record(2, 20);
         window.record(3, 30);
         MetricWindow.Snapshot s = window.snapshot(3);
-        check(s.samples == 3 && s.capacityEvictions == 1 && s.observations == 4 && s.coveredSpanNanos == 2,
+        check(
+            s.samples == 3 && s.capacityEvictions == 1 && s.observations == 4 && s.coveredSpanNanos == 2,
             "hard capacity and actual covered span");
         check(s.p50 == 20 && s.p95 == 30 && s.p99 == 30 && s.max == 30, "nearest rank");
         s = window.snapshot(11);
@@ -310,8 +328,13 @@ public final class RuntimeContracts {
         window.noteUpstreamDropped(Long.MAX_VALUE);
         window.noteUpstreamDropped(1);
         s = window.snapshot(13);
-        check(s.samples == 0 && s.p50 == -1 && s.timeExpirations == 3 && s.capacityEvictions == 1
-            && s.upstreamDropped == Long.MAX_VALUE && s.observations == 4, "cumulative saturated loss remains explicit");
+        check(
+            s.samples == 0 && s.p50 == -1
+                && s.timeExpirations == 3
+                && s.capacityEvictions == 1
+                && s.upstreamDropped == Long.MAX_VALUE
+                && s.observations == 4,
+            "cumulative saturated loss remains explicit");
         expect(IllegalArgumentException.class, () -> window.record(12, 100));
         expect(IllegalArgumentException.class, () -> window.record(15, -1));
         window.record(13, 7);
@@ -328,11 +351,13 @@ public final class RuntimeContracts {
     private static void quality() throws Exception {
         QualityGovernor governor = new QualityGovernor(QualityGovernor.Tier.HIGH, 10, 20, 5, 2, 3, 10);
         check(!governor.observe(0, 0, 21, 5, true).changed, "one high window holds");
-        check(governor.observe(1, 1, -1, 0, false).reason == QualityGovernor.Reason.MISSING_OR_LOSSY,
+        check(
+            governor.observe(1, 1, -1, 0, false).reason == QualityGovernor.Reason.MISSING_OR_LOSSY,
             "unavailable is not zero load");
         check(!governor.observe(2, 2, 21, 5, true).changed, "loss clears hysteresis");
         QualityGovernor.Decision d = governor.observe(3, 3, 21, 5, true);
-        check(d.changed && d.tier == QualityGovernor.Tier.MEDIUM && d.reason == QualityGovernor.Reason.OVER_BUDGET,
+        check(
+            d.changed && d.tier == QualityGovernor.Tier.MEDIUM && d.reason == QualityGovernor.Reason.OVER_BUDGET,
             "continuous high windows lower one tier");
         check(governor.observe(4, 4, 0, 5, true).reason == QualityGovernor.Reason.COOLDOWN, "cooldown clears evidence");
         check(!governor.observe(5, 13, 9, 5, true).changed, "recovery begins after cooldown");
@@ -343,13 +368,15 @@ public final class RuntimeContracts {
         governor.setLocked(false);
         expect(IllegalArgumentException.class, () -> governor.observe(8, 31, 100, 5, true));
         expect(IllegalArgumentException.class, () -> governor.observe(9, 31, 0, 0, true));
-        check(governor.observe(9, 31, 100, 1, true).reason == QualityGovernor.Reason.TOO_FEW_SAMPLES,
+        check(
+            governor.observe(9, 31, 100, 1, true).reason == QualityGovernor.Reason.TOO_FEW_SAMPLES,
             "insufficient sample resets");
         check(!governor.observe(10, 32, 20, 5, true).changed, "exact high threshold holds");
         check(!governor.observe(11, 33, 21, 5, true).changed, "held threshold cleared streak");
         foreignThread(() -> governor.setLocked(true));
         QualityGovernor off = new QualityGovernor(QualityGovernor.Tier.OFF, 10, 20, 1, 1, 1, 0);
-        check(off.observe(0, 0, 0, 1, true).tier == QualityGovernor.Tier.LOW,
+        check(
+            off.observe(0, 0, 0, 1, true).tier == QualityGovernor.Tier.LOW,
             "OFF is adaptive floor; separate host permission must enforce user disable");
     }
 
@@ -357,21 +384,29 @@ public final class RuntimeContracts {
         Host host = new Host();
         AnimationV1.Document initial = document("core:initial", 1);
         AnimationSession session = new AnimationSession(new EpochKey(0, 0, 0), initial, host);
-        check(session.present(0) && session.presentedFrame().sampledFrom(initial), "compiled frame exact definition");
+        check(
+            session.present(0) && session.presentedFrame()
+                .sampledFrom(initial),
+            "compiled frame exact definition");
         SampledFrame old = session.presentedFrame();
         expect(IllegalArgumentException.class, () -> session.replaceDocument(oversizedDocument()));
-        check(session.presentedFrame() == old && session.present(1) && host.last.sampledFrom(initial),
+        check(
+            session.presentedFrame() == old && session.present(1) && host.last.sampledFrom(initial),
             "failed compiled replacement preserves valid plan and prior frame");
         session.suspend();
-        check(!session.present(2) && session.presentedFrame() == null && host.stopped == 1, "suspend stops effects/draw");
+        check(
+            !session.present(2) && session.presentedFrame() == null && host.stopped == 1,
+            "suspend stops effects/draw");
         RuntimeGenerations.Ticket cpu = session.ticket(RuntimeGenerations.Purpose.CPU_DECODE);
         check(session.accepts(cpu), "suspended pure result can be retained");
         session.resume();
-        check(session.seek(7) && host.stopped == 2 && session.presentedFrame().localTimeMs == 7,
+        check(
+            session.seek(7) && host.stopped == 2 && session.presentedFrame().localTimeMs == 7,
             "seek stops transient handles without cues");
         RuntimeGenerations.Ticket gpu = session.ticket(RuntimeGenerations.Purpose.GPU_UPLOAD);
         session.contextChanged();
-        check(session.accepts(cpu) && !session.accepts(gpu) && session.presentedFrame() == null,
+        check(
+            session.accepts(cpu) && !session.accepts(gpu) && session.presentedFrame() == null,
             "context invalidates device/presentation, not pure decode");
         session.resourceReload();
         check(!session.accepts(cpu), "reload rejects late pure result");
@@ -392,7 +427,8 @@ public final class RuntimeContracts {
             check(host.closed == 0, "device cleanup deferred during active presentation");
             check(session.state() == SessionLifecycle.State.CLOSED, "close fences immediately");
         };
-        check(!session.present(0) && host.drawn == 1 && host.closed == 1 && session.presentedFrame() == null,
+        check(
+            !session.present(0) && host.drawn == 1 && host.closed == 1 && session.presentedFrame() == null,
             "closed callback cannot commit its old frame");
 
         Host recursive = new Host();
@@ -402,16 +438,23 @@ public final class RuntimeContracts {
         check(recursive.drawn == 1 && recursive.closed == 1, "recursive rendering refused, never retried");
 
         Host retiringHost = new Host();
-        AnimationSession retiring = new AnimationSession(new EpochKey(0, 0, 0), document("core:retire", 0), retiringHost);
+        AnimationSession retiring = new AnimationSession(
+            new EpochKey(0, 0, 0),
+            document("core:retire", 0),
+            retiringHost);
         Closing resource = new Closing();
         resource.onClose = () -> {
             retiring.close();
             check(retiringHost.closed == 0, "host close deferred during resource retirement");
         };
-        retiring.resources().own(retiring.ticket(RuntimeGenerations.Purpose.GPU_UPLOAD), resource,
-            smallLedger().reserve(0, 1, 1, 0, 0, 0));
+        retiring.resources()
+            .own(
+                retiring.ticket(RuntimeGenerations.Purpose.GPU_UPLOAD),
+                resource,
+                smallLedger().reserve(0, 1, 1, 0, 0, 0));
         retiring.resourceReload();
-        check(retiringHost.closed == 1 && resource.closed == 1 && retiring.state() == SessionLifecycle.State.CLOSED,
+        check(
+            retiringHost.closed == 1 && resource.closed == 1 && retiring.state() == SessionLifecycle.State.CLOSED,
             "resource callback close retires once before returning");
     }
 
@@ -431,9 +474,11 @@ public final class RuntimeContracts {
         resources.own(ticket, good, ledger.reserve(0, 10, 1, 0, 0, 0));
         check(expect(Exception.class, () -> session.present(0)) == shared, "original draw failure preserved");
         check(shared.getSuppressed().length == 0, "shared cleanup exception cannot mask original");
-        check(good.closed == 1 && bad.closed == 1 && host.closed == 1 && host.drawn == 1,
+        check(
+            good.closed == 1 && bad.closed == 1 && host.closed == 1 && host.drawn == 1,
             "all cleanup owners attempted, draw called once");
-        check(ledger.used(ResourceLedger.Dimension.GPU_BYTES) == 10 && resources.failedReleases() == 1,
+        check(
+            ledger.used(ResourceLedger.Dimension.GPU_BYTES) == 10 && resources.failedReleases() == 1,
             "failed release accounting survives session closure");
 
         Host distinct = new Host();
@@ -441,8 +486,10 @@ public final class RuntimeContracts {
         distinct.closeFailure = new Exception("close");
         AnimationSession second = new AnimationSession(new EpochKey(0, 0, 0), document("core:distinct", 0), distinct);
         Throwable primary = expect(Exception.class, () -> second.present(0));
-        check(primary == distinct.drawFailure && primary.getSuppressed().length == 1
-            && primary.getSuppressed()[0] == distinct.closeFailure, "distinct cleanup preserved as suppressed");
+        check(
+            primary == distinct.drawFailure && primary.getSuppressed().length == 1
+                && primary.getSuppressed()[0] == distinct.closeFailure,
+            "distinct cleanup preserved as suppressed");
     }
 
     private static void miaovisionBoundary() throws Exception {
@@ -451,20 +498,29 @@ public final class RuntimeContracts {
         SceneBounds bounds = new SceneBounds(-128, -128, -128, 128, 128, 128);
         for (SceneBody body : bodies) bounds.validate(body);
         SceneSnapshot snapshot = new SceneSnapshot("existing-contract", 0, 0, bodies);
-        check(snapshot.bodies.size() == 100 && SceneSnapshot.MAX_BODIES == 100 && snapshot.schemaVersion == 1,
+        check(
+            snapshot.bodies.size() == 100 && SceneSnapshot.MAX_BODIES == 100 && snapshot.schemaVersion == 1,
             "production MiaoVision admits 100 valid bodies without changing schema");
         bodies.add(new SceneBody("b100", .5, .5, .5, 0, 0, 0));
         expect(IllegalArgumentException.class, () -> new SceneSnapshot("existing-contract", 0, 0, bodies));
         check(snapshot.bodies.size() == 100, "101 refused rather than truncating input");
         expect(IllegalArgumentException.class, () -> new SceneBounds(-128, -128, -128, 129, 128, 128));
-        expect(IllegalArgumentException.class,
-            () -> bounds.validate(new SceneBody("outside", .5, .5, .5, 128, 0, 0)));
+        expect(IllegalArgumentException.class, () -> bounds.validate(new SceneBody("outside", .5, .5, .5, 128, 0, 0)));
     }
 
     private static AnimationV1.Document document(String id, double x) {
-        AnimationV1.Track track = new AnimationV1.Track("x", "body", AnimationV1.Property.X,
+        AnimationV1.Track track = new AnimationV1.Track(
+            "x",
+            "body",
+            AnimationV1.Property.X,
             Collections.singletonList(new AnimationV1.Key(0, x, AnimationV1.Interpolation.LINEAR)));
-        return new AnimationV1.Document(id, 0, 100, 0, Collections.singletonList(track), Collections.emptyList(),
+        return new AnimationV1.Document(
+            id,
+            0,
+            100,
+            0,
+            Collections.singletonList(track),
+            Collections.emptyList(),
             Collections.emptySet());
     }
 
@@ -474,7 +530,13 @@ public final class RuntimeContracts {
             keys.add(new AnimationV1.Key(i, 123456.123456789, AnimationV1.Interpolation.SMOOTHSTEP));
         List<AnimationV1.Track> tracks = new ArrayList<>();
         for (int i = 0; i < 16; i++) tracks.add(new AnimationV1.Track("x" + i, "b" + i, AnimationV1.Property.X, keys));
-        return new AnimationV1.Document("core:oversized", 0, 5000, 0, tracks, Collections.emptyList(),
+        return new AnimationV1.Document(
+            "core:oversized",
+            0,
+            5000,
+            0,
+            tracks,
+            Collections.emptyList(),
             Collections.emptySet());
     }
 
@@ -487,6 +549,7 @@ public final class RuntimeContracts {
     }
 
     private interface Action {
+
         void run() throws Exception;
     }
 

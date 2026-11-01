@@ -48,10 +48,13 @@ public final class SolidBoxRenderer implements AutoCloseable {
 
     /**
      * Clears depth inside the intersection of viewport and enclosing scissor, never color. The caller owns target size,
-     * background, MSAA, readback and alpha conversion. Input must be between Tessellator batches with logical FFP program
-     * zero. One failed draw aborts the pass and is never retried. Intersecting translucent boxes are not order-independent.
+     * background, MSAA, readback and alpha conversion. Input must be between Tessellator batches with logical FFP
+     * program
+     * zero. One failed draw aborts the pass and is never retried. Intersecting translucent boxes are not
+     * order-independent.
      */
-    public void render(VisualFrame frame, SceneViewport viewport, CameraPose camera, OrthographicProjection projection) {
+    public void render(VisualFrame frame, SceneViewport viewport, CameraPose camera,
+        OrthographicProjection projection) {
         checkOwner();
         if (closed) throw new IllegalStateException("renderer closed");
         if (rendering) throw new IllegalStateException("reentrant solid-box render");
@@ -95,11 +98,19 @@ public final class SolidBoxRenderer implements AutoCloseable {
             GL11.glFrontFace(GL11.GL_CCW);
             GL14.glBlendEquation(GL14.GL_FUNC_ADD);
             GL14.glBlendFuncSeparate(
-                GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
+                GL11.GL_SRC_ALPHA,
+                GL11.GL_ONE_MINUS_SRC_ALPHA,
+                GL11.GL_ONE,
+                GL11.GL_ONE_MINUS_SRC_ALPHA);
             GL11.glMatrixMode(GL11.GL_PROJECTION);
             GL11.glLoadIdentity();
-            GL11.glOrtho(-projection.halfWidth(), projection.halfWidth(), -projection.halfHeight(),
-                projection.halfHeight(), projection.near(), projection.far());
+            GL11.glOrtho(
+                -projection.halfWidth(),
+                projection.halfWidth(),
+                -projection.halfHeight(),
+                projection.halfHeight(),
+                projection.near(),
+                projection.far());
             Tessellator.instance.setTranslation(0, 0, 0);
             for (Draw draw : ordered) {
                 VisualFrame.TargetPose pose = draw.pose;
@@ -137,12 +148,15 @@ public final class SolidBoxRenderer implements AutoCloseable {
         List<Draw> opaque = new ArrayList<>(), translucent = new ArrayList<>();
         for (VisualFrame.TargetPose pose : frame.targets) {
             if (!pose.visible) continue;
-            double depth = basis.project(projection, pose.x, pose.y, pose.z).ndcZ();
+            double depth = basis.project(projection, pose.x, pose.y, pose.z)
+                .ndcZ();
             Draw draw = new Draw(pose, depth);
             (pose.opacity == 1 ? opaque : translucent).add(draw);
         }
         // Greater projected Z is farther. Stable sorting retains target-ID order at equal depth.
-        translucent.sort(Comparator.comparingDouble((Draw draw) -> draw.depth).reversed());
+        translucent.sort(
+            Comparator.comparingDouble((Draw draw) -> draw.depth)
+                .reversed());
         opaque.addAll(translucent);
         return opaque;
     }
@@ -152,28 +166,30 @@ public final class SolidBoxRenderer implements AutoCloseable {
         if (!caps.OpenGL14) throw new IllegalStateException("OpenGL 1.4 blend support required");
         boolean angelica = Loader.isModLoaded("angelica");
         if (angelica) {
-            if (!AngelicaFfp.supported()) throw new IllegalStateException("supported Angelica fixed-function state required");
+            if (!AngelicaFfp.supported())
+                throw new IllegalStateException("supported Angelica fixed-function state required");
         } else {
             boolean compatibility = caps.OpenGL32
                 ? (GL11.glGetInteger(GL32.GL_CONTEXT_PROFILE_MASK) & GL32.GL_CONTEXT_COMPATIBILITY_PROFILE_BIT) != 0
                 : caps.OpenGL31 ? caps.GL_ARB_compatibility
-                    : !caps.OpenGL30 || (GL11.glGetInteger(GL30.GL_CONTEXT_FLAGS)
-                        & GL30.GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT) == 0;
-            if (!compatibility) throw new IllegalStateException("native core-profile fixed-function rendering unsupported");
+                    : !caps.OpenGL30
+                        || (GL11.glGetInteger(GL30.GL_CONTEXT_FLAGS) & GL30.GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT)
+                            == 0;
+            if (!compatibility)
+                throw new IllegalStateException("native core-profile fixed-function rendering unsupported");
             if (caps.OpenGL20 && GL11.glGetInteger(GL20.GL_CURRENT_PROGRAM) != 0)
                 throw new IllegalStateException("solid-box renderer requires logical fixed-function program zero");
         }
         if (GL11.glGetInteger(GL11.GL_DEPTH_BITS) == 0)
             throw new IllegalStateException("solid-box target requires a depth buffer");
-        if (GL11.glIsEnabled(GL11.GL_STENCIL_TEST))
-            throw new IllegalStateException("solid-box viewport supports scissor clipping, not active stencil clipping");
+        if (GL11.glIsEnabled(GL11.GL_STENCIL_TEST)) throw new IllegalStateException(
+            "solid-box viewport supports scissor clipping, not active stencil clipping");
         if (caps.OpenGL20 || caps.GL_ARB_draw_buffers) {
             if (GL11.glGetInteger(GL20.GL_DRAW_BUFFER0) == GL11.GL_NONE)
                 throw new IllegalStateException("solid-box output zero is disabled");
             int buffers = GL11.glGetInteger(GL20.GL_MAX_DRAW_BUFFERS);
-            for (int i = 1; i < buffers; i++)
-                if (GL11.glGetInteger(GL20.GL_DRAW_BUFFER0 + i) != GL11.GL_NONE)
-                    throw new IllegalStateException("solid-box renderer does not support MRT");
+            for (int i = 1; i < buffers; i++) if (GL11.glGetInteger(GL20.GL_DRAW_BUFFER0 + i) != GL11.GL_NONE)
+                throw new IllegalStateException("solid-box renderer does not support MRT");
         } else if (GL11.glGetInteger(GL11.GL_DRAW_BUFFER) == GL11.GL_NONE) {
             throw new IllegalStateException("solid-box color output is disabled");
         }
@@ -247,7 +263,8 @@ public final class SolidBoxRenderer implements AutoCloseable {
         static boolean supported() {
             return com.gtnewhorizons.angelica.glsm.GLStateManager.isCachingEnabled()
                 && com.gtnewhorizons.angelica.glsm.ffp.ShaderManager.isEnabled()
-                && com.gtnewhorizons.angelica.glsm.ffp.ShaderManager.getInstance().isActive()
+                && com.gtnewhorizons.angelica.glsm.ffp.ShaderManager.getInstance()
+                    .isActive()
                 && com.gtnewhorizons.angelica.glsm.GLSMQueries.glGetInteger(GL20.GL_CURRENT_PROGRAM) == 0
                 && !com.gtnewhorizons.angelica.rendering.celeritas.api.IrisShaderProviderHolder.isActive();
         }

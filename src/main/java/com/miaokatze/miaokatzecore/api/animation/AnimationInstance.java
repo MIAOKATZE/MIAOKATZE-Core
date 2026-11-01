@@ -36,10 +36,8 @@ public final class AnimationInstance implements AutoCloseable {
 
     public void replace(CompiledPlan plan) {
         active();
-        if (preparing)
-            throw new IllegalStateException("animation replacement already preparing");
-        if (plan == null)
-            throw new IllegalArgumentException("plan");
+        if (preparing) throw new IllegalStateException("animation replacement already preparing");
+        if (plan == null) throw new IllegalArgumentException("plan");
         current = plan;
     }
 
@@ -50,8 +48,7 @@ public final class AnimationInstance implements AutoCloseable {
      */
     public void replaceFrom(InputStream input) throws IOException {
         active();
-        if (preparing)
-            throw new IllegalStateException("animation replacement already preparing");
+        if (preparing) throw new IllegalStateException("animation replacement already preparing");
         preparing = true;
         CompiledPlan next;
         try {
@@ -64,13 +61,11 @@ public final class AnimationInstance implements AutoCloseable {
 
     private void active() {
         ownerThread();
-        if (closed)
-            throw new IllegalStateException("animation instance closed");
+        if (closed) throw new IllegalStateException("animation instance closed");
     }
 
     private void ownerThread() {
-        if (Thread.currentThread() != owner)
-            throw new IllegalStateException("animation instance owner thread");
+        if (Thread.currentThread() != owner) throw new IllegalStateException("animation instance owner thread");
     }
 
     @Override

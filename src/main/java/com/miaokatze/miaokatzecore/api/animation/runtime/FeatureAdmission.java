@@ -11,7 +11,11 @@ import com.miaokatze.miaokatzecore.api.animation.ResourceId;
 /** Bounded preflight. Support declarations do not authorize resource loading or native adapters. */
 public final class FeatureAdmission {
 
-    public enum Status { SUPPORTED, DEGRADED, REJECTED }
+    public enum Status {
+        SUPPORTED,
+        DEGRADED,
+        REJECTED
+    }
 
     public static final class Decision {
 

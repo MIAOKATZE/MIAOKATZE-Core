@@ -32,9 +32,8 @@ public strictfp final class VisualFrame {
         public final double opacity;
         public final boolean visible;
 
-        TargetPose(String targetId, String materialId, double x, double y, double z,
-            double qx, double qy, double qz, double qw, double scaleX, double scaleY, double scaleZ,
-            int rgb, double opacity, boolean visible) {
+        TargetPose(String targetId, String materialId, double x, double y, double z, double qx, double qy, double qz,
+            double qw, double scaleX, double scaleY, double scaleZ, int rgb, double opacity, boolean visible) {
             this.targetId = targetId;
             this.materialId = materialId;
             this.x = x;
@@ -54,18 +53,11 @@ public strictfp final class VisualFrame {
 
         /** Returns a fresh column-major matrix M = translation * rotation * scale. */
         public double[] matrix() {
-            return new double[] {
-                (1 - 2 * (qy * qy + qz * qz)) * scaleX,
-                2 * (qx * qy + qz * qw) * scaleX,
-                2 * (qx * qz - qy * qw) * scaleX, 0,
-                2 * (qx * qy - qz * qw) * scaleY,
-                (1 - 2 * (qx * qx + qz * qz)) * scaleY,
-                2 * (qy * qz + qx * qw) * scaleY, 0,
-                2 * (qx * qz + qy * qw) * scaleZ,
-                2 * (qy * qz - qx * qw) * scaleZ,
-                (1 - 2 * (qx * qx + qy * qy)) * scaleZ, 0,
-                x, y, z, 1
-            };
+            return new double[] { (1 - 2 * (qy * qy + qz * qz)) * scaleX, 2 * (qx * qy + qz * qw) * scaleX,
+                2 * (qx * qz - qy * qw) * scaleX, 0, 2 * (qx * qy - qz * qw) * scaleY,
+                (1 - 2 * (qx * qx + qz * qz)) * scaleY, 2 * (qy * qz + qx * qw) * scaleY, 0,
+                2 * (qx * qz + qy * qw) * scaleZ, 2 * (qy * qz - qx * qw) * scaleZ,
+                (1 - 2 * (qx * qx + qy * qy)) * scaleZ, 0, x, y, z, 1 };
         }
     }
 }

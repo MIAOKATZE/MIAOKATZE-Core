@@ -1,0 +1,60 @@
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+import java.security.MessageDigest
+
+// Standalone resolution only: no MC plugin, mavenLocal, consumer defaults or Core overrides.
+def receiptPath = providers.gradleProperty('distributionReceipt').get()
+def receipt = new JsonSlurper().parse(file(receiptPath))
+assert receipt.status == 'PASS' && receipt.mode == 'remote': 'A successful remote distribution receipt is required'
+def coordinate = receipt.coordinate
+assert coordinate.startsWith('com.miaokatze.miaokatzecore:miaokatzecore:')
+assert receipt.mavenRoot.startsWith('https://')
+
+repositories {
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'verifiedCoreDistribution'
+                url = uri(receipt.mavenRoot)
+                metadataSources { gradleMetadata(); mavenPom() }
+            }
+        }
+        filter { includeGroup('com.miaokatze.miaokatzecore') }
+    }
+}
+
+configurations { coreCompile; coreRuntime }
+configurations.coreCompile.attributes.attribute(Attribute.of('com.gtnewhorizons.retrofuturagradle.obfuscation', String), 'mcp')
+configurations.coreRuntime.attributes.attribute(Attribute.of('com.gtnewhorizons.retrofuturagradle.obfuscation', String), 'srg')
+
+dependencies {
+    coreCompile("${coordinate}:dev") { transitive = false }
+    coreRuntime(coordinate) { transitive = false }
+}
+
+tasks.register('verifyCoreResolution') {
+    doLast {
+        def artifacts = []
+        [configurations.coreCompile, configurations.coreRuntime].each { configuration ->
+            def resolved = configuration.resolvedConfiguration.resolvedArtifacts
+            assert resolved.size() == 1: "Expected one Core artifact for ${configuration.name}"
+            resolved.each { artifact ->
+                def expectedName = "miaokatzecore-${coordinate.tokenize(':').last()}${configuration.name == 'coreCompile' ? '-dev' : ''}.jar"
+                assert artifact.moduleVersion.id.toString() == coordinate
+                assert artifact.file.name == expectedName: "Unexpected ${configuration.name} artifact"
+                def hash = MessageDigest.getInstance('SHA-256').digest(artifact.file.bytes).encodeHex().toString()
+                def expected = receipt.files.find { it.name == expectedName }
+                assert expected != null && hash == expected.sha256 && artifact.file.length() == expected.bytes
+                artifacts << [configuration: configuration.name, coordinate: coordinate,
+                              classifier: artifact.classifier, name: expectedName, bytes: artifact.file.length(), sha256: hash]
+            }
+        }
+        def output = [status: 'PASS', scope: 'Core dev/normal only; not a full cold MC/GTNH build',
+                      coordinate: coordinate, sourceSha: receipt.source.sha, mavenRoot: receipt.mavenRoot,
+                      gradleUserHome: gradle.gradleUserHomeDir.absolutePath, artifacts: artifacts]
+        def destination = file(providers.gradleProperty('resolutionReceipt').get())
+        destination.parentFile.mkdirs()
+        destination.setText(JsonOutput.prettyPrint(JsonOutput.toJson(output)) + '\n', 'UTF-8')
+        println "Core dev/normal SHA-256 verified: ${coordinate}"
+    }
+}

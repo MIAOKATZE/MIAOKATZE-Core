@@ -1,0 +1,75 @@
+name: Verify Core distribution
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Published immutable Maven version
+        required: true
+        default: '0.2.3'
+      source_sha:
+        description: Full 40-digit source commit SHA
+        required: true
+        default: '66d72c0b5c3f043d31dbd446308aa2e66f2039ba'
+      maven_commit:
+        description: Full 40-digit public Maven branch commit SHA
+        required: true
+        default: '7230dfe839af62e683aa9a8fde40cb31b13b36a5'
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run offline verifier tests
+        run: python -B -m unittest discover -s tools/tests -p test_core_distribution.py -v
+
+  distribution:
+    runs-on: ubuntu-latest
+    env:
+      CORE_VERSION: ${{ inputs.version }}
+      SOURCE_SHA: ${{ inputs.source_sha }}
+      MAVEN_COMMIT: ${{ inputs.maven_commit }}
+      GRADLE_USER_HOME: ${{ runner.temp }}/core-distribution-gradle
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Select immutable public Maven root
+        shell: bash
+        run: |
+          python -B - <<'PY'
+          import os, re
+          commit = os.environ['MAVEN_COMMIT']
+          if not re.fullmatch(r'[0-9a-fA-F]{40}', commit):
+              raise SystemExit('maven_commit must be a full 40-digit Git SHA')
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as output:
+              output.write('MAVEN_ROOT=https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/' + commit.lower() + '\n')
+          PY
+      - name: Verify public files and fixed source version
+        shell: bash
+        run: |
+          python -B tools/verify-core-distribution.py --mode remote --maven-root "$MAVEN_ROOT" --version "$CORE_VERSION" --source-sha "$SOURCE_SHA" --output "$RUNNER_TEMP/core-distribution/distribution.json"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Resolve dev and normal with an empty Gradle user home
+        shell: bash
+        run: |
+          test ! -e "$GRADLE_USER_HOME"
+          bash ./gradlew --no-daemon -p tools/distribution-probe verifyCoreResolution -PdistributionReceipt="$RUNNER_TEMP/core-distribution/distribution.json" -PresolutionReceipt="$RUNNER_TEMP/core-distribution/resolution.json"
+      - name: Upload verification receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-distribution-receipts
+          path: ${{ runner.temp }}/core-distribution/*.json
+          if-no-files-found: warn

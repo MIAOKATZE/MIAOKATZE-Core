@@ -1,5 +1,7 @@
 # Core 分发与验证
 
+2026-11-02 发布跟进：**0.2.4 已正式发布**，推荐坐标见 README。[Release](https://github.com/MIAOKATZE/MIAOKATZE-Core/releases/tag/v0.2.4) 由原草稿 430739227 原位更新；正式 Tag 固定源提交 `75a614d45881fce4307251d2b2021c9cad2fd5ce`，Maven 固定提交 `753181e6e1b7369bebf90fc64c340c1eaea821f9`。合并后 clean 构建及三包逐字节复核通过，远端分发核验通过。主分支工作流另经 PR25 修正 runner 上下文后，[实际运行成功](https://github.com/MIAOKATZE/MIAOKATZE-Core/actions/runs/41387506578)；执行发布校验请使用主分支工作流，历史 Tag 内的工作流配置保持原样。CI 和发布文档维护不改已发布 Tag 或制品。以下为发布前冻结的阶段记录，最终回执见 `GT-Miao-Blueprint/plan/core-v024-distribution-20261102/release/`。
+
 本页区分源码版本、Maven 制品和 GitHub Release。以下历史状态截至 2026-11-02；本轮源码目标为 **0.2.4 候选**，当前推荐的已分发版本为 **0.2.3**。
 
 ## 当前状态

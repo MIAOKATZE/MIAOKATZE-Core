@@ -1,21 +1,23 @@
 # MIAOKATZE Core
 
-本地 01 线新增的动画合同候选见 [标量协议](docs/animation-contract.md)、
+动画合同见 [标量协议](docs/animation-contract.md)、
 [显式运行时](docs/animation-runtime.md) 与 [冻结及交接记录](docs/handoff-01/README.md)。
-它们尚未随已发布的 Core 版本提供；本轮 SDK 仅供对应 owner 接入验证，正式版本和游戏验收由第七阶段统一处理。
+早期 SDK 的冻结记录保留原验收边界；当前安装请使用下方完整 Core 制品，SDK 不能代替运行包。
 
 缺口修复候选新增独立的 [SOLID_BOX 可视协议](docs/animation-visual.md)、[显式绘制入口](docs/animation-visual-renderer.md)
 及兼容的多档质量迟滞；修复与验证边界见 [R3 接入记录](docs/handoff-01/revision-03/README.md)。旧标量格式保持严格兼容。
 
-Minecraft 1.7.10 / Forge 10.13.4.1614 / Java 8 的模块化基础库。当前主线为面向 **GTNH 2.9.0 正式版的 0.2.0 候选**，保留既有公开 API 签名；原 Mod 继续拥有玩法、注册、配置、存档与测试维度。0.1.15 已实现向下兼容的 [BoundedMru](docs/bounded-mru.md)，用于有界、去重的最近访问顺序；GTSR 2.0.8 的机器终端历史使用此接口。
+Minecraft 1.7.10 / Forge 10.13.4.1614 / Java 8 的模块化基础库。当前源码为面向 **GTNH 2.9.0 正式版的 0.2.4 候选**，已分发的推荐 Maven 版本为 **0.2.3**。本次仅修正文档并增加分发校验，不改运行时 API；原 Mod 继续拥有玩法、注册、配置、存档与测试维度。0.1.15 已实现向下兼容的 [BoundedMru](docs/bounded-mru.md)，用于有界、去重的最近访问顺序；GTSR 2.0.8 的机器终端历史使用此接口。
 
-0.1.23 已实现纯 Java 8 的 [`api.work.WorkGovernor`](docs/work-governor.md)：CPU/内存租约、精确键 singleflight 与跨域退休回收。由消费者显式创建或接入进程共享实例，不创建 worker 或事件监听。0.1.28 已实现有界 [ScreenLineStream](docs/screen-lines.md)。本次 0.2.0 迁移正式版的 GLSM 查询、程序生命周期、即时/deferred 网格和宽线 shader；源码候选不等于已发布产物或客户端验收通过。
+0.1.23 已实现纯 Java 8 的 [`api.work.WorkGovernor`](docs/work-governor.md)：CPU/内存租约、精确键 singleflight 与跨域退休回收。由消费者显式创建或接入进程共享实例，不创建 worker 或事件监听。0.1.28 已实现有界 [ScreenLineStream](docs/screen-lines.md)。0.2.x 平台迁移覆盖正式版的 GLSM 查询、程序生命周期、即时/deferred 网格和宽线 shader；源码候选不等于已发布产物或客户端验收通过。
 
 ## 安装与依赖
 
 [历史 RC2 普通 JAR 0.1.28](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.28/miaokatzecore-0.1.28.jar) · [SHA-256](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.28/miaokatzecore-0.1.28.jar.sha256) · [历史 dev JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.28/miaokatzecore-0.1.28-dev.jar) · [历史 sources JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.28/miaokatzecore-0.1.28-sources.jar)
 
-以上为保留不变的 RC2 发布物，不是正式版下载入口。面向 GTNH 2.9.0 正式版的版本范围为 **0.2.0 ~ +**；当前 0.2.0 仍为待发布草稿，完成 Maven 发布后再使用下列精确集成坐标。
+以上为保留不变的 RC2 历史发布物。GTNH 2.9.0 正式版推荐使用已分发的 [0.2.3 普通 JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.2.3/miaokatzecore-0.2.3.jar)（[SHA-256](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.2.3/miaokatzecore-0.2.3.jar.sha256)）。截至 2026-11-02，0.2.3 已有 Maven 制品及源码 Tag，GitHub Release 仍为草稿；0.2.4 尚未分发。三种状态分别记录，详见 [分发验证](docs/distribution.md)。
+
+公开 Maven 中没有普通 `0.2.0` 目录。历史 `v0.2.0-git.8+099f028d1a` 是另一精确坐标，不能改名当作普通 0.2.0，也不能据此声称任意 0.2.0 JAR 一致。现有消费者允许安装 0.2.0 是兼容范围，不代表该下载坐标存在；新集成使用下列已分发坐标。
 
 客户端和服务端安装同一版 Core。同一 JAR 包含普通 Forge Mod 和极小的 FML early loader，复用整合包 UniMixins 启动机制，不携带另一套 Mixin bootstrap。专服不选择客户端 Mixin。通用数学与所有权契约不依赖 Minecraft/OpenGL；client 包只在客户端调用。当前适配面向 **GTNH 2.9.0 正式版**，精确开发依赖为 GT5U 5.09.54.265、MUI2 2.3.94、GTNHLib 0.11.54、NEI 2.8.171 与 Angelica 2.2.43；使用相应适配功能的 Mod 负责提供该依赖。
 
@@ -23,16 +25,16 @@ Gradle 仓库：https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven
 
 ~~~groovy
 repositories { maven { url = "https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/" } }
-dependencies { api("com.miaokatze.miaokatzecore:miaokatzecore:0.2.0:dev") { transitive = false } }
+dependencies { api("com.miaokatze.miaokatzecore:miaokatzecore:0.2.3:dev") { transitive = false } }
 ~~~
 
-正式版系列 Mod 的 Core 前置版本范围统一为 **0.2.0 ~ +**（最低 0.2.0，不设上限）：
+FML 最低版本由消费者实际调用的 API 和修复要求决定，并非所有 Mod 统一。以下是要求 0.2.3 的新集成示例；已有消费者应保持其已验证的兼容范围：
 
 ~~~properties
-required-after:miaokatzecore@[0.2.0,)
+required-after:miaokatzecore@[0.2.3,)
 ~~~
 
-系列 Mod 的 META-INF JSON 使用 FalsePatternLib 1.12.0+ 的 `modDependencies`，正式版缺包请求坐标为 `com.miaokatze.miaokatzecore:miaokatzecore:0.2.0`。下载机制继续复用整合包的 DepLoader；离线部署请预先提供匹配版本的 Core。该机制不覆盖已加载旧 Jar、不解决任意版本组合，也不意味着自动追踪最新版；从 RC2 升级时应将旧 Core 成组替换，避免重复 Mod。精确下载坐标不限制已安装 Core 的更高版本。历史上普通 LaunchWrapper 首次补下载带 early hooks 的 Core 可能要求重启，RC2/RFB 路径也有在 FML 扫描前补下载的记录；这些旧记录不作为正式版启动证明。参见 [上游格式](https://github.com/FalsePattern/FalsePatternLib/blob/1.12.0/src/main/resources/DEPENDENCIES.md)。
+系列 Mod 的 META-INF JSON 使用 FalsePatternLib 1.12.0+ 的 `modDependencies`；上述示例对应缺包请求坐标 `com.miaokatze.miaokatzecore:miaokatzecore:0.2.3`。下载机制继续复用整合包的 DepLoader；离线部署请预先提供匹配版本的 Core。该机制不覆盖已加载旧 Jar、不解决任意版本组合，也不意味着自动追踪最新版；从 RC2 升级时应将旧 Core 成组替换，避免重复 Mod。精确下载坐标不限制已安装 Core 的更高版本。历史上普通 LaunchWrapper 首次补下载带 early hooks 的 Core 可能要求重启，RC2/RFB 路径也有在 FML 扫描前补下载的记录；这些旧记录不作为正式版启动证明。参见 [上游格式](https://github.com/FalsePattern/FalsePatternLib/blob/1.12.0/src/main/resources/DEPENDENCIES.md)。
 
 ## 模块
 

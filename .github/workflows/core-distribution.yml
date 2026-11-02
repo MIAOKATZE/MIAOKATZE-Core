@@ -36,7 +36,6 @@ jobs:
       CORE_VERSION: ${{ inputs.version }}
       SOURCE_SHA: ${{ inputs.source_sha }}
       MAVEN_COMMIT: ${{ inputs.maven_commit }}
-      GRADLE_USER_HOME: ${{ runner.temp }}/core-distribution-gradle
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -62,6 +61,8 @@ jobs:
           distribution: temurin
           java-version: '17'
       - name: Resolve dev and normal with an empty Gradle user home
+        env:
+          GRADLE_USER_HOME: ${{ runner.temp }}/core-distribution-gradle
         shell: bash
         run: |
           test ! -e "$GRADLE_USER_HOME"

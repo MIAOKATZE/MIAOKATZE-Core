@@ -8,6 +8,7 @@ A shared library for rendering, cameras, UI and task management across MIAOKATZE
 
 | Core | GTNH | Minecraft / Forge | Java | 下载 / Download |
 | --- | --- | --- | --- | --- |
+| 0.2.5 | 2.9.0 RC-2 | 1.7.10 / 10.13.4.1614 | 8+ | [测试分发 JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.2.5/miaokatzecore-0.2.5.jar) |
 | 0.2.4 | 2.9.0 | 1.7.10 / 10.13.4.1614 | 8+ | [Release](https://github.com/MIAOKATZE/MIAOKATZE-Core/releases/tag/v0.2.4) |
 | 0.1.28 | 2.9.0 RC-2 | 1.7.10 / 10.13.4.1614 | 8+ | [JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.28/miaokatzecore-0.1.28.jar) |
 
@@ -19,7 +20,7 @@ Install the same Core version on client and server. Follow each mod's minimum-ve
 
 ```groovy
 repositories { maven { url = "https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/" } }
-dependencies { api("com.miaokatze.miaokatzecore:miaokatzecore:0.2.4:dev") { transitive = false } }
+dependencies { api("com.miaokatze.miaokatzecore:miaokatzecore:0.2.5:dev") { transitive = false } }
 ```
 
 ## 模块
@@ -35,6 +36,8 @@ dependencies { api("com.miaokatze.miaokatzecore:miaokatzecore:0.2.4:dev") { tran
 | client.itemfx.AtlasGlintRenderer | 参数化两遍物品光泽；由调用方注册，适合普通 atlas 物品，不自动覆盖其他渲染器 |
 | api.itemfx.GlintStyle | 不可变颜色、缩放、滚动速度和旋转参数，数组防御复制与有限值检查 |
 | client.preview.PreviewRenderScope | GL/FBO/Tessellator 预览隔离和显式第三方上下文清理；调用方控制快照、恢复时机 |
+| client.preview.ModelRendererMesh | 纯 CPU 提取原生 ModelRenderer 的四边形、UV、法线与子模型姿态；不调用 GL、编译模型或开关绘制批次 |
+| api.items.NativeItemIds | 按 GTNH EndlessIDs 原生格式读写数值物品 ID，重映射时同步或清除 idExt；不查询注册表或解释物品资产 |
 | ui.mui2.ScrollEdges | 绘制滚动内容上下渐隐与边缘；不拥有滚动、裁剪、鼠标或控件生命周期 |
 | api.extension.ExtensionCatalog | 每实例命名空间注册、稳定快照、可关闭句柄、安装重入保护与注销失败重试 |
 | api.camera | 不可变姿态、正交投影/反投影射线、交点、缩放与旋转缓动，不引用 Minecraft 或 GL |

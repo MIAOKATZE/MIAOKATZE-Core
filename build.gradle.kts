@@ -30,6 +30,22 @@ tasks.register<JavaExec>("runCoreContracts") {
 }
 tasks.named("check") { dependsOn("runCoreContracts") }
 
+tasks.register<JavaExec>("runModelRendererMeshContracts") {
+    group = "verification"
+    mainClass = "com.miaokatze.miaokatzecore.client.preview.ModelRendererMeshContracts"
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
+tasks.named("check") { dependsOn("runModelRendererMeshContracts") }
+
+tasks.register<JavaExec>("runNativeItemIdsContracts") {
+    group = "verification"
+    mainClass = "com.miaokatze.miaokatzecore.api.items.NativeItemIdsContracts"
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
+tasks.named("check") { dependsOn("runNativeItemIdsContracts") }
+
 mapOf(
     "runAnimationContracts" to "com.miaokatze.miaokatzecore.api.animation.AnimationContracts",
     "runAnimationRuntimeContracts" to "com.miaokatze.miaokatzecore.api.animation.RuntimeContracts",

@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "sourceRepository": "https://github.com/MIAOKATZE/MIAOKATZE-Core",
+  "sourceCommit": "e62b0b4fb43921e313802216c02059d15e20652a",
+  "tag": "v0.2.5",
+  "releaseVersion": "0.2.5",
+  "sourceCleanBefore": true,
+  "sourceCleanAfter": true,
+  "buildCommand": "./gradlew clean assemble --offline --no-configuration-cache",
+  "buildExitCode": 0,
+  "buildElapsedSeconds": 30.64,
+  "checks": {
+    "sourceTree": "95e598721de5f9669f493c960b73e15615fed7a3",
+    "scope": "Full clean check passed on identical Git tree before a commit-message-only correction; final tag clean assemble passed."
+  },
+  "files": [
+    {
+      "name": "miaokatzecore-0.2.5.jar",
+      "bytes": 483941,
+      "sha256": "5713a1e3be5d319c9de50dcdff72ece1894f8a2c5a930cc579a7bca38d9e1fcc"
+    },
+    {
+      "name": "miaokatzecore-0.2.5-dev.jar",
+      "bytes": 477140,
+      "sha256": "c92c4de1a57c558ecc2596fe8d9652b178e0ec8709abf0751bbd8d5a5aac3172"
+    },
+    {
+      "name": "miaokatzecore-0.2.5-sources.jar",
+      "bytes": 235575,
+      "sha256": "d6b06cd568758bbc3a6b222742f86adb6679babf63a518dab4b0f4b368e4ee41"
+    },
+    {
+      "name": "miaokatzecore-0.2.5.pom",
+      "bytes": 1284,
+      "sha256": "c2a7343237e49ffa919475f0f11436985a8560da397d997323fa491abe625b65"
+    },
+    {
+      "name": "miaokatzecore-0.2.5.module",
+      "bytes": 4500,
+      "sha256": "6d40fd45dd4a0f571b005139e2b6528bb40cd34ed1b532ef7cb425a9e87f46f4"
+    }
+  ]
+}

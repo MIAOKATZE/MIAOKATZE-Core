@@ -8,6 +8,7 @@ A shared library for rendering, cameras, UI and task management across MIAOKATZE
 
 | Core | GTNH | Minecraft / Forge | Java | 下载 / Download |
 | --- | --- | --- | --- | --- |
+| 0.2.6 (draft) | 2.9.0 RC-2 | 1.7.10 / 10.13.4.1614 | 8+ | Release draft (unpublished) |
 | 0.2.5 | 2.9.0 RC-2 | 1.7.10 / 10.13.4.1614 | 8+ | [测试分发 JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.2.5/miaokatzecore-0.2.5.jar) |
 | 0.2.4 | 2.9.0 | 1.7.10 / 10.13.4.1614 | 8+ | [Release](https://github.com/MIAOKATZE/MIAOKATZE-Core/releases/tag/v0.2.4) |
 | 0.1.28 | 2.9.0 RC-2 | 1.7.10 / 10.13.4.1614 | 8+ | [JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.28/miaokatzecore-0.1.28.jar) |
@@ -20,7 +21,7 @@ Install the same Core version on client and server. Follow each mod's minimum-ve
 
 ```groovy
 repositories { maven { url = "https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/" } }
-dependencies { api("com.miaokatze.miaokatzecore:miaokatzecore:0.2.5:dev") { transitive = false } }
+dependencies { api("com.miaokatze.miaokatzecore:miaokatzecore:0.2.6:dev") { transitive = false } }
 ```
 
 ## 模块

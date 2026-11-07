@@ -28,11 +28,11 @@
         {
           "name": "miaokatzecore-0.2.6-dev.jar",
           "url": "miaokatzecore-0.2.6-dev.jar",
-          "size": 499213,
-          "sha512": "d6eaea04453abe3ab695faf5c5967e85d1f2aeb481fdd3b65981c7ef4bcc9a37974561fefd8d9793ab011679073efb59ecb0aef896be7678417da0d37b82932a",
-          "sha256": "5571325b6889aa09c62b35596ccc7788b70abcaf0ec5422da948208d2e6de1f3",
-          "sha1": "1095a1dc4d9a0a21018062636b50bb8cbe832619",
-          "md5": "0507ce8123285fd9097ef68cc50ea4c0"
+          "size": 499385,
+          "sha512": "00d3aae62af6f26a92bd41dd75a639f6b2dbe7686eab9ff9d1427faacccc35ec77e5163846c8a366f7f5862d468432dca12c9be6cd560f373599b0067d215ee3",
+          "sha256": "beffc501d8865d4d3755bf3ea5c6e950f882076d1407cd6309d1d191e0a69bb0",
+          "sha1": "c78ede4ab48716ee1ef1b48a14f69e14607838c3",
+          "md5": "dbde53dd48d5a1f575e5cfb5adc898d6"
         }
       ]
     },
@@ -77,11 +77,11 @@
         {
           "name": "miaokatzecore-0.2.6-dev.jar",
           "url": "miaokatzecore-0.2.6-dev.jar",
-          "size": 499213,
-          "sha512": "d6eaea04453abe3ab695faf5c5967e85d1f2aeb481fdd3b65981c7ef4bcc9a37974561fefd8d9793ab011679073efb59ecb0aef896be7678417da0d37b82932a",
-          "sha256": "5571325b6889aa09c62b35596ccc7788b70abcaf0ec5422da948208d2e6de1f3",
-          "sha1": "1095a1dc4d9a0a21018062636b50bb8cbe832619",
-          "md5": "0507ce8123285fd9097ef68cc50ea4c0"
+          "size": 499385,
+          "sha512": "00d3aae62af6f26a92bd41dd75a639f6b2dbe7686eab9ff9d1427faacccc35ec77e5163846c8a366f7f5862d468432dca12c9be6cd560f373599b0067d215ee3",
+          "sha256": "beffc501d8865d4d3755bf3ea5c6e950f882076d1407cd6309d1d191e0a69bb0",
+          "sha1": "c78ede4ab48716ee1ef1b48a14f69e14607838c3",
+          "md5": "dbde53dd48d5a1f575e5cfb5adc898d6"
         }
       ]
     },
@@ -98,11 +98,11 @@
         {
           "name": "miaokatzecore-0.2.6.jar",
           "url": "miaokatzecore-0.2.6.jar",
-          "size": 506289,
-          "sha512": "630fe6106dc8a876950a456d2f01f20c96a3c3144d5f4212c9584d32d30fe5c52e715cd296abff446f553d41e720631e46fa90a47afbadc61f6a5c7a72a4ce7f",
-          "sha256": "d518d17db0ef90d6a5485bb0367bb00aab4cbf9b6ade60d53db85a108f4ab8c6",
-          "sha1": "75f657f46ff8a987398a42613b24c858dfb91663",
-          "md5": "10218f59dd2e897db9ecd9ea07574fa5"
+          "size": 506472,
+          "sha512": "05966f98d07757e8dd64b61ecd270f8ed55421a995577ecc220ab6736e9e4bd4accb1ea077c4a8c6f59cabeadd37fd7384f0e4fd3726616bfe0bbbfa1f3316be",
+          "sha256": "de7e2df4bf301d9e7df9937f32ae1a81062b0d4db0bda3226dd54a5608331c48",
+          "sha1": "f699d48cb516ab08672ee5f69d53d7697cb803be",
+          "md5": "fb40c07e7dda94cab397dd75b5540c49"
         }
       ]
     },
@@ -119,11 +119,11 @@
         {
           "name": "miaokatzecore-0.2.6-sources.jar",
           "url": "miaokatzecore-0.2.6-sources.jar",
-          "size": 246455,
-          "sha512": "2826c1f4068a7ba4005b0cc69bec495a5b1737abaca1bb0342afe60c178e1ad3eea764077d2166ecf5ead31c47d7503dfb257245bf64364c57fbe8aa236f77ca",
-          "sha256": "603775318219356935811738b237af51efedee73253b51032c2f28cf428dd993",
-          "sha1": "102ad6696796d14e7fccc422e959b3b96a411192",
-          "md5": "ebf3e9ce80cb8caf89c53ceb27d84470"
+          "size": 246618,
+          "sha512": "d14ca5dacc38273f925ada563d199ce8539287de60f7ade5c10546d339694eaf5d8d9daf89932fe771b20fdac283fb837fec205831e53aa4625fe0139f5a19c7",
+          "sha256": "460e4c7937eddc5c390c22263b0003ae2788fc25de2ff9fb0edbd19d674d8818",
+          "sha1": "6e47dc0fe935d647d358270feb7abe8d54eab2f5",
+          "md5": "0f7a991502d99121d5d48fbba41fc536"
         }
       ]
     }

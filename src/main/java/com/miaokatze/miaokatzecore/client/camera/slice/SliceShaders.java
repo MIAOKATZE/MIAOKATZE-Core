@@ -102,7 +102,7 @@ public final class SliceShaders {
         if (owned && enabledPrograms != 0) Bridge.disableCurrentProgram();
     }
 
-    /** Null means the default shader path is available. Active shader packs are unsupported. */
+    /** Null means the default shader path is available. SDL GPU and active shader packs are unsupported. */
     public static String unsupportedReason() {
         try {
             return Bridge.unsupportedReason();
@@ -169,6 +169,7 @@ public final class SliceShaders {
     }
 
     public static String terrainSource(String resource, String source) {
+        if (isSDLGPU()) return source;
         if ("sodium:blocks/block_layer_opaque.vsh".equals(resource)) return vertexSource(source, false);
         if ("angelica:blocks/block_layer_opaque.fsh".equals(resource)) return fragmentSource(source);
         return source;
@@ -176,6 +177,7 @@ public final class SliceShaders {
 
     /** Use transformed centerline coordinates before wide-line screen-space expansion. */
     public static String vertexSource(String source, boolean fixedFunction) {
+        if (isSDLGPU()) return source;
         if (source.contains("v_CoreSliceEye")) return source;
         String declarations = "out vec3 v_CoreSliceEye;\n";
         String assignment;
@@ -210,12 +212,22 @@ public final class SliceShaders {
     }
 
     public static String fragmentSource(String source) {
+        if (isSDLGPU()) return source;
         if (source.contains("coreSliceDiscard")) return source;
         int main = source.indexOf("void main() {");
         if (main < 0) throw new IllegalStateException("Unsupported fragment shader layout");
         return source.substring(0, main) + FragmentSource.VALUE
             + source.substring(main)
                 .replace("void main() {", "void main() {\n  coreSliceDiscard();");
+    }
+
+    private static boolean isSDLGPU() {
+        try {
+            return Bridge.isSDLGPU();
+        } catch (LinkageError missingRenderer) {
+            // Preserve standalone source transformation when the optional renderer is absent.
+            return false;
+        }
     }
 
     /** Forward the new varying through wide-line near-plane interpolation. */
@@ -291,7 +303,13 @@ public final class SliceShaders {
     /** Optional Angelica symbols stay in this lazy class; public lifecycle calls are safe without Angelica. */
     private static final class Bridge {
 
+        private static boolean isSDLGPU() {
+            return com.gtnewhorizons.angelica.glsm.backend.BackendManager.RENDER_BACKEND.isSDLGPU();
+        }
+
         private static String unsupportedReason() {
+            // Bare slice uniforms change SDL's UBO layout even when no slice frame is active.
+            if (isSDLGPU()) return "Height slicing does not support the SDL GPU backend";
             return com.gtnewhorizons.angelica.rendering.celeritas.api.IrisShaderProviderHolder.isActive()
                 ? "Height slicing does not support active Iris shader packs"
                 : null;

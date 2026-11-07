@@ -113,6 +113,7 @@ mapOf(
     "runCameraPointerContracts" to "com.miaokatze.miaokatzecore.client.camera.CameraPointerContracts",
     "runCameraHudContracts" to "com.miaokatze.miaokatzecore.client.camera.hud.CameraHudContracts",
     "runSliceMeshContracts" to "com.miaokatze.miaokatzecore.client.camera.slice.SliceMeshContracts",
+    "runSliceBackendContracts" to "com.miaokatze.miaokatzecore.client.camera.slice.SliceBackendContracts",
     "runAngelicaSliceContracts" to "com.miaokatze.miaokatzecore.client.camera.slice.AngelicaSliceContracts",
     "runTessellatorSliceContracts" to "com.miaokatze.miaokatzecore.client.render.TessellatorSliceContracts",
     "runScreenLineContracts" to "com.miaokatze.miaokatzecore.client.render.ScreenLineContracts",

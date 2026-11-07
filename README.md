@@ -49,7 +49,7 @@ dependencies { api("com.miaokatze.miaokatzecore:miaokatzecore:0.2.6:dev") { tran
 | client.camera.CameraSettings / CameraControls | 不可变具名策略及能力回调；准星、非模态控制条、平移旋转缩放与切层由消费者选择 |
 | client.camera.CameraFrame | 成功显示的只读帧、复用坐标基、requested/displayed/committed 切层与内容 revision |
 | api.camera.HeightSlice / SliceSurfaceRule | 整数上下高度区间、真实边界面及同像素渐变覆盖规则 |
-| client.camera.slice.SliceBackend | 正式版默认地形与 TESR 裁切、局部边界补面和后台上传状态；不支持活动 Iris shaderpack |
+| client.camera.slice.SliceBackend | 正式版默认地形与 TESR 裁切、局部边界补面和后台上传状态；SDL GPU/Vulkan 保留正常渲染但不支持高度切片；不支持活动 Iris shaderpack |
 | testkit.Deadline | 可注入单调时间戳的被动预算，处理 nanoTime 回绕，不注册维度或后台任务 |
 | api.work.WorkGovernor | 显式共享 CPU/字节准入、资源租约、精确键 singleflight、owner guard 与被动观察器；无游戏依赖、自动线程或监听 |
 

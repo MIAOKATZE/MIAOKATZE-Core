@@ -1,5 +1,9 @@
 # 世界相机 API（0.1.7）
 
+## 0.2.6：SDL GPU/Vulkan 的高度切片状态
+
+SDL GPU/Vulkan 后端保留正常世界渲染，但高度切片暂不可用。Core 在该后端跳过 SliceShaders 的额外 vertex、fragment 与 terrain 源码注入，避免改变 SDL shader 的 UBO 布局。OpenGL 切片注入与活动 Iris shaderpack 的既有处理保持不变，公开方法签名不变。构建核验与发布状态见全局 workflow 后续回执。
+
 ## 0.2.0：GTNH 2.9.0 正式版
 
 开发依赖对齐正式版的 GT5U 5.09.54.264、MUI2 2.3.94、GTNHLib 0.11.54、NEI 2.8.171 与 Angelica 2.2.42。公开相机、切片和渲染 API 签名保留，RC2 的 Core 0.1.28 发布物不变。

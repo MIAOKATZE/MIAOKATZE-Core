@@ -256,7 +256,7 @@ public final class ScreenLineStream implements AutoCloseable {
     }
 
     /** Optional symbols remain lazy; compatibility-profile users do not require Angelica. No backend bindings. */
-    private static final class AngelicaFfp {
+    static final class AngelicaFfp {
 
         static boolean supported() {
             return com.gtnewhorizons.angelica.glsm.GLStateManager.isCachingEnabled()

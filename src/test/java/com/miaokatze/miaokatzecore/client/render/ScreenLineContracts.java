@@ -12,6 +12,7 @@ import com.miaokatze.miaokatzecore.mixin.render.TessellatorAccessor;
 public final class ScreenLineContracts {
 
     public static void main(String[] args) throws Exception {
+        PackedVertexContracts.main(args);
         packedBytes();
         translationOrder();
         inputIsReadOnly();

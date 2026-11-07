@@ -32,6 +32,7 @@ dependencies { api("com.miaokatze.miaokatzecore:miaokatzecore:0.2.6:dev") { tran
 | client.fx.RuneRenderer | 符文、环、柔光；可注入纹理，standard() 使用 Core 默认资源 |
 | client.fx.VoxelGeometry | 无逐体素顶点数组分配；立即绘制与追加 Tessellator 批次分别使用对应方法 |
 | client.render.SolidMesh | 实心盒、圆环、方环；box/ring 自有批次，cubeVertices 只追加顶点 |
+| client.render.PackedVertexStream | 有界复用 Angelica packed 提交；固定 quad/strip 布局，不支持的上下文由调用方完整回退 |
 | client.render.GlScope | 纹理单元、矩阵、属性及光照坐标保护，按 try-with-resources 单次关闭 |
 | client.render.MatrixAttributeScope | 轻量矩阵与显式属性掩码保护 |
 | client.itemfx.AtlasGlintRenderer | 参数化两遍物品光泽；由调用方注册，适合普通 atlas 物品，不自动覆盖其他渲染器 |
@@ -64,6 +65,7 @@ try (GlScope scope = new GlScope()) {
 - [动画协议 / Animation](docs/animation-contract.md) · [运行时 / Runtime](docs/animation-runtime.md) · [绘制 / Rendering](docs/animation-visual-renderer.md)
 - [相机 / Camera](docs/world-camera.md) · [任务准入 / Work governor](docs/work-governor.md)
 - [最近访问列表 / Bounded MRU](docs/bounded-mru.md) · [屏幕线条 / Screen lines](docs/screen-lines.md)
+- [Packed 顶点流 / Packed vertex stream](docs/packed-vertex-stream.md)
 
 ## 构建 / Build
 

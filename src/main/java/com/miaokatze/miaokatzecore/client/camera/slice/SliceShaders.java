@@ -159,8 +159,10 @@ public final class SliceShaders {
 
     public static void resourceReloaded() {
         endFrame();
-        LOCATIONS.clear();
-        enabledPrograms = 0;
+        // Resource reload does not destroy Angelica's cached FFP programs. Retain pending disables until
+        // their next real bind, or until the existing program-deletion hook calls forgetProgram.
+        LOCATIONS.entrySet()
+            .removeIf(entry -> !entry.getValue().enabledValue);
     }
 
     private static boolean wantsEnabled() {

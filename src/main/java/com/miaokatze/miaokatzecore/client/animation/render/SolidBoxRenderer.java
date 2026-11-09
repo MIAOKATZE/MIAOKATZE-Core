@@ -25,6 +25,7 @@ import com.miaokatze.miaokatzecore.api.camera.OrthographicProjection;
 import com.miaokatze.miaokatzecore.client.miaovision.SceneViewport;
 import com.miaokatze.miaokatzecore.client.preview.PreviewRenderScope;
 import com.miaokatze.miaokatzecore.client.render.SolidMesh;
+import com.miaokatze.miaokatzecore.client.render.internal.AngelicaFfpBridge;
 
 import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.relauncher.Side;
@@ -52,7 +53,7 @@ public final class SolidBoxRenderer implements AutoCloseable {
      * restore raw state and is a no-op when the supported Angelica fixed-function path is not active.
      */
     public static void restoreFixedFunctionState() {
-        if (Loader.isModLoaded("angelica") && AngelicaFfp.supported()) AngelicaFfp.restore();
+        if (Loader.isModLoaded("angelica") && AngelicaFfpBridge.supported()) AngelicaFfpBridge.restore();
     }
 
     /**
@@ -175,7 +176,7 @@ public final class SolidBoxRenderer implements AutoCloseable {
         if (!caps.OpenGL14) throw new IllegalStateException("OpenGL 1.4 blend support required");
         boolean angelica = Loader.isModLoaded("angelica");
         if (angelica) {
-            if (!AngelicaFfp.supported())
+            if (!AngelicaFfpBridge.supported())
                 throw new IllegalStateException("supported Angelica fixed-function state required");
         } else {
             boolean compatibility = caps.OpenGL32
@@ -243,7 +244,7 @@ public final class SolidBoxRenderer implements AutoCloseable {
         }
         if (angelica) {
             try {
-                AngelicaFfp.restore();
+                AngelicaFfpBridge.restore();
             } catch (RuntimeException | Error thrown) {
                 if (failure == null) failure = thrown;
                 else if (failure != thrown) failure.addSuppressed(thrown);
@@ -263,25 +264,6 @@ public final class SolidBoxRenderer implements AutoCloseable {
         Draw(VisualFrame.TargetPose pose, double depth) {
             this.pose = pose;
             this.depth = depth;
-        }
-    }
-
-    /** Existing ScreenLineStream's gate is private; use the same optional 2.2.42 public FFP boundary here. */
-    private static final class AngelicaFfp {
-
-        static boolean supported() {
-            return com.gtnewhorizons.angelica.glsm.GLStateManager.isCachingEnabled()
-                && com.gtnewhorizons.angelica.glsm.ffp.ShaderManager.isEnabled()
-                && com.gtnewhorizons.angelica.glsm.ffp.ShaderManager.getInstance()
-                    .isActive()
-                && com.gtnewhorizons.angelica.glsm.GLSMQueries.glGetInteger(GL20.GL_CURRENT_PROGRAM) == 0
-                && !com.gtnewhorizons.angelica.rendering.celeritas.api.IrisShaderProviderHolder.isActive();
-        }
-
-        static void restore() {
-            // Reconcile derived FFP state through its own API; never bind a cached generated program as raw GL state.
-            com.gtnewhorizons.angelica.glsm.ffp.ShaderManager.getInstance()
-                .preDraw(com.gtnewhorizons.angelica.glsm.GLStateManager.ctx());
         }
     }
 

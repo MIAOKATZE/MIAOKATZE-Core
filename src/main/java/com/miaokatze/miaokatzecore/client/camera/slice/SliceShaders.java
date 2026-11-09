@@ -115,8 +115,9 @@ public final class SliceShaders {
         Objects.requireNonNull(domain, "domain");
         if (frame == null) return new Scope(null, generation, false);
         Domain previous = currentDomain;
-        currentDomain = domain;
         if (enabledPrograms != 0) Bridge.disableCurrentProgram();
+        // No Scope exists to unwind an entry whose native preparation fails.
+        currentDomain = domain;
         return new Scope(previous, generation, true);
     }
 

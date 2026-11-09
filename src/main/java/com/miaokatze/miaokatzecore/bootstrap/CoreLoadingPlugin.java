@@ -57,7 +57,6 @@ public final class CoreLoadingPlugin implements IFMLLoadingPlugin, IEarlyMixinLo
                     "camera.slice.shader.MixinSliceDefaultChunkShaderInterface",
                     "camera.slice.shader.MixinSliceTerrainDomain",
                     "camera.slice.shader.MixinSliceTileEntityDomain",
-                    "camera.slice.shader.MixinSliceGlStateManager",
                     "camera.slice.shader.MixinSliceGlProgram",
                     "camera.slice.mesh.MixinAngelicaSliceManager",
                     "camera.slice.mesh.MixinAngelicaSliceTask",

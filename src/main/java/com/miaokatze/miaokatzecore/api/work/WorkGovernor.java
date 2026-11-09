@@ -312,9 +312,20 @@ public final class WorkGovernor {
      */
     public <K, V> Subscription<V> singleFlight(K exactKey, long epoch, Callable<V> work, Executor executor,
         java.util.function.BiConsumer<? super V, ? super Throwable> onReady) {
+        return singleFlightInDomain(null, exactKey, epoch, work, executor, onReady);
+    }
+
+    /**
+     * Isolates coalescing and epoch cancellation with an owner-held domain token, compared by identity. Keep the
+     * token for the owner's lifetime. Unlike the legacy overload, equal keys/epochs in other domains never share work.
+     * 
+     * @since 0.2.8
+     */
+    public <K, V> Subscription<V> singleFlightInDomain(Object domain, K exactKey, long epoch, Callable<V> work,
+        Executor executor, java.util.function.BiConsumer<? super V, ? super Throwable> onReady) {
         Objects.requireNonNull(work, "work");
         Objects.requireNonNull(executor, "executor");
-        FlightKey key = new FlightKey(Objects.requireNonNull(exactKey, "exactKey"), epoch);
+        FlightKey key = new FlightKey(domain, Objects.requireNonNull(exactKey, "exactKey"), epoch);
         Flight<V> candidate = new Flight<>(key, work);
         Flight<V> flight;
         Subscription<V> subscription;
@@ -362,12 +373,29 @@ public final class WorkGovernor {
         }
     }
 
-    /** Cancel obsolete epoch subscribers. A running native unit exits before its permit is released. */
+    /**
+     * Legacy global cancellation across every domain. Epoch numbers must be globally allocated when using this
+     * method on a shared governor. Prefer cancelEpochInDomain for independently numbered consumer epochs.
+     */
     public void cancelEpoch(long epoch) {
+        cancelEpochMatching(null, epoch, true);
+    }
+
+    /**
+     * Cancels only subscriptions for this exact domain token and epoch, leaving all peers untouched.
+     * 
+     * @since 0.2.8
+     */
+    public void cancelEpochInDomain(Object domain, long epoch) {
+        cancelEpochMatching(domain, epoch, false);
+    }
+
+    private void cancelEpochMatching(Object domain, long epoch, boolean allDomains) {
         java.util.List<Subscription<?>> obsolete = new java.util.ArrayList<>();
         synchronized (flights) {
             for (Flight<?> flight : flights.values())
-                if (flight.key.epoch == epoch) obsolete.addAll(flight.subscribers);
+                if (flight.key.epoch == epoch && (allDomains || flight.key.domain == domain))
+                    obsolete.addAll(flight.subscribers);
         }
         for (Subscription<?> subscription : obsolete) subscription.cancel();
     }
@@ -518,24 +546,26 @@ public final class WorkGovernor {
 
     private static final class FlightKey {
 
+        final Object domain;
         final Object exact;
         final long epoch;
 
-        FlightKey(Object exact, long epoch) {
+        FlightKey(Object domain, Object exact, long epoch) {
+            this.domain = domain;
             this.exact = exact;
             this.epoch = epoch;
         }
 
         @Override
         public int hashCode() {
-            return 31 * exact.hashCode() + Long.hashCode(epoch);
+            return 31 * (31 * System.identityHashCode(domain) + exact.hashCode()) + Long.hashCode(epoch);
         }
 
         @Override
         public boolean equals(Object other) {
             if (!(other instanceof FlightKey)) return false;
             FlightKey key = (FlightKey) other;
-            return epoch == key.epoch && exact.equals(key.exact);
+            return domain == key.domain && epoch == key.epoch && exact.equals(key.exact);
         }
     }
 

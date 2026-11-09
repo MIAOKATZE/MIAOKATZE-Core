@@ -90,6 +90,8 @@ configurations.named("testCompileOnly") { extendsFrom(configurations.getByName("
 mapOf(
     "runQuestPreflightContracts" to "com.miaokatze.miaokatzecore.api.bq.QuestPreflightContracts",
     "runAngelicaHandContracts" to "com.miaokatze.miaokatzecore.client.camera.AngelicaHandContracts",
+    "runAngelicaProgramContracts" to "com.miaokatze.miaokatzecore.client.camera.AngelicaProgramContracts",
+    "runAtomicFilePublisherContracts" to "com.miaokatze.miaokatzecore.api.io.AtomicFilePublisherContracts",
     "runSliceReloadContracts" to "com.miaokatze.miaokatzecore.client.camera.slice.SliceReloadContracts"
 ).forEach { (taskName, entryPoint) ->
     tasks.register<JavaExec>(taskName) {

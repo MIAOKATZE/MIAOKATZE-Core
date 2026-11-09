@@ -18,7 +18,10 @@ public final class CameraClientEvents {
         if (installed) return;
         installed = true;
         MinecraftForge.EVENT_BUS.register(new CameraClientEvents());
-        if (Loader.isModLoaded("angelica")) AngelicaHandBridge.install();
+        if (Loader.isModLoaded("angelica")) {
+            AngelicaHandBridge.install();
+            AngelicaProgramBridge.install();
+        }
     }
 
     @SubscribeEvent

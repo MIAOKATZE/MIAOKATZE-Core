@@ -25,6 +25,7 @@ public final class SliceReloadContracts implements Opcodes {
     private static final String RECORDING = "core/fixture/RecordingBackend";
     private static final Map<Integer, Integer> UNIFORMS = new HashMap<>();
     private static final int[] CURRENT = { 0 };
+    private static boolean failDisable;
 
     public static void main(String[] args) throws Exception {
         URL target = args.length == 0 ? SliceShaders.class.getProtectionDomain()
@@ -113,6 +114,27 @@ public final class SliceReloadContracts implements Opcodes {
             Field locations = slice.getDeclaredField("LOCATIONS");
             locations.setAccessible(true);
             check(((Map<?, ?>) locations.get(null)).isEmpty(), "fully retired ledger clears on reload");
+            slice.getMethod("beginFrame", dataType)
+                .invoke(null, data);
+            scope = (AutoCloseable) slice.getMethod("domain", domainType)
+                .invoke(null, terrain);
+            slice.getMethod("upload", int.class)
+                .invoke(null, 202);
+            failDisable = true;
+            try {
+                slice.getMethod("domain", domainType)
+                    .invoke(null, domainType.getEnumConstants()[1]);
+                throw new AssertionError("native preparation must fail");
+            } catch (java.lang.reflect.InvocationTargetException expected) {
+                check(expected.getCause() instanceof IllegalStateException, "native failure propagates");
+            }
+            Field currentDomain = slice.getDeclaredField("currentDomain");
+            currentDomain.setAccessible(true);
+            check(currentDomain.get(null) == terrain, "failed nested entry retains the previous domain");
+            scope.close();
+            slice.getMethod("endFrame")
+                .invoke(null);
+            check(count(slice) == 0, "outer scope can still unwind after failed nested entry");
         }
         System.out
             .println("SliceReloadContracts: PASS (two variants, repeated reload, lazy disable, exact deletion; no GL)");
@@ -231,6 +253,10 @@ public final class SliceReloadContracts implements Opcodes {
     }
 
     public static void writeUniform(int location, int value) {
+        if (value == 0 && failDisable) {
+            failDisable = false;
+            throw new IllegalStateException("injected native uniform failure");
+        }
         if (location < 0) return;
         check(location == CURRENT[0] * 10, "uniform belongs to bound program");
         UNIFORMS.put(CURRENT[0], value);

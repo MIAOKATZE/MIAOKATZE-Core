@@ -276,6 +276,28 @@ public final class UiComponentContracts {
                 .add(survivor));
         expect(IllegalStateException.class, failing::close);
         check(cleanup[0] == 1 && survivor.disposed(), "one disposal failure does not retain sibling callbacks");
+        RuntimeException shared = new IllegalStateException("shared disposal failure");
+        UiNode sameFailure = UiNode.panel("sameFailure")
+            .onDispose(() -> { throw shared; });
+        sameFailure.add(
+            UiNode.panel("first")
+                .onDispose(() -> { throw shared; }))
+            .add(
+                UiNode.panel("second")
+                    .onDispose(() -> { throw shared; }))
+            .add(
+                UiNode.panel("last")
+                    .onDispose(() -> cleanup[0]++));
+        try {
+            sameFailure.disposeTree();
+            throw new AssertionError("shared failure must propagate");
+        } catch (RuntimeException thrown) {
+            same(shared, thrown, "same exception is preserved without self suppression");
+        }
+        check(
+            cleanup[0] == 2 && sameFailure.children()
+                .isEmpty() && sameFailure.dispose == null,
+            "repeated exception does not interrupt sibling and parent cleanup");
     }
 
     private static void rendering() {

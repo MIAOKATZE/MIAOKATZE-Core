@@ -20,6 +20,7 @@ import com.gtnewhorizon.gtnhlib.client.renderer.vao.IVertexArrayObject;
 import com.gtnewhorizon.gtnhlib.client.renderer.vao.VAOManager;
 import com.gtnewhorizon.gtnhlib.client.renderer.vbo.VertexBuffer;
 import com.gtnewhorizon.gtnhlib.client.renderer.vertex.DefaultVertexFormat;
+import com.miaokatze.miaokatzecore.client.render.internal.AngelicaFfpBridge;
 import com.miaokatze.miaokatzecore.client.render.internal.TessellatorCapture;
 import com.miaokatze.miaokatzecore.mixin.render.TessellatorAccessor;
 
@@ -95,7 +96,7 @@ public final class ScreenLineStream implements AutoCloseable {
         if (!caps.OpenGL30 || !VAOManager.isVaoEnabled()) return reject(Rejection.UNSUPPORTED_GL);
         angelica = Loader.isModLoaded("angelica");
         if (angelica) {
-            if (!AngelicaFfp.supported()) return reject(Rejection.SHADER);
+            if (!AngelicaFfpBridge.supported()) return reject(Rejection.SHADER);
         } else {
             if (caps.OpenGL32
                 && (GL11.glGetInteger(GL32.GL_CONTEXT_PROFILE_MASK) & GL32.GL_CONTEXT_CORE_PROFILE_BIT) != 0)
@@ -103,13 +104,14 @@ public final class ScreenLineStream implements AutoCloseable {
             if (GL11.glGetInteger(GL20.GL_CURRENT_PROGRAM) != 0) return reject(Rejection.SHADER);
         }
         if (GL11.glGetInteger(GL11.GL_LIST_INDEX) != 0) return reject(Rejection.CAPTURE);
-        if (GL11.glIsEnabled(GL11.GL_LIGHTING) || (angelica ? AngelicaFfp.textured() : textured()))
+        if (GL11.glIsEnabled(GL11.GL_LIGHTING) || (angelica ? AngelicaFfpBridge.textured() : textured()))
             return reject(Rejection.TEXTURED_OR_LIT);
 
         ScreenLineData.offsets(input, offsets);
         savedArray = GL11.glGetInteger(GL30.GL_VERTEX_ARRAY_BINDING);
         savedBuffer = GL11.glGetInteger(GL15.GL_ARRAY_BUFFER_BINDING);
-        savedClientTexture = angelica ? AngelicaFfp.clientTexture() : GL11.glGetInteger(GL13.GL_CLIENT_ACTIVE_TEXTURE);
+        savedClientTexture = angelica ? AngelicaFfpBridge.clientTexture()
+            : GL11.glGetInteger(GL13.GL_CLIENT_ACTIVE_TEXTURE);
         if (staging == null) staging = MemoryUtilities.memAlloc(MAX_VERTICES * BYTES_PER_VERTEX)
             .order(ByteOrder.nativeOrder());
         GL11.glPushClientAttrib(GL11.GL_CLIENT_VERTEX_ARRAY_BIT);
@@ -199,7 +201,7 @@ public final class ScreenLineStream implements AutoCloseable {
                 GL11.glPopClientAttrib();
                 GL13.glClientActiveTexture(savedClientTexture);
                 GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, savedBuffer);
-                if (angelica) AngelicaFfp.restore();
+                if (angelica) AngelicaFfpBridge.restore();
             } finally {
                 active = false;
             }
@@ -255,45 +257,4 @@ public final class ScreenLineStream implements AutoCloseable {
         }
     }
 
-    /** Optional symbols remain lazy; compatibility-profile users do not require Angelica. No backend bindings. */
-    static final class AngelicaFfp {
-
-        static boolean supported() {
-            return com.gtnewhorizons.angelica.glsm.GLStateManager.isCachingEnabled()
-                && com.gtnewhorizons.angelica.glsm.ffp.ShaderManager.isEnabled()
-                && com.gtnewhorizons.angelica.glsm.ffp.ShaderManager.getInstance()
-                    .isActive()
-                && com.gtnewhorizons.angelica.glsm.GLSMQueries.glGetInteger(GL20.GL_CURRENT_PROGRAM) == 0
-                && !com.gtnewhorizons.angelica.rendering.celeritas.api.IrisShaderProviderHolder.isActive();
-        }
-
-        static void restore() {
-            // Restore the logical FFP format through its own public preparation, never bind a generated program behind
-            // GLSM's cache. The physical generated program is not the application's logical CURRENT_PROGRAM zero.
-            com.gtnewhorizons.angelica.glsm.ffp.ShaderManager.getInstance()
-                .preDraw(com.gtnewhorizons.angelica.glsm.GLStateManager.ctx());
-        }
-
-        static int clientTexture() {
-            // CLIENT_ACTIVE_TEXTURE is legacy state and is not routed by glGetInteger in the core profile.
-            return GL13.GL_TEXTURE0 + com.gtnewhorizons.angelica.glsm.GLStateManager.ctx().clientActiveTextureUnit;
-        }
-
-        static boolean textured() {
-            // These are the texture targets represented by Angelica 2.2.42's FFP FragmentKey. Querying legacy
-            // MAX_TEXTURE_UNITS or TEXTURE_CUBE_MAP via the core-profile driver is not a valid substitute.
-            int units = com.gtnewhorizons.angelica.glsm.GLStateManager.MAX_TEXTURE_UNITS;
-            if (units <= 0) throw new IllegalStateException("Angelica FFP texture-unit count is invalid");
-            com.gtnewhorizons.angelica.glsm.states.TextureUnitArray textures = com.gtnewhorizons.angelica.glsm.GLStateManager
-                .ctx().textures;
-            for (int unit = 0; unit < units; unit++) if (textures.getTexture1DStates(unit)
-                .isEnabled()
-                || textures.getTextureUnitStates(unit)
-                    .isEnabled()
-                || textures.getTexture3DStates(unit)
-                    .isEnabled())
-                return true;
-            return false;
-        }
-    }
 }

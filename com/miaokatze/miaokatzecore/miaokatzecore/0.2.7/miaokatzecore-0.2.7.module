@@ -1,0 +1,131 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.miaokatze.miaokatzecore",
+    "module": "miaokatzecore",
+    "version": "0.2.7",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.3.1"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "miaokatzecore-0.2.7-dev.jar",
+          "url": "miaokatzecore-0.2.7-dev.jar",
+          "size": 506090,
+          "sha512": "bfb9a3c927e4b96c90ab8b72baf7d605483f9d7bc84978e76b43c480323150d0e15808054923c2186757d8af65f905fa34dfd3ffccd0f9076c37cdaea0a57b22",
+          "sha256": "d0cec389ce688bf8a84755c6a3b1ec9846b6db5972db0a1c094937f0c1990645",
+          "sha1": "881edf6dd43808c7adb864c201f87c16f146a366",
+          "md5": "9fc0d1a843122391f7bdea56d9a4258d"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.legacymoddingmc",
+          "module": "unimixins",
+          "version": {
+            "requires": "0.2.1"
+          },
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "unimixins",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "dev"
+            }
+          }
+        }
+      ],
+      "dependencyConstraints": [
+        {
+          "group": "com.github.GTNewHorizons",
+          "module": "GTNHLib",
+          "version": {
+            "requires": "0.9.20"
+          },
+          "reason": "fixes duplicate mod errors in java 17 configurations using old gtnhlib"
+        }
+      ],
+      "files": [
+        {
+          "name": "miaokatzecore-0.2.7-dev.jar",
+          "url": "miaokatzecore-0.2.7-dev.jar",
+          "size": 506090,
+          "sha512": "bfb9a3c927e4b96c90ab8b72baf7d605483f9d7bc84978e76b43c480323150d0e15808054923c2186757d8af65f905fa34dfd3ffccd0f9076c37cdaea0a57b22",
+          "sha256": "d0cec389ce688bf8a84755c6a3b1ec9846b6db5972db0a1c094937f0c1990645",
+          "sha1": "881edf6dd43808c7adb864c201f87c16f146a366",
+          "md5": "9fc0d1a843122391f7bdea56d9a4258d"
+        }
+      ]
+    },
+    {
+      "name": "reobfElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "srg",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "miaokatzecore-0.2.7.jar",
+          "url": "miaokatzecore-0.2.7.jar",
+          "size": 513249,
+          "sha512": "de9c68c5b3265eade96d54d55aa3d9d655dbbf8e229f3a98e792983a6cbcaebb5d5d5c277e59c420e87d77303685beba79788090dd877aa1a3669606728dc1b9",
+          "sha256": "4ca7e9438729e3b1eecc712f8f09defe0f8b99ebcc2a7b67cd730e8cdb7e8c24",
+          "sha1": "87859cd2044e854c715b05c2a7f4c5e57945c661",
+          "md5": "a461cdcf3f0f9d91dffb52c522f236d8"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "com.gtnewhorizons.retrofuturagradle.obfuscation": "mcp",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "miaokatzecore-0.2.7-sources.jar",
+          "url": "miaokatzecore-0.2.7-sources.jar",
+          "size": 250791,
+          "sha512": "a48f80c5a2d42a053e38b63a8030b018c9120726f5846142effc42380c7a9b177b01949a7e565b8706e9ed5e573493c9d3cc9bbf33504ed0bb7ce9ad34e37300",
+          "sha256": "9ae4ce615b8bffaf6cdbdf00c2be9feaa3d923ebdeca307e42850fcf93a97e87",
+          "sha1": "b1fbad4c2e02c52768d91f884ab4133d05156bf3",
+          "md5": "3d8b9c6bfad2a089c3bc63e68c5fd3e2"
+        }
+      ]
+    }
+  ]
+}

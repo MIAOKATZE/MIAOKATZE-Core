@@ -84,6 +84,24 @@ tasks.register<JavaExec>("runRecipeRegistrationContracts") {
 
 tasks.named("check") { dependsOn("runRecipeRegistrationContracts") }
 
+// Native optional API contracts compile against the same compile-only surfaces as production.
+configurations.named("testCompileOnly") { extendsFrom(configurations.getByName("compileOnly")) }
+
+mapOf(
+    "runQuestPreflightContracts" to "com.miaokatze.miaokatzecore.api.bq.QuestPreflightContracts",
+    "runAngelicaHandContracts" to "com.miaokatze.miaokatzecore.client.camera.AngelicaHandContracts",
+    "runAngelicaProgramContracts" to "com.miaokatze.miaokatzecore.client.camera.AngelicaProgramContracts",
+    "runAtomicFilePublisherContracts" to "com.miaokatze.miaokatzecore.api.io.AtomicFilePublisherContracts",
+    "runSliceReloadContracts" to "com.miaokatze.miaokatzecore.client.camera.slice.SliceReloadContracts"
+).forEach { (taskName, entryPoint) ->
+    tasks.register<JavaExec>(taskName) {
+        group = "verification"
+        mainClass = entryPoint
+        classpath = sourceSets.getByName("test").runtimeClasspath + sourceSets.getByName("main").compileClasspath
+    }
+    tasks.named("check") { dependsOn(taskName) }
+}
+
 tasks.register<JavaExec>("runUiComponentContracts") {
     group = "verification"
     mainClass = "com.miaokatze.miaokatzecore.api.ui.component.UiComponentContracts"

@@ -6,6 +6,7 @@ import net.minecraftforge.common.MinecraftForge;
 
 import com.miaokatze.miaokatzecore.client.camera.hud.CameraHud;
 
+import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 
 /** Installed only from the client-only Minecraft Mixin; common mod loading never resolves this class. */
@@ -17,6 +18,10 @@ public final class CameraClientEvents {
         if (installed) return;
         installed = true;
         MinecraftForge.EVENT_BUS.register(new CameraClientEvents());
+        if (Loader.isModLoaded("angelica")) {
+            AngelicaHandBridge.install();
+            AngelicaProgramBridge.install();
+        }
     }
 
     @SubscribeEvent

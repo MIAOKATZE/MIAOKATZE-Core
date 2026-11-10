@@ -40,6 +40,7 @@ public final class WorkGovernorContracts {
         byteAdmission();
         subscriberLifecycle();
         epochAndException();
+        cancellationDomains();
         reentry();
         ownedProducerLifecycle();
         cooperativeCancellation();
@@ -55,6 +56,40 @@ public final class WorkGovernorContracts {
     public static void main(String[] args) throws Exception {
         run();
         System.out.println("WorkGovernorContracts passed");
+    }
+
+    private static void cancellationDomains() {
+        WorkGovernor governor = new WorkGovernor(1, 64, null, null);
+        List<Runnable> queue = new ArrayList<>();
+        Object first = new Object(), second = new Object();
+        WorkGovernor.Subscription<Integer> a = governor
+            .singleFlightInDomain(first, "same", 1, () -> 1, queue::add, null);
+        WorkGovernor.Subscription<Integer> peer = governor
+            .singleFlightInDomain(first, "same", 1, () -> 2, queue::add, null);
+        WorkGovernor.Subscription<Integer> b = governor
+            .singleFlightInDomain(second, "same", 1, () -> 3, queue::add, null);
+        check(queue.size() == 2, "coalescing stays inside one identity domain");
+        governor.cancelEpochInDomain(first, 1);
+        check(
+            a.future()
+                .isCancelled()
+                && peer.future()
+                    .isCancelled()
+                && !b.future()
+                    .isDone(),
+            "same epoch in another owner domain remains subscribed");
+        for (Runnable task : queue) task.run();
+        check(
+            b.future()
+                .join() == 3,
+            "independent owner completes");
+        WorkGovernor.Subscription<Integer> global = governor
+            .singleFlightInDomain(second, "later", 2, () -> 4, queue::add, null);
+        governor.cancelEpoch(2);
+        check(
+            global.future()
+                .isCancelled(),
+            "legacy global cancellation retains its old semantics");
     }
 
     private static void byteAdmission() throws Exception {

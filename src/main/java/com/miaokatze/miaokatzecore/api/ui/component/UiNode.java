@@ -353,7 +353,7 @@ public final class UiNode {
                 child.disposeTree();
             } catch (RuntimeException e) {
                 if (failure == null) failure = e;
-                else failure.addSuppressed(e);
+                else if (failure != e) failure.addSuppressed(e);
             }
         }
         children.clear();
@@ -363,7 +363,7 @@ public final class UiNode {
             if (dispose != null) dispose.run();
         } catch (RuntimeException e) {
             if (failure == null) failure = e;
-            else failure.addSuppressed(e);
+            else if (failure != e) failure.addSuppressed(e);
         }
         painter = null;
         click = null;

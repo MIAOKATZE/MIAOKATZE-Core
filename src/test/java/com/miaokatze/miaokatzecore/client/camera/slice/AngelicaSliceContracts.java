@@ -7,6 +7,8 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -76,9 +78,36 @@ public final class AngelicaSliceContracts {
         require(encode.desc.startsWith("([III[I[I"), "native encoding retains offset and vertex count separately");
         ClassNode deletion = read("com/miaokatze/miaokatzecore/mixin/camera/slice/shader/MixinSliceGlStateManager");
         AnnotationNode mixinTarget = annotation(deletion.invisibleAnnotations, "Mixin;");
+        require(mixinTarget == null, "historical public deletion type no longer injects before native guards");
+        boolean nativeDeletionBus = false, subscribes = false;
+        for (AbstractInsnNode instruction : method(
+            read("com/miaokatze/miaokatzecore/client/camera/AngelicaProgramBridge"),
+            "install").instructions.toArray()) {
+            if (instruction instanceof FieldInsnNode) {
+                FieldInsnNode field = (FieldInsnNode) instruction;
+                if (field.owner.equals("com/gtnewhorizons/angelica/glsm/hooks/GLSMHooks")
+                    && field.name.equals("PROGRAM_DELETE")) nativeDeletionBus = true;
+            }
+            if (instruction instanceof MethodInsnNode && ((MethodInsnNode) instruction).name.equals("addListener"))
+                subscribes = true;
+        }
+        require(nativeDeletionBus && subscribes, "program cleanup subscribes to the native owner deletion bus");
+        for (AbstractInsnNode instruction : method(
+            read("com/miaokatze/miaokatzecore/bootstrap/CoreLoadingPlugin"),
+            "getMixins").instructions.toArray()) {
+            require(
+                !(instruction instanceof LdcInsnNode)
+                    || !"camera.slice.shader.MixinSliceGlStateManager".equals(((LdcInsnNode) instruction).cst),
+                "bootstrap does not register the historical deletion injection");
+        }
         require(
-            ((List<?>) value(mixinTarget, "targets")).contains("com.gtnewhorizons.angelica.glsm.GLSMPrograms"),
-            "program cleanup targets the actual program owner");
+            ((List<?>) value(
+                annotation(
+                    read(
+                        "com/miaokatze/miaokatzecore/mixin/camera/slice/shader/MixinSliceGlProgram").invisibleAnnotations,
+                    "Mixin;"),
+                "targets")).contains("org.embeddedt.embeddium.impl.gl.shader.GlProgram"),
+            "independent native GlProgram deletion path remains covered");
         require(
             method(read("com/gtnewhorizons/angelica/glsm/GLSMPrograms"), "glDeleteProgram").desc.equals("(I)V"),
             "program cleanup target descriptor exists");
@@ -117,6 +146,7 @@ public final class AngelicaSliceContracts {
     }
 
     private static Object value(AnnotationNode annotation, String name) {
+        require(annotation != null, "expected annotation is absent while reading " + name);
         for (int i = 0; i < annotation.values.size(); i += 2) {
             if (name.equals(annotation.values.get(i))) return annotation.values.get(i + 1);
         }

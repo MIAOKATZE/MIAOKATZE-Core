@@ -20,6 +20,7 @@ import com.gtnewhorizon.gtnhlib.client.renderer.TessellatorManager;
 import com.gtnewhorizon.gtnhlib.client.renderer.vao.VAOManager;
 import com.gtnewhorizons.angelica.glsm.hooks.GLSMHooks;
 import com.gtnewhorizons.angelica.glsm.hooks.ImmediateExtendedAttribHandler;
+import com.miaokatze.miaokatzecore.client.render.internal.AngelicaFfpBridge;
 import com.miaokatze.miaokatzecore.client.render.internal.TessellatorCapture;
 import com.miaokatze.miaokatzecore.mixin.render.TessellatorAccessor;
 
@@ -111,7 +112,7 @@ public final class PackedVertexStream implements AutoCloseable {
         if (!caps.OpenGL30 || !VAOManager.isVaoEnabled() || PackedDrawer.DRAW == null)
             return reject(Rejection.UNSUPPORTED_BACKEND);
         try {
-            if (!ScreenLineStream.AngelicaFfp.supported() || !PackedFfp.standardFormat())
+            if (!AngelicaFfpBridge.supported() || !PackedFfp.standardFormat())
                 return reject(Rejection.SHADER_OR_EXTENDED_FORMAT);
             if (GL11.glIsEnabled(GL11.GL_LIGHTING) || !PackedFfp.textureMatches(requestedLayout.textured))
                 return reject(Rejection.TEXTURE_OR_LIGHTING);
@@ -123,7 +124,7 @@ public final class PackedVertexStream implements AutoCloseable {
         ScreenLineData.offsets(input, offsets);
         savedArray = GL11.glGetInteger(GL30.GL_VERTEX_ARRAY_BINDING);
         savedBuffer = GL11.glGetInteger(GL15.GL_ARRAY_BUFFER_BINDING);
-        savedClientTexture = ScreenLineStream.AngelicaFfp.clientTexture();
+        savedClientTexture = AngelicaFfpBridge.clientTexture();
         if (staging == null) staging = MemoryUtilities.memAlloc(MAX_VERTICES * 24)
             .order(ByteOrder.nativeOrder());
         GL11.glPushClientAttrib(GL11.GL_CLIENT_VERTEX_ARRAY_BIT);
@@ -229,7 +230,7 @@ public final class PackedVertexStream implements AutoCloseable {
                     try {
                         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, savedBuffer);
                     } finally {
-                        ScreenLineStream.AngelicaFfp.restore();
+                        AngelicaFfpBridge.restore();
                     }
                 }
             }

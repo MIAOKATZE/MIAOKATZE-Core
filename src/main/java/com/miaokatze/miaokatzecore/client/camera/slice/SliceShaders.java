@@ -115,8 +115,9 @@ public final class SliceShaders {
         Objects.requireNonNull(domain, "domain");
         if (frame == null) return new Scope(null, generation, false);
         Domain previous = currentDomain;
-        currentDomain = domain;
         if (enabledPrograms != 0) Bridge.disableCurrentProgram();
+        // No Scope exists to unwind an entry whose native preparation fails.
+        currentDomain = domain;
         return new Scope(previous, generation, true);
     }
 
@@ -159,8 +160,10 @@ public final class SliceShaders {
 
     public static void resourceReloaded() {
         endFrame();
-        LOCATIONS.clear();
-        enabledPrograms = 0;
+        // Resource reload does not destroy Angelica's cached FFP programs. Retain pending disables until
+        // their next real bind, or until the existing program-deletion hook calls forgetProgram.
+        LOCATIONS.entrySet()
+            .removeIf(entry -> !entry.getValue().enabledValue);
     }
 
     private static boolean wantsEnabled() {

@@ -1,10 +1,13 @@
 package com.miaokatze.miaokatzecore.api.testlab;
 
 import java.io.InputStream;
+import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.CodeSource;
 import java.security.MessageDigest;
+import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -272,7 +275,8 @@ public final class TestlabContracts {
                 .get("jarSha256")
                 .equals("unknown"),
             "classes directory never guessed as jar");
-        Path jarPath = Files.createTempFile("miaotest-artifact-contract", ".jar");
+        Path specialDirectory = Files.createTempDirectory("miaotest-artifact-contract");
+        Path jarPath = specialDirectory.resolve("\u4e2d\u6587 \u7a7a\u683c%\u611f\u53f9!.jar");
         Manifest manifest = new Manifest();
         manifest.getMainAttributes()
             .putValue("Manifest-Version", "1.0");
@@ -316,7 +320,67 @@ public final class TestlabContracts {
                     .equals("true"),
                 "dirty marker retained");
         }
+        String encodedJar = jarPath.toUri()
+            .toASCIIString()
+            .replace("!", "%21");
+        URL entrySource = new URL("jar:" + encodedJar + "!/" + resource);
+        try (EntryCodeSourceLoader loader = new EntryCodeSourceLoader(jarPath, entrySource)) {
+            Class<?> anchor = Class.forName(ArtifactIdentity.class.getName(), true, loader);
+            Map<String, String> values = ArtifactIdentity.capture(anchor)
+                .asMap();
+            StringBuilder expected = new StringBuilder();
+            for (byte b : MessageDigest.getInstance("SHA-256")
+                .digest(Files.readAllBytes(jarPath))) expected.append(String.format(Locale.ROOT, "%02x", b & 255));
+            check(
+                entrySource.toExternalForm()
+                    .equals(values.get("codeSource")),
+                "raw jar-entry CodeSource preserved");
+            check("jar".equals(values.get("artifactKind")), "jar-entry resolves its local jar container");
+            check(
+                expected.toString()
+                    .equals(values.get("jarSha256")),
+                "Unicode space percent exclamation path binds actual jar SHA");
+            check("contract-commit".equals(values.get("sourceCommit")), "jar-entry reads actual manifest commit");
+        }
+        URL remote = new URL("jar:http://127.0.0.1:1/never-contact.jar!/" + resource);
+        try (EntryCodeSourceLoader loader = new EntryCodeSourceLoader(jarPath, remote)) {
+            Class<?> anchor = Class.forName(ArtifactIdentity.class.getName(), true, loader);
+            Map<String, String> values = ArtifactIdentity.capture(anchor)
+                .asMap();
+            check(
+                "unknown".equals(values.get("jarSha256")) && !values.containsKey("identityError"),
+                "remote jar container rejected without connection");
+        }
         Files.delete(jarPath);
+        Files.delete(specialDirectory);
+    }
+
+    /** Real class definition with the jar-entry ProtectionDomain shape used by LaunchWrapper/RFB. */
+    private static final class EntryCodeSourceLoader extends URLClassLoader {
+
+        private final Path jar;
+        private final URL reportedSource;
+
+        EntryCodeSourceLoader(Path jar, URL reportedSource) {
+            super(new URL[0], null);
+            this.jar = jar;
+            this.reportedSource = reportedSource;
+        }
+
+        protected Class<?> findClass(String name) throws ClassNotFoundException {
+            String entry = name.replace('.', '/') + ".class";
+            try (java.util.jar.JarFile input = new java.util.jar.JarFile(jar.toFile());
+                InputStream bytes = input.getInputStream(input.getJarEntry(entry));
+                java.io.ByteArrayOutputStream output = new java.io.ByteArrayOutputStream()) {
+                byte[] buffer = new byte[8192];
+                int count;
+                while ((count = bytes.read(buffer)) != -1) output.write(buffer, 0, count);
+                byte[] code = output.toByteArray();
+                return defineClass(name, code, 0, code.length, new CodeSource(reportedSource, (Certificate[]) null));
+            } catch (Exception failure) {
+                throw new ClassNotFoundException(name, failure);
+            }
+        }
     }
 
     private static final class Adapter implements LabModule {

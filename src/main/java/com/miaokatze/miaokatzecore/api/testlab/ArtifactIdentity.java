@@ -1,6 +1,8 @@
 package com.miaokatze.miaokatzecore.api.testlab;
 
 import java.io.InputStream;
+import java.net.JarURLConnection;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -40,13 +42,16 @@ public final class ArtifactIdentity {
                 "codeSource",
                 source.getLocation()
                     .toExternalForm());
-            if (!"file".equals(
-                source.getLocation()
-                    .getProtocol()))
-                return new ArtifactIdentity(values);
-            Path path = Paths.get(
-                source.getLocation()
-                    .toURI());
+            URL container = source.getLocation();
+            if ("jar".equals(container.getProtocol())) {
+                // LaunchWrapper/RFB may report the exact class entry rather than the enclosing jar root.
+                // Opening a connection object does not fetch bytes; only local file containers are accepted below.
+                JarURLConnection connection = (JarURLConnection) container.openConnection();
+                connection.setUseCaches(false);
+                container = connection.getJarFileURL();
+            }
+            if (!"file".equals(container.getProtocol())) return new ArtifactIdentity(values);
+            Path path = Paths.get(container.toURI());
             if (!Files.isRegularFile(path)) {
                 values.put("artifactKind", "classes-directory");
                 return new ArtifactIdentity(values);

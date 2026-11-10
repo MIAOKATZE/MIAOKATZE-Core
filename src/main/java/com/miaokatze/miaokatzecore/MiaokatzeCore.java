@@ -26,6 +26,16 @@ public final class MiaokatzeCore {
     public static final String MODID = "miaokatzecore";
 
     @Mod.EventHandler
+    public void serverStarting(cpw.mods.fml.common.event.FMLServerStartingEvent event) {
+        com.miaokatze.miaokatzecore.bootstrap.LabBootstrap.serverStarting(event);
+    }
+
+    @Mod.EventHandler
+    public void serverStopped(cpw.mods.fml.common.event.FMLServerStoppedEvent event) {
+        com.miaokatze.miaokatzecore.api.testlab.LabEvents.clearAll();
+    }
+
+    @Mod.EventHandler
     public void loadComplete(FMLLoadCompleteEvent event) {
         RecipeRegistrationLifecycle.install(event.getSide());
     }

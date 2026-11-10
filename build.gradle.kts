@@ -18,8 +18,12 @@ tasks.jar {
 }
 
 tasks.processResources {
-    inputs.property("coreRelease", coreReleaseVersion)
-    filesMatching(listOf("mcmod.info", "META-INF/miaokatze_core_marker.json")) { filter<ReplaceTokens>("tokens" to mapOf("CORE_RELEASE" to coreReleaseVersion.get())) }
+    val release = coreReleaseVersion.get()
+    val releaseTokens = mapOf("CORE_RELEASE" to release)
+    inputs.property("coreRelease", release)
+    filesMatching(listOf("mcmod.info", "META-INF/miaokatze_core_marker.json")) {
+        filter<ReplaceTokens>("tokens" to releaseTokens)
+    }
 }
 
 tasks.test { failOnNoDiscoveredTests = false }
@@ -148,3 +152,65 @@ mapOf(
     }
     tasks.named("check") { dependsOn(taskName) }
 }
+
+// A complete replacement variant, never an addon to the ordinary Core jar.
+val testlabSourceSet = sourceSets.create("testlab") {
+    compileClasspath += sourceSets.main.get().output + sourceSets.main.get().compileClasspath
+    runtimeClasspath += output + compileClasspath + sourceSets.main.get().runtimeClasspath
+}
+configurations.named(testlabSourceSet.implementationConfigurationName) { extendsFrom(configurations.implementation.get()) }
+configurations.named(testlabSourceSet.compileOnlyConfigurationName) { extendsFrom(configurations.compileOnly.get()) }
+configurations.named(testlabSourceSet.annotationProcessorConfigurationName) { extendsFrom(configurations.annotationProcessor.get()) }
+sourceSets.test {
+    compileClasspath += testlabSourceSet.output
+    runtimeClasspath += testlabSourceSet.output
+}
+val testlabJar = tasks.register<Jar>("testlabJar") {
+    group = "build"
+    description = "Complete opt-in testlab replacement; do not install alongside the ordinary jar."
+    archiveClassifier.set("testlab-dev")
+    // Reuse every production CopySpec, including convention-added injected tags and mixin source sets.
+    with(tasks.jar.get())
+    from(testlabSourceSet.output)
+    manifest.from(tasks.jar.get().manifest)
+    manifest.attributes("Miaokatze-Testlab-Variant" to "replacement")
+}
+// RFG 2.x creates and fully configures this task through its reobf<JarTaskName> rule.
+tasks.named<com.gtnewhorizons.retrofuturagradle.mcp.ReobfuscatedJar>("reobfTestlabJar") {
+    archiveClassifier.set("testlab")
+    referenceClasspath.from(testlabSourceSet.compileClasspath)
+    val productionReobf = tasks.named<com.gtnewhorizons.retrofuturagradle.mcp.ReobfuscatedJar>("reobfJar")
+    extraSrgFiles.from(productionReobf.map { it.extraSrgFiles })
+    extraSrgEntries.addAll(productionReobf.flatMap { it.extraSrgEntries })
+}
+val testlabSourceCommit = providers.exec { commandLine("git", "rev-parse", "HEAD") }.standardOutput.asText.map { it.trim() }
+val testlabSourceDirty = providers.exec { commandLine("git", "status", "--porcelain", "--untracked-files=normal") }.standardOutput.asText.map { it.isNotBlank().toString() }
+tasks.withType<Jar>().configureEach {
+    manifest.attributes("Miaokatze-Source-Commit" to testlabSourceCommit.get(), "Miaokatze-Source-Dirty" to testlabSourceDirty.get())
+}
+tasks.register<JavaExec>("runTestlabContracts") {
+    group = "verification"
+    mainClass = "com.miaokatze.miaokatzecore.api.testlab.TestlabContracts"
+    classpath = sourceSets.test.get().runtimeClasspath + sourceSets.main.get().compileClasspath
+}
+tasks.named("check") { dependsOn("runTestlabContracts") }
+
+// Both complete variants share the main publication coordinate and are explicit replacement classifiers.
+extensions.configure<PublishingExtension> {
+    publications.withType<MavenPublication>().configureEach {
+        version = coreReleaseVersion.get()
+        groupId = "com.miaokatze.miaokatzecore"
+        artifactId = "miaokatzecore"
+        artifact(testlabJar)
+        artifact(tasks.named("reobfTestlabJar"))
+    }
+}
+
+// The convention computes its own Git-derived publication version in afterEvaluate.
+// Apply the explicit public coordinate after that callback, without changing archive provenance names.
+afterEvaluate {
+    extensions.configure<PublishingExtension> {
+        publications.withType<MavenPublication>().configureEach { version = coreReleaseVersion.get() }
+    }
+}
+tasks.named("assemble") { dependsOn("reobfTestlabJar") }

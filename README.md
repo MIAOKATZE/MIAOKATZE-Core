@@ -75,4 +75,8 @@ Build with JDK 25 using `gradlew build --no-configuration-cache`. Output targets
 
 ## License
 
-[AGPL-3.0](LICENSE) · [NOTICE](NOTICE.md)
+**Code:** [AGPLv3](LICENSE) with [reasonable additional terms](AGPL-ADDITIONAL-TERMS.md). **Designated independent assets:** [CC BY-NC-ND 4.0](ASSET-LICENSE.md). See [NOTICE](NOTICE.md) for project identity, exact scope, third-party exceptions, and independent legal-compliance duties.
+
+**代码：** AGPLv3及合理附加条款；**指定独立素材：** CC BY-NC-ND 4.0。具体范围、第三方例外和独立法律合规义务见NOTICE；既有有效授权不追溯撤回。
+
+This arrangement applies from **v0.2.10**. The two licenses cover different material; they are not alternative choices for the same material.

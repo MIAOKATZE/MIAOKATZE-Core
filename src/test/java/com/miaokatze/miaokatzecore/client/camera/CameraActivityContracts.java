@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Additional terms: see AGPL-ADDITIONAL-TERMS.md in the project root.
+
 package com.miaokatze.miaokatzecore.client.camera;
 
 /** GUI focus differs from native window focus. These contracts need neither Minecraft nor OpenGL. */

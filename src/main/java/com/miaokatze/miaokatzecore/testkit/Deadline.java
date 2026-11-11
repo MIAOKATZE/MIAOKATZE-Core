@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Additional terms: see AGPL-ADDITIONAL-TERMS.md in the project root.
+
 package com.miaokatze.miaokatzecore.testkit;
 
 /** Passive monotonic time budget. The consumer owns scheduling, cancellation and world state. */

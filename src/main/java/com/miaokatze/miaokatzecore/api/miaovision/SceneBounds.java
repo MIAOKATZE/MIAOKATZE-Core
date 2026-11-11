@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Additional terms: see AGPL-ADDITIONAL-TERMS.md in the project root.
+
 package com.miaokatze.miaokatzecore.api.miaovision;
 
 /** Finite local room. This is not a dimension registration or a reference to a game world. */

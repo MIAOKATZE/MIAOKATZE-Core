@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Additional terms: see AGPL-ADDITIONAL-TERMS.md in the project root.
+
 package com.miaokatze.miaokatzecore.client.miaovision;
 
 /** Native 1.7.10 equipped/extruded sprite coordinates normalized to the exact SceneBody half extents. */

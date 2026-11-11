@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Additional terms: see AGPL-ADDITIONAL-TERMS.md in the project root.
+
 package com.miaokatze.miaokatzecore.api.camera;
 
 /** Pure transform matching Tz(-depth) Rx(pitch) Ry(yaw) T(-anchor), without reading graphics state. */

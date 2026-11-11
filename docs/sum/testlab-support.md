@@ -1,6 +1,6 @@
 # Testlab 支持与消费合同
 
-Core 公共 SDK 基线为 `0.2.9` / `v0.2.9` / `134521a2b79bc39136f3d7b6e1877a162830d84e`。本页另记录其后实际运行发现的 CodeSource 兼容修正；后续候选源码和 JAR 身份须按对应回执核对，不能与原 Tag 制品混用。
+Core 公共 SDK 为 `0.2.9`，正式 `v0.2.9` 源码及制品固定于 `b3393c6d8d08b5d8b42443741ddf94619343f1e1`，包含 RFB CodeSource 兼容修正。公开 Maven 的七件制品已核验；后续纯文档整理不移动此 Tag、不替换同版本制品。GitHub Release 保持草稿。
 
 ## 普通包与完整测试替换包
 
@@ -11,7 +11,7 @@ Core 公共 SDK 基线为 `0.2.9` / `v0.2.9` / `134521a2b79bc39136f3d7b6e1877a16
 | 正式编译 / 普通实例 | `dev` / 无 classifier |
 | 需要测试实现的开发编译 / 测试实例 | `testlab-dev` / `testlab` |
 
-Maven 坐标为 `com.miaokatze.miaokatzecore:miaokatzecore:0.2.9`。完整测试包具有相同 modid，必须替换普通 Core，不能并装；各消费 Mod 的完整测试变体同理。此轮已确认 MavenLocal 发布，不据此推定公开远端仓或 Release 已更新。
+Maven 坐标为 `com.miaokatze.miaokatzecore:miaokatzecore:0.2.9`。完整测试包具有相同 modid，必须替换普通 Core，不能并装；各消费 Mod 的完整测试变体同理。公开 Maven 和正式源码 Tag 已就绪，GitHub 草稿与正式 Release 分别管理。
 
 `testlabJar` 复用普通 Jar 的完整 CopySpec，包含 Tags、Mixin、refmap 与资源，再加入 testlab 输出。RFG 原生规则配置 `reobfTestlabJar`，并继承普通 reobf 的额外 SRG。`assemble` 生成完整测试运行变体；`check` 包含 testlab 编译和 `runTestlabContracts`。两种变体的 330 个对应生产条目已逐字节核对一致，manifest 的测试变体标记单独保留。
 
@@ -62,4 +62,4 @@ Driver 用 `AtomicFilePublisher.publishAtomic` 尝试写实例工作目录 `logs
 
 证据根为 `E:/CodeGT/.artifacts/testlab-system-optimization/core/`。final-targeted-contracts.log 覆盖离线事件、精确世界、ambient join/旧残留、fixture scope、HARD、OP2/UUID/回执与真实临时 JAR 身份；World/Entity 为惰性对象，不启动 Minecraft。build-clean-publish.utf8.log 和 delivery.json 记录原 v0.2.9 clean build/check、本地发布和条目边界。
 
-后续身份修正通过 jar-entry-identity-contracts.log，候选构建及本地发布见 jar-entry-identity-publish.log，候选路径及 SHA 见 jar-entry-identity-candidate.json。候选与原 Tag 制品分开识别。真实实例曾暴露身份兼容问题；本页没有真实机器、GUI/GL、网络、桌面隔离或完整生存玩法通过结论。过程见[独立 workflow](../workflow/testlab-support_20261110.md)。
+身份修正已进入上述正式源码；早期候选证据仍保留原身份。最终干净构建与公开字节核对见 `delivery/final-merged-build.json`，发布状态见 `delivery/release-state-after.json`。四个消费 Mod 已实际加载该版本完成声明的服务端与后台客户端代表场景，范围以工作区总报告为准，不等同所有机器、GUI 或生存玩法验收。过程见[独立 workflow](../workflow/testlab-support_20261110.md)。

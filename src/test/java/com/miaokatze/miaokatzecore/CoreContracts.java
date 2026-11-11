@@ -16,7 +16,7 @@ import com.miaokatze.miaokatzecore.testkit.Deadline;
 /** Pure JVM contracts: no game world, GPU, sleeping or class stubs. */
 public final class CoreContracts {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         check(
             Deadline.startingAt(100L, 5L)
                 .hasTimeRemaining(104L),
@@ -44,6 +44,7 @@ public final class CoreContracts {
             Deadline.startingAt(0L, Long.MAX_VALUE)
                 .hasTimeRemaining(Long.MAX_VALUE - 1L),
             "large budget");
+        com.miaokatze.miaokatzecore.api.tooltip.TooltipPreferenceContracts.run();
         testCatalog();
         testGlint();
         testMru();

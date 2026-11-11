@@ -46,7 +46,19 @@ public final class MiaokatzeCore {
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         if (!event.getSide()
-            .isClient() || !Loader.isModLoaded("NotEnoughItems")) return;
+            .isClient()) return;
+        com.miaokatze.miaokatzecore.api.tooltip.TooltipPages.load(
+            event.getModConfigurationDirectory()
+                .toPath()
+                .resolve("miaokatzecore/tooltip.properties"));
+        try {
+            Class.forName("com.miaokatze.miaokatzecore.client.items.TooltipInput")
+                .getMethod("install")
+                .invoke(null);
+        } catch (ReflectiveOperationException exception) {
+            throw new IllegalStateException("Cannot install tooltip controls", exception);
+        }
+        if (!Loader.isModLoaded("NotEnoughItems")) return;
         try {
             // String lookup prevents optional NEI/client types from entering the common class's signatures.
             Class.forName("com.miaokatze.miaokatzecore.client.items.NEIItemOrdering")

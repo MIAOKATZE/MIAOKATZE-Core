@@ -8,10 +8,11 @@ A shared library for rendering, cameras, UI and task management across MIAOKATZE
 
 | Core | GTNH | Minecraft / Forge | Java | 下载 / Download |
 | --- | --- | --- | --- | --- |
-| 0.2.6 (draft) | 2.9.0 RC-2 | 1.7.10 / 10.13.4.1614 | 8+ | Release draft (unpublished) |
-| 0.2.5 | 2.9.0 RC-2 | 1.7.10 / 10.13.4.1614 | 8+ | [测试分发 JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.2.5/miaokatzecore-0.2.5.jar) |
-| 0.2.4 | 2.9.0 | 1.7.10 / 10.13.4.1614 | 8+ | [Release](https://github.com/MIAOKATZE/MIAOKATZE-Core/releases/tag/v0.2.4) |
-| 0.1.28 | 2.9.0 RC-2 | 1.7.10 / 10.13.4.1614 | 8+ | [JAR](https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/com/miaokatze/miaokatzecore/miaokatzecore/0.1.28/miaokatzecore-0.1.28.jar) |
+| 0.2.11 | 2.9.0 | 1.7.10 / 10.13.4.1614 | 8+ | [版本列表 / Releases](https://github.com/MIAOKATZE/MIAOKATZE-Core/releases) |
+
+较长的物品说明默认展开。悬停时按 **C** 切换收纳；有动画提示的物品可按 **Alt+C** 单独关闭动画。设置按物品注册名和子类型保存在本机 `config/miaokatzecore/tooltip.properties`，不会写入物品或服务端。模组只需提供自己的简述和关键参数，未接入的物品保持原样。
+
+On supported items, **C** toggles details and **Alt+C** toggles the animated warning. Choices persist per item type on this client.
 
 客户端和服务端安装同一版 Core，具体最低版本以所用模组的依赖要求为准。
 
@@ -21,7 +22,7 @@ Install the same Core version on client and server. Follow each mod's minimum-ve
 
 ```groovy
 repositories { maven { url = "https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/" } }
-dependencies { api("com.miaokatze.miaokatzecore:miaokatzecore:0.2.6:dev") { transitive = false } }
+dependencies { api("com.miaokatze.miaokatzecore:miaokatzecore:0.2.11:dev") { transitive = false } }
 ```
 
 ## 模块

@@ -17,6 +17,9 @@ public final class TooltipPreferenceContracts {
         try {
             TooltipPages.load(file);
             TooltipPages.register(entangler, true);
+            require(
+                !TooltipPages.foldHintColor(entangler, 0)
+                    .equals(TooltipPages.foldHintColor(entangler, 1550000000L)));
             TooltipPages.register(other, false);
             require(TooltipPages.expanded(entangler) && TooltipPages.animation(entangler));
             require(
@@ -32,7 +35,12 @@ public final class TooltipPreferenceContracts {
                 !TooltipPages.controlLabel("refund", "scope")
                     .startsWith("§"));
             require(!TooltipPages.toggle("missing", false) && !TooltipPages.toggle(other, true));
+            require(TooltipPages.toggle(entangler, true));
+            require("§8".equals(TooltipPages.foldHintColor(entangler, 1550000000L)));
+            require(TooltipPages.toggle(entangler, true));
+            require(!"§8".equals(TooltipPages.foldHintColor(entangler, 1550000000L)));
             require(TooltipPages.toggle(entangler, false) && !TooltipPages.expanded(entangler));
+            require("§8".equals(TooltipPages.foldHintColor(other, 1550000000L)));
             require(TooltipPages.animation(entangler) && TooltipPages.expanded(other));
             require(TooltipPages.toggle(entangler, true));
             TooltipPages.load(file);
@@ -41,6 +49,10 @@ public final class TooltipPreferenceContracts {
             require(TooltipPages.toggle(entangler, true));
             TooltipPages.load(file);
             require(TooltipPages.expanded(entangler) && TooltipPages.animation(entangler));
+            require("§8".equals(TooltipPages.foldHintColor(entangler, 1550000000L)));
+            Files.write(file, java.util.Collections.singletonList("details.legacy=false"));
+            TooltipPages.load(file);
+            require("§8".equals(TooltipPages.foldHintColor(other, 1550000000L)));
         } finally {
             Files.deleteIfExists(file);
             Files.delete(dir);

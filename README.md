@@ -8,7 +8,7 @@ A shared library for rendering, cameras, UI and task management across MIAOKATZE
 
 | Core | GTNH | Minecraft / Forge | Java | 下载 / Download |
 | --- | --- | --- | --- | --- |
-| 0.2.13 | 2.9.0 | 1.7.10 / 10.13.4.1614 | 8+ | [版本列表 / Releases](https://github.com/MIAOKATZE/MIAOKATZE-Core/releases) |
+| 0.2.14 | 2.9.0 | 1.7.10 / 10.13.4.1614 | 8+ | [版本列表 / Releases](https://github.com/MIAOKATZE/MIAOKATZE-Core/releases) |
 
 可在「选项 → 控制 → MIAOKATZE Core · 物品提示」改键，提示会显示当前绑定。较长的物品说明默认展开。悬停时按 **V** 切换收纳；按 **Alt+V** 可为当前物品关闭动画；收纳状态与文字警告仍会保留。设置按物品注册名和子类型保存在本机 `config/miaokatzecore/tooltip.properties`，不会写入物品或服务端。模组只需提供自己的简述和关键参数，未接入的物品保持原样。
 
@@ -22,7 +22,7 @@ Install the same Core version on client and server. Follow each mod's minimum-ve
 
 ```groovy
 repositories { maven { url = "https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/" } }
-dependencies { api("com.miaokatze.miaokatzecore:miaokatzecore:0.2.13:dev") { transitive = false } }
+dependencies { api("com.miaokatze.miaokatzecore:miaokatzecore:0.2.14:dev") { transitive = false } }
 ```
 
 ## 模块

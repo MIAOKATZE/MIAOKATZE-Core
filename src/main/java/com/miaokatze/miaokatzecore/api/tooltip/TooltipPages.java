@@ -29,8 +29,7 @@ public final class TooltipPages {
     private static final Set<String> animated = ConcurrentHashMap.newKeySet();
     private static final Set<String> introductoryItems = ConcurrentHashMap.newKeySet();
     private static final java.util.Map<String, Long> firstShown = new ConcurrentHashMap<>();
-    private static String changedKey = "";
-    private static long changedAt;
+    private static final String LEARNED_FOLD = "learned.tooltipFold";
     private static Path file;
 
     private static Supplier<String> detailLabel = () -> "V";
@@ -46,10 +45,15 @@ public final class TooltipPages {
     public static void load(Path path) {
         file = path;
         firstShown.clear();
-        changedKey = "";
         prefs.clear();
         if (Files.isRegularFile(path)) try (java.io.InputStream in = Files.newInputStream(path)) {
             prefs.load(in);
+            // Older versions saved only non-default values; a collapsed item proves prior use.
+            if (!prefs.containsKey(LEARNED_FOLD) && prefs.stringPropertyNames()
+                .stream()
+                .anyMatch(k -> k.startsWith("details.") && "false".equals(prefs.getProperty(k)))) {
+                prefs.setProperty(LEARNED_FOLD, "true");
+            }
         } catch (IOException | IllegalArgumentException e) {
             LogManager.getLogger("MIAOKATZE-Core")
                 .warn("Cannot read local tooltip preferences", e);
@@ -76,17 +80,24 @@ public final class TooltipPages {
     public static void hint(ItemStack stack, List<String> lines, boolean hasAnimation) {
         String key = identity(stack);
         if (key.isEmpty()) return;
-        // Every page has a short arrow transition; warnings additionally advertise their own animation.
+        // Every foldable page supports the introductory key hint; warnings advertise their own animation.
         register(key, true);
         String action = expanded(key) ? "collapse" : "expand";
         String hint = StatCollector.translateToLocalFormatted("miaokatzecore.tooltip." + action, detailLabel.get());
-        if (hasAnimation || !animation(key)) hint += "  " + StatCollector.translateToLocalFormatted(
+        String arrow = expanded(key) ? "▾" : "▸";
+        String line = foldHintColor(key, System.nanoTime()) + arrow + " " + hint + "§r";
+        if (hasAnimation || !animation(key)) line += "  §8" + StatCollector.translateToLocalFormatted(
             "miaokatzecore.tooltip.animation." + (animation(key) ? "on" : "off"),
-            effectLabel.get());
-        long age = System.nanoTime() - changedAt;
-        boolean turning = key.equals(changedKey) && age >= 0 && age < 180000000L && animation(key);
-        String arrow = turning ? "§e›" : (expanded(key) ? "§7▾" : "§7▸");
-        lines.add(arrow + " §8" + hint + "§r");
+            effectLabel.get()) + "§r";
+        lines.add(line);
+    }
+
+    static String foldHintColor(String key, long nanos) {
+        if (prefs.containsKey(LEARNED_FOLD) || !animation(key)) return "§8";
+        // Fixed geometry, no bold or obfuscation: only the key hint brightens and fades.
+        long ms = Math.floorMod(nanos / 1000000L, 3200L);
+        long level = Math.min(ms, 3200L - ms);
+        return level < 450 ? "§8" : level < 1050 ? "§7" : level < 1430 ? "§f" : "§e";
     }
 
     public static String warning(ItemStack stack, String message) {
@@ -151,10 +162,7 @@ public final class TooltipPages {
         String field = (effect ? "animation." : "details.") + key;
         if ("false".equals(prefs.getProperty(field))) prefs.remove(field);
         else prefs.setProperty(field, "false");
-        if (!effect) {
-            changedKey = key;
-            changedAt = System.nanoTime();
-        }
+        if (!effect) prefs.setProperty(LEARNED_FOLD, "true");
         save();
         return true;
     }

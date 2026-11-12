@@ -33,12 +33,15 @@ public final class TooltipInput {
     private final boolean nei = Loader.isModLoaded("NotEnoughItems");
 
     public static void install() {
-        MinecraftForge.EVENT_BUS.register(new TooltipInput());
+        TooltipInput input = new TooltipInput();
+        MinecraftForge.EVENT_BUS.register(input);
+        if (Loader.isModLoaded("chromatictooltips")) MinecraftForge.EVENT_BUS.register(new ChromaticHover(input));
     }
 
     private void hovered(GuiScreen gui, ItemStack stack) {
         screen = gui;
         key = TooltipPages.identity(stack);
+        TooltipPages.rendered(key);
         mouseX = Mouse.getX();
         mouseY = Mouse.getY();
         lastRender = System.nanoTime();
@@ -61,7 +64,7 @@ public final class TooltipInput {
 
     @SubscribeEvent
     public void keyboard(KeyboardInputEvent.Pre event) {
-        if (Keyboard.getEventKey() != Keyboard.KEY_C || !Keyboard.getEventKeyState()
+        if (Keyboard.getEventKey() != Keyboard.KEY_X || !Keyboard.getEventKeyState()
             || Keyboard.isRepeatEvent()
             || GuiScreen.isCtrlKeyDown()
             || GuiScreen.isShiftKeyDown()) return;
@@ -82,7 +85,7 @@ public final class TooltipInput {
     }
 
     // Many inventory screens (including AE terminals) own vanilla text fields without exposing focus.
-    // Inspect only on an eligible C press. Never take the key if focus cannot be determined.
+    // Inspect only on an eligible X press. Never take the key if focus cannot be determined.
     private static boolean typingInVanillaField(GuiScreen gui) {
         for (Class<?> type = gui.getClass(); type != GuiScreen.class && type != null; type = type.getSuperclass()) {
             java.lang.reflect.Field[] fields;
@@ -103,6 +106,21 @@ public final class TooltipInput {
             }
         }
         return false;
+    }
+
+    // Kept in a separately loaded class: Core also runs without Chromatic Tooltips.
+    public static final class ChromaticHover {
+
+        private final TooltipInput input;
+
+        private ChromaticHover(TooltipInput input) {
+            this.input = input;
+        }
+
+        @SubscribeEvent
+        public void rendered(com.slprime.chromatictooltips.event.RenderTooltipEvent event) {
+            input.hovered(Minecraft.getMinecraft().currentScreen, event.context.getItem());
+        }
     }
 
     private static final class NeiInput {

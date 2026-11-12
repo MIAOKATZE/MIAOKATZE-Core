@@ -19,6 +19,18 @@ public final class TooltipPreferenceContracts {
             TooltipPages.register(entangler, true);
             TooltipPages.register(other, false);
             require(TooltipPages.expanded(entangler) && TooltipPages.animation(entangler));
+            require(
+                !TooltipPages.controlLabel("refund", "scope")
+                    .startsWith("§"));
+            TooltipPages.controlRendered("refund");
+            require(
+                TooltipPages.controlLabel("refund", "scope")
+                    .startsWith("§e"));
+            TooltipPages.load(file);
+            TooltipPages.controlRendered("refund");
+            require(
+                !TooltipPages.controlLabel("refund", "scope")
+                    .startsWith("§"));
             require(!TooltipPages.toggle("missing", false) && !TooltipPages.toggle(other, true));
             require(TooltipPages.toggle(entangler, false) && !TooltipPages.expanded(entangler));
             require(TooltipPages.animation(entangler) && TooltipPages.expanded(other));

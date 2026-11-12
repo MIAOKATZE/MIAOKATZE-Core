@@ -1,4 +1,4 @@
-miaokatzecore.tooltip.collapse=[C] Collapse details
-miaokatzecore.tooltip.expand=[C] Expand details
-miaokatzecore.tooltip.animation.on=[Alt+C] Animation: on
-miaokatzecore.tooltip.animation.off=[Alt+C] Animation: off
+miaokatzecore.tooltip.collapse=[X] Collapse details
+miaokatzecore.tooltip.expand=[X] Expand details
+miaokatzecore.tooltip.animation.on=[Alt+X] Animation: on
+miaokatzecore.tooltip.animation.off=[Alt+X] Animation: off

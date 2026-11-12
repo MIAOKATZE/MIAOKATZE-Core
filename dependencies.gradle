@@ -11,6 +11,7 @@ dependencies {
     testRuntimeOnly("org.joml:joml:1.10.8") { transitive = false }
     compileOnly("com.github.GTNewHorizons:ModularUI2:${coreMuiVersion}:dev") { transitive = false }
     compileOnly("com.github.GTNewHorizons:GTNHLib:${coreLibVersion}:dev") { transitive = false }
+    compileOnly("com.github.GTNewHorizons:Controlling:2.1.10:dev") { transitive = false }
     compileOnly("com.github.slprime:ChromaticTooltips:1.0.36-GTNH:dev") { transitive = false }
     // Optional client-only ordering adapter, matching GTNH 2.9.0. Never bundled or required at runtime.
     compileOnly("com.github.GTNewHorizons:NotEnoughItems:2.8.171-GTNH:dev") { transitive = false }

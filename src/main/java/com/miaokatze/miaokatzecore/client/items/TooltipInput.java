@@ -4,27 +4,37 @@
 package com.miaokatze.miaokatzecore.client.items;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiRepair;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.inventory.GuiContainer;
-import net.minecraft.client.gui.inventory.GuiContainerCreative;
+import net.minecraft.client.settings.GameSettings;
+import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.StatCollector;
 import net.minecraftforge.common.MinecraftForge;
 
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
+import com.blamejared.controlling.keybinding.ComboKeyBinding;
+import com.blamejared.controlling.keybinding.KeyModifier;
 import com.cleanroommc.modularui.api.event.KeyboardInputEvent;
+import com.cleanroommc.modularui.api.event.MouseInputEvent;
 import com.cleanroommc.modularui.screen.ModularScreen;
 import com.cleanroommc.modularui.screen.RichTooltipEvent;
 import com.gtnewhorizon.gtnhlib.client.event.RenderTooltipEvent;
 import com.miaokatze.miaokatzecore.api.tooltip.TooltipPages;
 
 import codechicken.nei.LayoutManager;
+import codechicken.nei.guihook.GuiContainerManager;
+import cpw.mods.fml.client.registry.ClientRegistry;
 import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 
 public final class TooltipInput {
+
+    private static final String CATEGORY = "miaokatzecore.keys.category";
+    private final KeyBinding details = new KeyBinding("miaokatzecore.keys.details", Keyboard.KEY_V, CATEGORY);
+    private KeyBinding effects;
 
     private GuiScreen screen;
     private String key = "";
@@ -34,6 +44,11 @@ public final class TooltipInput {
 
     public static void install() {
         TooltipInput input = new TooltipInput();
+        ClientRegistry.registerKeyBinding(input.details);
+        if (Loader.isModLoaded("controlling") && Chords.available(input.details)) {
+            input.effects = Chords.registerEffects();
+        }
+        TooltipPages.bindLabels(() -> input.label(false), () -> input.label(true));
         MinecraftForge.EVENT_BUS.register(input);
         if (Loader.isModLoaded("chromatictooltips")) MinecraftForge.EVENT_BUS.register(new ChromaticHover(input));
     }
@@ -64,28 +79,81 @@ public final class TooltipInput {
 
     @SubscribeEvent
     public void keyboard(KeyboardInputEvent.Pre event) {
-        if (Keyboard.getEventKey() != Keyboard.KEY_X || !Keyboard.getEventKeyState()
-            || Keyboard.isRepeatEvent()
-            || GuiScreen.isCtrlKeyDown()
-            || GuiScreen.isShiftKeyDown()) return;
-        if (event.gui != screen || !(screen instanceof GuiContainer)
-            || screen instanceof GuiRepair
-            || screen instanceof GuiContainerCreative && ((GuiContainerCreative) screen).func_147056_g()
-                == net.minecraft.creativetab.CreativeTabs.tabAllSearch.getTabIndex()
-            || mouseX != Mouse.getX()
-            || mouseY != Mouse.getY()
-            || System.nanoTime() - lastRender > 300000000L
-            || !TooltipPages.supports(key)) return;
+        if (!Keyboard.getEventKeyState() || Keyboard.isRepeatEvent()) return;
+        if (pressed(event.gui, Keyboard.getEventKey())) event.setCanceled(true);
+    }
+
+    @SubscribeEvent
+    public void mouse(MouseInputEvent.Pre event) {
+        int button = Mouse.getEventButton();
+        if (button >= 0 && Mouse.getEventButtonState() && pressed(event.gui, button - 100)) event.setCanceled(true);
+    }
+
+    private String label(boolean effect) {
+        KeyBinding binding = effect && effects != null ? effects : details;
+        if (binding.getKeyCode() == Keyboard.KEY_NONE)
+            return StatCollector.translateToLocal("miaokatzecore.keys.unbound");
+        if (effects != null) return Chords.label(binding);
+        String name = GameSettings.getKeyDisplayString(binding.getKeyCode());
+        return effect ? "Alt+" + name : name;
+    }
+
+    private boolean pressed(GuiScreen gui, int code) {
+        if (code == Keyboard.KEY_NONE
+            || (code != details.getKeyCode() && (effects == null || effects.getKeyCode() != code))) return false;
+        if (gui == null || gui != screen
+            || gui != Minecraft.getMinecraft().currentScreen
+            || !TooltipPages.supports(key)
+            || System.nanoTime() - lastRender > 300000000L) return false;
+        if ((mouseX != Mouse.getX() || mouseY != Mouse.getY())
+            && !(nei && gui instanceof GuiContainer && NeiInput.sameItem((GuiContainer) gui, key))) return false;
         ModularScreen modular = ModularScreen.getCurrent();
         if (modular != null && modular.getContext()
-            .getFocusedWidget() != null || nei && NeiInput.focused()) return;
-        if (typingInVanillaField(screen)) return;
-        if (TooltipPages.toggle(key, Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU)))
-            event.setCanceled(true);
+            .getFocusedWidget() != null || nei && NeiInput.focused() || typingInVanillaField(gui)) return false;
+        boolean effect;
+        if (effects != null) {
+            effect = Chords.matches(effects, code);
+            if (!effect && !Chords.matches(details, code)) return false;
+        } else {
+            if (GuiScreen.isCtrlKeyDown() || GuiScreen.isShiftKeyDown()) return false;
+            effect = Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU);
+        }
+        return TooltipPages.toggle(key, effect);
+    }
+
+    // Optional GTNH Controlling adapter. Match exactly the chord configured in the Controls screen.
+    private static final class Chords {
+
+        static boolean available(KeyBinding key) {
+            return key instanceof ComboKeyBinding;
+        }
+
+        static KeyBinding registerEffects() {
+            KeyBinding key = new KeyBinding("miaokatzecore.keys.effects", Keyboard.KEY_V, CATEGORY);
+            ComboKeyBinding combo = (ComboKeyBinding) key;
+            combo.controlling$setDefaultKeyModifier(KeyModifier.ALT);
+            combo.controlling$setKeyModifier(KeyModifier.ALT);
+            ClientRegistry.registerKeyBinding(key);
+            return key;
+        }
+
+        static String label(KeyBinding binding) {
+            return ((ComboKeyBinding) binding).controlling$getDisplayName();
+        }
+
+        static boolean matches(KeyBinding binding, int code) {
+            if (binding.getKeyCode() != code) return false;
+            KeyModifier wanted = ((ComboKeyBinding) binding).controlling$getKeyModifier();
+            for (KeyModifier modifier : KeyModifier.VALUES) {
+                if (modifier == KeyModifier.NONE || modifier.matches(code)) continue;
+                if (modifier.isActive() != (modifier == wanted)) return false;
+            }
+            return true;
+        }
     }
 
     // Many inventory screens (including AE terminals) own vanilla text fields without exposing focus.
-    // Inspect only on an eligible X press. Never take the key if focus cannot be determined.
+    // Inspect only on an eligible tooltip shortcut. Never take the key if focus cannot be determined.
     private static boolean typingInVanillaField(GuiScreen gui) {
         for (Class<?> type = gui.getClass(); type != GuiScreen.class && type != null; type = type.getSuperclass()) {
             java.lang.reflect.Field[] fields;
@@ -124,6 +192,10 @@ public final class TooltipInput {
     }
 
     private static final class NeiInput {
+
+        static boolean sameItem(GuiContainer gui, String key) {
+            return key.equals(TooltipPages.identity(GuiContainerManager.getStackMouseOver(gui)));
+        }
 
         static boolean focused() {
             return LayoutManager.getInputFocused() != null;

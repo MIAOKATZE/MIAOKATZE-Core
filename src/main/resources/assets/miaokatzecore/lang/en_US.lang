@@ -1,4 +1,8 @@
-miaokatzecore.tooltip.collapse=[X] Collapse details
-miaokatzecore.tooltip.expand=[X] Expand details
-miaokatzecore.tooltip.animation.on=[Alt+X] Animation: on
-miaokatzecore.tooltip.animation.off=[Alt+X] Animation: off
+miaokatzecore.tooltip.collapse=[%s] Collapse details
+miaokatzecore.tooltip.expand=[%s] Expand details
+miaokatzecore.tooltip.animation.on=[%s] Animation: on
+miaokatzecore.tooltip.animation.off=[%s] Animation: off
+miaokatzecore.keys.category=MIAOKATZE Core · Item tooltips
+miaokatzecore.keys.details=Expand / collapse hovered item details
+miaokatzecore.keys.effects=Toggle hovered item tooltip animation
+miaokatzecore.keys.unbound=Unbound

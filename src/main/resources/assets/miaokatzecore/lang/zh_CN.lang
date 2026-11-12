@@ -1,4 +1,8 @@
-miaokatzecore.tooltip.collapse=[X] 收纳说明
-miaokatzecore.tooltip.expand=[X] 展开说明
-miaokatzecore.tooltip.animation.on=[Alt+X] 动态提示：开
-miaokatzecore.tooltip.animation.off=[Alt+X] 动态提示：关
+miaokatzecore.tooltip.collapse=[%s] 收纳说明
+miaokatzecore.tooltip.expand=[%s] 展开说明
+miaokatzecore.tooltip.animation.on=[%s] 动态提示：开
+miaokatzecore.tooltip.animation.off=[%s] 动态提示：关
+miaokatzecore.keys.category=MIAOKATZE Core · 物品提示
+miaokatzecore.keys.details=展开 / 收纳悬停物品说明
+miaokatzecore.keys.effects=开关悬停物品提示动画
+miaokatzecore.keys.unbound=未绑定

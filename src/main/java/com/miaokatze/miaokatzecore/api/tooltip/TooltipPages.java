@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.StatCollector;
@@ -32,7 +33,15 @@ public final class TooltipPages {
     private static long changedAt;
     private static Path file;
 
+    private static Supplier<String> detailLabel = () -> "V";
+    private static Supplier<String> effectLabel = () -> "Alt+V";
+
     private TooltipPages() {}
+
+    public static void bindLabels(Supplier<String> details, Supplier<String> effects) {
+        detailLabel = details;
+        effectLabel = effects;
+    }
 
     public static void load(Path path) {
         file = path;
@@ -70,9 +79,10 @@ public final class TooltipPages {
         // Every page has a short arrow transition; warnings additionally advertise their own animation.
         register(key, true);
         String action = expanded(key) ? "collapse" : "expand";
-        String hint = StatCollector.translateToLocal("miaokatzecore.tooltip." + action);
-        if (hasAnimation || !animation(key)) hint += "  "
-            + StatCollector.translateToLocal("miaokatzecore.tooltip.animation." + (animation(key) ? "on" : "off"));
+        String hint = StatCollector.translateToLocalFormatted("miaokatzecore.tooltip." + action, detailLabel.get());
+        if (hasAnimation || !animation(key)) hint += "  " + StatCollector.translateToLocalFormatted(
+            "miaokatzecore.tooltip.animation." + (animation(key) ? "on" : "off"),
+            effectLabel.get());
         long age = System.nanoTime() - changedAt;
         boolean turning = key.equals(changedKey) && age >= 0 && age < 180000000L && animation(key);
         String arrow = turning ? "§e›" : (expanded(key) ? "§7▾" : "§7▸");

@@ -58,7 +58,7 @@ public final class MiaoVisionRenderer implements AutoCloseable {
     private boolean closed;
     private final SceneOpacityCompositor compositor = new SceneOpacityCompositor();
 
-    /** Null unless fading is unavailable; unsupported contexts retain native models, rendered opaque. */
+    /** Null unless fading or the scene target is unavailable. An unqueryable target skips the entire scene. */
     public String opacityFailure() {
         return compositor.failure();
     }
@@ -84,8 +84,7 @@ public final class MiaoVisionRenderer implements AutoCloseable {
         // All validation precedes changes to the caller's OpenGL/Tessellator state.
         for (SceneBody body : snapshot.bodies) bounds.validate(body);
         java.util.List<SceneRenderOrder.Entry> ordered = SceneRenderOrder.prepare(snapshot, presentation, camera);
-        if (!SceneOpacityCompositor.singleColorTarget())
-            throw new IllegalStateException("MiaoVision requires a single-color GUI target; MRT is unsupported");
+        if (!compositor.canRenderScene()) return;
         PreviewRenderScope.ClientTessState tess;
         try {
             tess = new PreviewRenderScope.ClientTessState(Tessellator.instance);

@@ -24,6 +24,8 @@ GTIT 的双 stamp 键合并、GTSWN 的 owned 定义指纹和保存意图、GTMB
 
 32 个历史 Core Mixin 类型逐项记录在本轮 `core-mixin-disposition.json`，包含注入点、实际候选和依据。嵌入 Celeritas 目标补了真实 2.2.43 dev JAR 的 `javap -p -c`，不是将源码缺口直接写成“必须保留”。保留结论只针对已核候选：RenderChunkEvent 在 translucent draw 后、没有 output/manager/取消或 finally，不能代替 task stamp 和真正 upload ACK；FFP 变体直接 backend 绑定，不发逻辑 PROGRAM_CHANGE。R08 跨仓 section 通知桥仍需具体维护收益和共同消费者合同，暂不扩公开框架。
 
+Core 0.2.15 的 MiaoVision 目标检查另见 [MiaoVision 合同](../miaovision.md#scene-target-availability)：实际 SDL GPU 后端缺少 indexed draw-buffer 查询时，在 GL/Tessellator 捕获前跳过场景，并沿既有 `opacityFailure()` 与每实例一次日志说明原因；OpenGL 回退、真实 MRT 拒绝和公开签名保持。此为防止售货机 GUI 崩溃的安全降级，不是 Metal/Vulkan 原生模型与淡出验收。纯目标策略合同接入 `runMiaoVisionContracts`，构建与未测边界见本版本 workflow。
+
 ## UI 与工作域
 
 `UiNode.disposeTree` 聚合多个回调抛出的同一异常实例时跳过自抑制，继续处理余下兄弟和父节点清理，最后保留原异常。

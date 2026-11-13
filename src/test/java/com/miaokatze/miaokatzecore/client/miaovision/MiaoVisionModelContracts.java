@@ -54,7 +54,7 @@ public final class MiaoVisionModelContracts {
         }
         if (!InventoryModelTransform.blockAtlas(0) || InventoryModelTransform.blockAtlas(1)
             || InventoryModelTransform.blockAtlas(-1)) throw new AssertionError("Forge atlas selection");
-        return checks + 3 + ordering();
+        return checks + 3 + ordering() + SceneTargetPolicyContracts.run();
     }
 
     private static int ordering() {

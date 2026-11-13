@@ -6,10 +6,27 @@ package com.miaokatze.miaokatzecore.client.render.internal;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL20;
 
-/** Optional symbols remain lazy; compatibility-profile users do not require Angelica. No backend bindings. */
+/** Optional symbols remain lazy; compatibility-profile users do not require Angelica. */
 public final class AngelicaFfpBridge {
 
     private AngelicaFfpBridge() {}
+
+    /** Actual selected backend, including an SDL request that fell back to OpenGL. No GL state is changed. */
+    public static boolean isSDLGPU() {
+        try {
+            return BackendBridge.isSDLGPU();
+        } catch (LinkageError missingRenderer) {
+            // Angelica remains optional, including older versions without the SDL backend identity API.
+            return false;
+        }
+    }
+
+    private static final class BackendBridge {
+
+        private static boolean isSDLGPU() {
+            return com.gtnewhorizons.angelica.glsm.backend.BackendManager.RENDER_BACKEND.isSDLGPU();
+        }
+    }
 
     public static boolean supported() {
         return com.gtnewhorizons.angelica.glsm.GLStateManager.isCachingEnabled()

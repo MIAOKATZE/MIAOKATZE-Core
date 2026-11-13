@@ -5,6 +5,7 @@ package com.miaokatze.miaokatzecore.client.miaovision;
 
 import java.nio.ByteBuffer;
 
+import org.apache.logging.log4j.LogManager;
 import org.lwjgl.opengl.ContextCapabilities;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
@@ -16,6 +17,8 @@ import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL32;
 import org.lwjgl.opengl.GL33;
 import org.lwjgl.opengl.GLContext;
+
+import com.miaokatze.miaokatzecore.client.render.internal.AngelicaFfpBridge;
 
 /**
  * Lazy bounded native-model compositor. Pixel colors/depth are produced by the original renderer at full opacity;
@@ -29,7 +32,7 @@ final class SceneOpacityCompositor implements AutoCloseable {
     private int framebuffer, colorTexture, depthTexture, program, vertexArray, width, height;
     private int colorUniform, depthUniform, opacityUniform;
     private String failure;
-    private boolean closed;
+    private boolean closed, targetWarningLogged;
 
     static boolean supported() {
         return GLContext.getCapabilities().OpenGL30 && GLContext.getCapabilities().OpenGL20;
@@ -43,6 +46,26 @@ final class SceneOpacityCompositor implements AutoCloseable {
         return width * height;
     }
 
+    /** Returns before any native state capture when the backend cannot prove the target layout. */
+    boolean canRenderScene() {
+        SceneTargetPolicy.Target target = target();
+        if (target == SceneTargetPolicy.Target.UNAVAILABLE) {
+            unavailable(target);
+            return false;
+        }
+        if (target == SceneTargetPolicy.Target.UNSUPPORTED) throw new IllegalStateException(target.reason);
+        return true;
+    }
+
+    private void unavailable(SceneTargetPolicy.Target target) {
+        failure = target.reason;
+        if (!targetWarningLogged) {
+            LogManager.getLogger("MIAOKATZE-Core")
+                .warn(failure);
+            targetWarningLogged = true;
+        }
+    }
+
     /** Returns false only when capability/allocation/shader setup is unavailable. Never invokes draw twice. */
     boolean draw(int viewportX, int viewportY, int viewportWidth, int viewportHeight, float opacity, Runnable draw) {
         if (closed) throw new IllegalStateException("compositor closed");
@@ -51,12 +74,17 @@ final class SceneOpacityCompositor implements AutoCloseable {
             || !Float.isFinite(opacity)
             || opacity < 0
             || opacity > 1) throw new IllegalArgumentException("compositor arguments");
-        if (!supported()) {
-            failure = "OpenGL 3.0 framebuffer/depth textures and GLSL 1.30 required";
+        SceneTargetPolicy.Target target = target();
+        if (target == SceneTargetPolicy.Target.UNAVAILABLE) {
+            unavailable(target);
             return false;
         }
-        if (!singleColorTarget()) {
-            failure = "MiaoVision requires one active draw buffer at output zero; MRT is unsupported";
+        if (target == SceneTargetPolicy.Target.UNSUPPORTED) {
+            failure = target.reason;
+            return false;
+        }
+        if (!supported()) {
+            failure = "OpenGL 3.0 framebuffer/depth textures and GLSL 1.30 required";
             return false;
         }
         if (failure != null) return false;
@@ -256,12 +284,12 @@ final class SceneOpacityCompositor implements AutoCloseable {
 
     /** Single-color Minecraft GUI target only. Called before changing any GL/Tessellator state. */
     static boolean singleColorTarget() {
-        if (!GLContext.getCapabilities().OpenGL20) return true;
-        if (GL11.glGetInteger(GL20.GL_DRAW_BUFFER0) == GL11.GL_NONE) return false;
-        int count = GL11.glGetInteger(GL20.GL_MAX_DRAW_BUFFERS);
-        for (int index = 1; index < count; index++)
-            if (GL11.glGetInteger(GL20.GL_DRAW_BUFFER0 + index) != GL11.GL_NONE) return false;
-        return true;
+        return target() == SceneTargetPolicy.Target.SINGLE_COLOR;
+    }
+
+    private static SceneTargetPolicy.Target target() {
+        return SceneTargetPolicy
+            .inspect(AngelicaFfpBridge::isSDLGPU, () -> GLContext.getCapabilities().OpenGL20, GL11::glGetInteger);
     }
 
     static boolean compatibility() {

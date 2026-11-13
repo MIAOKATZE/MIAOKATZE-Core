@@ -7,6 +7,12 @@ Package: `com.miaokatze.miaokatzecore.api.miaovision`. No previous Core API is r
 - `SceneSnapshot(layoutId,revision,tick,List<SceneBody>)` is a transport-neutral immutable, ID-sorted DTO. Alternate constructor starts with schema version. Schema 1, maximum 100 bodies, IDs/layout names ≤128 chars, no null/duplicate IDs, finite bounded numbers. No inventory, NBT, world or entities in the API.
 - `SceneSimulation(layoutId,bounds)`: `put(body)`, `remove(id)`, `wake()`, `setEnabled(boolean)`, `isEnabled()`, `isSettled()`, `step()`, `snapshot()`, `restore(snapshot)`, `revision()`, `tick()`, `bounds()`, `size()`.
 
+## Scene target availability
+
+Core 0.2.15 checks the actual Angelica backend before querying indexed draw buffers. Angelica 2.2.43's experimental SDL GPU backend does not implement these queries, so MiaoVision skips the entire scene before capturing or changing GL/Tessellator state. The surrounding GUI remains available; `opacityFailure()` supplies the reason and each renderer logs it once. This is a safe scene downgrade, not native-model or fade support on Metal/Vulkan. A requested SDL backend that actually fell back to OpenGL follows the normal OpenGL path.
+
+Real OpenGL targets still require output zero to be active and every other indexed output to be inactive. Known MRT/output-zero-disabled targets remain rejected; an unknown target is never treated as a safe opaque-model fallback. Public renderer signatures and simulation/inventory behavior are unchanged.
+
 ## Ownership and activation
 
 Physics is **disabled by default**. Construction, loading, adding, removal and rendering never enable it. The machine owner explicitly enables after an event requiring motion, calls `step()` at most once per server tick, and may disable when `isSettled()` becomes true. Disabled/settled `step()` returns false without iterating bodies, allocating or advancing counters. Inventory, ME and delivery/presentation clocks are separate; do not stop them when physics is disabled.

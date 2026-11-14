@@ -29,6 +29,7 @@ dependencies { api("com.miaokatze.miaokatzecore:miaokatzecore:0.2.14:dev") { tra
 
 | 入口 | 职责及边界 |
 | --- | --- |
+| [api.tooltip.component](docs/sum/native-tooltip.md) | 按物品与连续原文匹配的原生 Tooltip 组件；表格可随当前字体重排，沿用现有收纳与动画偏好 |
 | api.fx.RisingTrails | 五种确定性上升轨迹，通过 Sink 输出坐标；调用方拥有时间、随机预设、颜色与 GL 状态 |
 | client.fx.RuneRenderer | 符文、环、柔光；可注入纹理，standard() 使用 Core 默认资源 |
 | client.fx.VoxelGeometry | 无逐体素顶点数组分配；立即绘制与追加 Tessellator 批次分别使用对应方法 |

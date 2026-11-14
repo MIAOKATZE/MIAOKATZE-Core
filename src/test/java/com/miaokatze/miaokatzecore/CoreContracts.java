@@ -45,6 +45,7 @@ public final class CoreContracts {
                 .hasTimeRemaining(Long.MAX_VALUE - 1L),
             "large budget");
         com.miaokatze.miaokatzecore.api.tooltip.TooltipPreferenceContracts.run();
+        com.miaokatze.miaokatzecore.api.tooltip.NativeTooltipContracts.run();
         testCatalog();
         testGlint();
         testMru();

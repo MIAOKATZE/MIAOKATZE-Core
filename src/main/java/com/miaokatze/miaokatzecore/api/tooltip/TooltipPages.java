@@ -85,7 +85,7 @@ public final class TooltipPages {
         String action = expanded(key) ? "collapse" : "expand";
         String hint = StatCollector.translateToLocalFormatted("miaokatzecore.tooltip." + action, detailLabel.get());
         String arrow = expanded(key) ? "▾" : "▸";
-        String line = foldHintColor(key, System.nanoTime()) + arrow + " " + hint + "§r";
+        String line = foldHintColor(key, TooltipAnimationClock.nowNanos()) + arrow + " " + hint + "§r";
         if (hasAnimation || !animation(key)) line += "  §8" + StatCollector.translateToLocalFormatted(
             "miaokatzecore.tooltip.animation." + (animation(key) ? "on" : "off"),
             effectLabel.get()) + "§r";
@@ -101,7 +101,7 @@ public final class TooltipPages {
     }
 
     public static String warning(ItemStack stack, String message) {
-        long phase = System.nanoTime() / 1000000L % 2400L;
+        long phase = TooltipAnimationClock.nowNanos() / 1000000L % 2400L;
         String color = animation(identity(stack)) && phase >= 700 && phase < 1700 ? "§e" : "§6";
         return color + "» §l" + message + "§r";
     }
@@ -129,14 +129,14 @@ public final class TooltipPages {
     private static void beginFirstLook(String key) {
         if (prefs.getProperty("seen." + key) != null) return;
         prefs.setProperty("seen." + key, "true");
-        firstShown.put(key, System.nanoTime());
+        firstShown.put(key, TooltipAnimationClock.nowNanos());
         save();
     }
 
     private static String introductoryColor(String key) {
         Long start = firstShown.get(key);
         if (start == null || !animation(key)) return "";
-        long age = System.nanoTime() - start;
+        long age = TooltipAnimationClock.nowNanos() - start;
         if (age >= 1000000000L) {
             firstShown.remove(key, start);
             return "";
@@ -151,6 +151,11 @@ public final class TooltipPages {
     static void register(String key, boolean effect) {
         supported.add(key);
         if (effect) animated.add(key);
+    }
+
+    /** Shared read-only animation policy for text, native components and art. */
+    public static boolean animationEnabled(String key) {
+        return animation(key);
     }
 
     static boolean animation(String key) {

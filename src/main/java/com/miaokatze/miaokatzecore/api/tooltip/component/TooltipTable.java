@@ -19,11 +19,17 @@ public final class TooltipTable implements TooltipBlock {
     private final String title;
     private final List<String> headers;
     private final List<List<String>> rows;
+    private final List<List<String>> measurementRows;
     private final List<Alignment> alignments;
     private final TooltipArt art;
 
     private TooltipTable(String title, List<String> headers, List<List<String>> rows, List<Alignment> alignments,
         TooltipArt art) {
+        this(title, headers, rows, alignments, art, null);
+    }
+
+    private TooltipTable(String title, List<String> headers, List<List<String>> rows, List<Alignment> alignments,
+        TooltipArt art, List<List<String>> measurementRows) {
         this.title = cell(title);
         if (headers == null || headers.isEmpty() || headers.size() > 8)
             throw new IllegalArgumentException("1–8 table columns required");
@@ -37,6 +43,7 @@ public final class TooltipTable implements TooltipBlock {
             copy.add(cells(row));
         }
         this.rows = Collections.unmodifiableList(copy);
+        this.measurementRows = measurementRows == null ? this.rows : measurementRows;
         this.alignments = Collections.unmodifiableList(new ArrayList<>(alignments));
         this.art = Objects.requireNonNull(art, "art");
     }
@@ -48,17 +55,17 @@ public final class TooltipTable implements TooltipBlock {
     }
 
     public TooltipTable withArt(TooltipArt art) {
-        return new TooltipTable(title, headers, rows, alignments, art);
+        return new TooltipTable(title, headers, rows, alignments, art, measurementRows);
     }
 
     public TooltipTable align(int column, Alignment alignment) {
         List<Alignment> next = new ArrayList<>(alignments);
         next.set(column, Objects.requireNonNull(alignment));
-        return new TooltipTable(title, headers, rows, next, art);
+        return new TooltipTable(title, headers, rows, next, art, measurementRows);
     }
 
     public TooltipTable slice(int from, int to) {
-        return new TooltipTable(title, headers, rows.subList(from, to), alignments, art);
+        return new TooltipTable(title, headers, rows.subList(from, to), alignments, art, measurementRows);
     }
 
     public String title() {
@@ -71,6 +78,11 @@ public final class TooltipTable implements TooltipBlock {
 
     public List<List<String>> rows() {
         return rows;
+    }
+
+    /** Full immutable source rows remain the width basis across every pagination slice. */
+    public List<List<String>> measurementRows() {
+        return measurementRows;
     }
 
     public Alignment alignment(int column) {
@@ -113,7 +125,7 @@ public final class TooltipTable implements TooltipBlock {
 
     @Override
     public int hashCode() {
-        return Objects.hash(title, headers, rows, alignments, art);
+        return Objects.hash(title, headers, rows, measurementRows, alignments, art);
     }
 
     @Override
@@ -122,6 +134,7 @@ public final class TooltipTable implements TooltipBlock {
         TooltipTable t = (TooltipTable) other;
         return title.equals(t.title) && headers.equals(t.headers)
             && rows.equals(t.rows)
+            && measurementRows.equals(t.measurementRows)
             && alignments.equals(t.alignments)
             && art == t.art;
     }

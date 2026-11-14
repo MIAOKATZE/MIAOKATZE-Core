@@ -22,7 +22,7 @@ public final class TooltipTableLayout {
             widths[c] = measure.applyAsInt(
                 table.headers()
                     .get(c));
-            for (java.util.List<String> row : table.rows())
+            for (java.util.List<String> row : table.measurementRows())
                 widths[c] = Math.max(widths[c], measure.applyAsInt(row.get(c)));
             total += widths[c] + (c > 0 ? GAP : 0);
         }

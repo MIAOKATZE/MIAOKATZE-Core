@@ -57,6 +57,46 @@ public final class NativeTooltipContracts {
                 && table.rows()
                     .size() == 2);
         require(table.equals(TooltipTable.of(table.title(), table.headers(), table.rows())));
+        TooltipTable full = TooltipTable.of(
+            "激活剂",
+            Arrays.asList("材料", "流量", "倍率"),
+            Arrays.asList(
+                Arrays.asList("氢", "12,000 L/s", "1.25×"),
+                Arrays.asList("扩大化空间流体", "50 L/s", "64×"),
+                Arrays.asList("氦", "100 L/s", "2×")));
+        for (int font = 1; font <= 3; font++) {
+            final int factor = font;
+            java.util.function.ToIntFunction<String> measure = text -> text.length() * factor * 5;
+            TooltipTableLayout whole = new TooltipTableLayout(full, measure);
+            for (TooltipTable page : Arrays.asList(
+                full.slice(0, 1),
+                full.slice(1, 3),
+                full.slice(1, 3)
+                    .slice(1, 2))) {
+                TooltipTableLayout part = new TooltipTableLayout(page, measure);
+                require(part.width() == whole.width());
+                require(
+                    page.measurementRows()
+                        .equals(full.rows()));
+                for (int column = 0; column < full.headers()
+                    .size(); column++) {
+                    require(part.columnWidth(column) == whole.columnWidth(column));
+                    require(
+                        part.cellX(
+                            page.headers()
+                                .get(column),
+                            column)
+                            == whole.cellX(
+                                page.headers()
+                                    .get(column),
+                                column));
+                    String visible = page.rows()
+                        .get(0)
+                        .get(column);
+                    require(part.cellX(visible, column) == whole.cellX(visible, column));
+                }
+            }
+        }
         try {
             table.rows()
                 .get(0)

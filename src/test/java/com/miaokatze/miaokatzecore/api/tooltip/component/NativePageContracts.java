@@ -86,7 +86,8 @@ public final class NativePageContracts {
         check(bars.previous(1) == 2);
         TooltipPageBody body = new TooltipPageBody(
             Arrays.asList("first", new TooltipGuide(TooltipGuide.Kind.WARNING, "safe gap"), heat, "last"));
-        NativePageAdapterContracts.run(body);
+        NativePageAdapterContracts
+            .run(body, new TooltipPageBody(Arrays.asList(new TooltipGuide(TooltipGuide.Kind.TIER, "tier"), "purpose")));
         System.out.println(
             "NativePageContracts: PASS (tier/selection, immutable chart data, GT finisher, Chromatic page conversion)");
     }

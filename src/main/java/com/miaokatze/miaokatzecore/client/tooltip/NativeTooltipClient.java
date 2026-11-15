@@ -19,7 +19,9 @@ import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipGuide;
 import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipPageBody;
 import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipTable;
 import com.slprime.chromatictooltips.api.ITooltipComponent;
+import com.slprime.chromatictooltips.api.TooltipModifier;
 import com.slprime.chromatictooltips.event.TextLinesConverterEvent;
+import com.slprime.chromatictooltips.event.TooltipEnricherEvent;
 
 import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -91,6 +93,12 @@ public final class NativeTooltipClient implements NativeTooltips.Backend {
         convert(item, event.list);
     }
 
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void positionTier(TooltipEnricherEvent event) {
+        if (Thread.currentThread() != clientThread || event.context.getActiveModifier() != TooltipModifier.NONE) return;
+        TierHeaderSlot.place(event.context.getSection("header"), event.context.getSection("body"));
+    }
+
     void convert(String item, List<Object> lines) {
         for (Binding binding : new ArrayList<>(bindings.values())) {
             if (!binding.item.equals(item)) continue;
@@ -111,6 +119,9 @@ public final class NativeTooltipClient implements NativeTooltips.Backend {
                         continue;
                     }
                     if (part != null) {
+                        if (span.block instanceof TooltipGuide
+                            && ((TooltipGuide) span.block).kind == TooltipGuide.Kind.TIER)
+                            part = new TierHeaderSlot(part);
                         lines.subList(start + span.from, start + span.to)
                             .clear();
                         lines.add(start + span.from, part);

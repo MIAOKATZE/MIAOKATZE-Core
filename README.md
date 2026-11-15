@@ -8,11 +8,15 @@ A shared library for rendering, cameras, UI and task management across MIAOKATZE
 
 | Core | GTNH | Minecraft / Forge | Java | 下载 / Download |
 | --- | --- | --- | --- | --- |
-| 0.2.14 | 2.9.0 | 1.7.10 / 10.13.4.1614 | 8+ | [版本列表 / Releases](https://github.com/MIAOKATZE/MIAOKATZE-Core/releases) |
+| 0.2.17（源码 / source） | 2.9.0 | 1.7.10 / 10.13.4.1614 | 8+ | [版本列表 / Releases](https://github.com/MIAOKATZE/MIAOKATZE-Core/releases) |
 
 可在「选项 → 控制 → MIAOKATZE Core · 物品提示」改键，提示会显示当前绑定。较长的物品说明默认展开。悬停时按 **V** 切换收纳；按 **Alt+V** 可为当前物品关闭动画；收纳状态与文字警告仍会保留。设置按物品注册名和子类型保存在本机 `config/miaokatzecore/tooltip.properties`，不会写入物品或服务端。模组只需提供自己的简述和关键参数，未接入的物品保持原样。
 
 Rebind the shortcuts under Options → Controls → MIAOKATZE Core · Item tooltips. On supported items, **V** toggles details and **Alt+V** toggles the animated warning. Choices persist per item type on this client.
+
+接入[三档机器说明](docs/sum/native-tooltip.md)的物品有单独操作：**Alt+V** 换阅读档位，**Tab** 选图，**V** 换所选图的数据；按住**左 Shift** 查看原生结构页。普通收纳物品的操作不变。
+
+On machines with authored tooltip pages, **Alt+V** cycles reading levels, **Tab** selects a chart and **V** changes its data. Hold **left Shift** for the original GT structure guide.
 
 客户端和服务端安装同一版 Core，具体最低版本以所用模组的依赖要求为准。
 
@@ -29,7 +33,7 @@ dependencies { api("com.miaokatze.miaokatzecore:miaokatzecore:0.2.14:dev") { tra
 
 | 入口 | 职责及边界 |
 | --- | --- |
-| [api.tooltip.component](docs/sum/native-tooltip.md) | 按物品与连续原文匹配的原生 Tooltip 组件；表格可随当前字体重排，沿用现有收纳与动画偏好 |
+| [api.tooltip.component](docs/sum/native-tooltip.md) | 按物品与连续原文匹配的原生表格、曲线、热图和读数柱；支持三档机器说明与图表切换 |
 | api.fx.RisingTrails | 五种确定性上升轨迹，通过 Sink 输出坐标；调用方拥有时间、随机预设、颜色与 GL 状态 |
 | client.fx.RuneRenderer | 符文、环、柔光；可注入纹理，standard() 使用 Core 默认资源 |
 | client.fx.VoxelGeometry | 无逐体素顶点数组分配；立即绘制与追加 Tessellator 批次分别使用对应方法 |

@@ -34,6 +34,14 @@ tasks.register<JavaExec>("runCoreContracts") {
 }
 tasks.named("check") { dependsOn("runCoreContracts") }
 
+tasks.register<JavaExec>("runNativePageContracts") {
+    group = "verification"
+    description = "Checks GT page ownership, chart inputs and the installed Chromatic converter API without OpenGL."
+    mainClass = "com.miaokatze.miaokatzecore.api.tooltip.component.NativePageContracts"
+    classpath = sourceSets.test.get().runtimeClasspath + sourceSets.main.get().compileClasspath
+}
+tasks.named("check") { dependsOn("runNativePageContracts") }
+
 tasks.register<JavaExec>("runModelRendererMeshContracts") {
     group = "verification"
     mainClass = "com.miaokatze.miaokatzecore.client.preview.ModelRendererMeshContracts"

@@ -37,6 +37,14 @@ public final class TooltipPages {
 
     private TooltipPages() {}
 
+    public static String effectKeyLabel() {
+        return effectLabel.get();
+    }
+
+    public static String detailKeyLabel() {
+        return detailLabel.get();
+    }
+
     public static void bindLabels(Supplier<String> details, Supplier<String> effects) {
         detailLabel = details;
         effectLabel = effects;

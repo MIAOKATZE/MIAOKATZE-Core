@@ -23,6 +23,7 @@ import com.cleanroommc.modularui.screen.ModularScreen;
 import com.cleanroommc.modularui.screen.RichTooltipEvent;
 import com.gtnewhorizon.gtnhlib.client.event.RenderTooltipEvent;
 import com.miaokatze.miaokatzecore.api.tooltip.TooltipPages;
+import com.miaokatze.miaokatzecore.api.tooltip.component.NativeTooltipPage;
 
 import codechicken.nei.LayoutManager;
 import codechicken.nei.guihook.GuiContainerManager;
@@ -41,6 +42,11 @@ public final class TooltipController {
     private int mouseX, mouseY;
     private long lastRender;
     private final boolean nei = Loader.isModLoaded("NotEnoughItems");
+    private static java.util.function.BooleanSupplier tierHeld = () -> false;
+
+    static boolean tierHeld() {
+        return tierHeld.getAsBoolean();
+    }
 
     public static void install() {
         TooltipController input = new TooltipController();
@@ -49,6 +55,12 @@ public final class TooltipController {
             input.effects = Chords.registerEffects();
         }
         TooltipPages.bindLabels(() -> input.label(false), () -> input.label(true));
+        tierHeld = () -> {
+            int code = (input.effects == null ? input.details : input.effects).getKeyCode();
+            boolean down = code > 0 ? Keyboard.isKeyDown(code) : code < 0 && Mouse.isButtonDown(code + 100);
+            return down && (input.effects != null ? Chords.matches(input.effects, code)
+                : Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU));
+        };
         MinecraftForge.EVENT_BUS.register(input);
         if (Loader.isModLoaded("chromatictooltips")) {
             MinecraftForge.EVENT_BUS.register(new ChromaticHover(input));
@@ -102,11 +114,19 @@ public final class TooltipController {
     }
 
     private boolean pressed(GuiScreen gui, int code) {
+        boolean page = NativeTooltipPage.supports(key);
+        boolean select = page && code == Keyboard.KEY_TAB
+            && !GuiScreen.isCtrlKeyDown()
+            && !GuiScreen.isShiftKeyDown()
+            && !Keyboard.isKeyDown(Keyboard.KEY_LMENU)
+            && !Keyboard.isKeyDown(Keyboard.KEY_RMENU);
+        if (page && Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) return false;
         if (code == Keyboard.KEY_NONE
-            || (code != details.getKeyCode() && (effects == null || effects.getKeyCode() != code))) return false;
+            || (!select && code != details.getKeyCode() && (effects == null || effects.getKeyCode() != code)))
+            return false;
         if (gui == null || gui != screen
             || gui != Minecraft.getMinecraft().currentScreen
-            || !TooltipPages.supports(key)
+            || !(page || TooltipPages.supports(key))
             || com.miaokatze.miaokatzecore.api.tooltip.TooltipAnimationClock.nowNanos() - lastRender > 300000000L)
             return false;
         if ((mouseX != Mouse.getX() || mouseY != Mouse.getY())
@@ -115,6 +135,11 @@ public final class TooltipController {
         if (modular != null && modular.getContext()
             .getFocusedWidget() != null || nei && NeiInput.focused() || typingInVanillaField(gui)) return false;
         boolean effect;
+        if (select) {
+            boolean changed = NativeTooltipPage.act(key, NativeTooltipPage.Action.SELECT);
+            if (changed && Loader.isModLoaded("chromatictooltips")) ChromaticHover.follow(key);
+            return changed;
+        }
         if (effects != null) {
             effect = Chords.matches(effects, code);
             if (!effect && !Chords.matches(details, code)) return false;
@@ -122,7 +147,9 @@ public final class TooltipController {
             if (GuiScreen.isCtrlKeyDown() || GuiScreen.isShiftKeyDown()) return false;
             effect = Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU);
         }
-        return TooltipPages.toggle(key, effect);
+        return page
+            ? NativeTooltipPage.act(key, effect ? NativeTooltipPage.Action.TIER : NativeTooltipPage.Action.VARIANT)
+            : TooltipPages.toggle(key, effect);
     }
 
     // Optional GTNH Controlling adapter. Match exactly the chord configured in the Controls screen.
@@ -192,6 +219,11 @@ public final class TooltipController {
         @SubscribeEvent
         public void rendered(com.slprime.chromatictooltips.event.RenderTooltipEvent event) {
             input.hovered(Minecraft.getMinecraft().currentScreen, event.context.getItem());
+            ChartPointer.rendered(event);
+        }
+
+        static void follow(String key) {
+            ChartPointer.follow(key);
         }
     }
 

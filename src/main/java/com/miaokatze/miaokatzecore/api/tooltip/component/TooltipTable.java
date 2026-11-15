@@ -58,6 +58,16 @@ public final class TooltipTable implements TooltipBlock {
         return new TooltipTable(title, headers, rows, alignments, art, measurementRows);
     }
 
+    /** Stable column widths when the current variant displays only a subset of the possible rows. */
+    public TooltipTable withMeasurementRows(List<List<String>> allRows) {
+        List<List<String>> copy = new ArrayList<>(rows);
+        for (List<String> row : allRows) {
+            if (row.size() != headers.size()) throw new IllegalArgumentException("Measurement row width");
+            copy.add(cells(row));
+        }
+        return new TooltipTable(title, headers, rows, alignments, art, Collections.unmodifiableList(copy));
+    }
+
     public TooltipTable align(int column, Alignment alignment) {
         List<Alignment> next = new ArrayList<>(alignments);
         next.set(column, Objects.requireNonNull(alignment));

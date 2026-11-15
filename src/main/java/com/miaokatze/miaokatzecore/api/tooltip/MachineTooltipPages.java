@@ -26,13 +26,7 @@ public final class MachineTooltipPages {
 
     private MachineTooltipPages() {}
 
-    public static void apply(ItemStack stack, List<String> lines, String summaryKey, String warningKey) {
-        IMetaTileEntity meta = ItemMachines.getMetaTileEntity(stack);
-        if (meta == null || !StatCollector.canTranslate(summaryKey)) return;
-        if (meta instanceof ISecondaryDescribable && ((ISecondaryDescribable) meta).isDisplaySecondaryDescription())
-            return;
-        String[] raw = meta.getDescription();
-        if (raw == null || raw.length == 0) return;
+    private static List<String> description(ItemStack stack, List<String> lines, IMetaTileEntity meta, String[] raw) {
         List<String> description = Arrays.asList(raw);
         int index = Collections.indexOfSubList(lines, description);
         if (index < 0) {
@@ -53,8 +47,52 @@ public final class MachineTooltipPages {
                     description = Arrays.asList(raw);
                 }
             } else description = Arrays.asList(GTSplit.split(translated));
-            index = Collections.indexOfSubList(lines, description);
         }
+        return description;
+    }
+
+    /** Replace the exact normal-page description, retaining the native GT structure finisher if present. */
+    public static boolean replaceDescription(ItemStack stack, List<String> lines, List<String> replacement) {
+        IMetaTileEntity meta = ItemMachines.getMetaTileEntity(stack);
+        if (meta == null
+            || meta instanceof ISecondaryDescribable && ((ISecondaryDescribable) meta).isDisplaySecondaryDescription())
+            return false;
+        String[] raw = meta.getDescription();
+        if (raw == null || raw.length == 0) return false;
+        List<String> owned = description(stack, lines, meta, raw);
+        return replaceOwned(lines, owned, replacement)
+            || !owned.equals(Arrays.asList(raw)) && replaceOwned(lines, Arrays.asList(raw), replacement);
+    }
+
+    static boolean replaceOwned(List<String> lines, List<String> owned, List<String> replacement) {
+        if (owned.isEmpty()) return false;
+        int index = Collections.indexOfSubList(lines, owned);
+        boolean finisher = owned.get(owned.size() - 1)
+            .contains("[LSHIFT]");
+        // Some GTNH Chromatic compatibility rules translate a native finisher into a modifier token.
+        if (index < 0 && finisher && owned.size() > 1 && lines.contains("§!shift")) {
+            owned = owned.subList(0, owned.size() - 1);
+            finisher = false;
+            index = Collections.indexOfSubList(lines, owned);
+        }
+        if (owned.isEmpty() || index < 1 || Collections.lastIndexOfSubList(lines, owned) != index) return false;
+        int end = index + owned.size();
+        if (finisher) end--;
+        lines.subList(index, end)
+            .clear();
+        lines.addAll(index, replacement);
+        return true;
+    }
+
+    public static void apply(ItemStack stack, List<String> lines, String summaryKey, String warningKey) {
+        IMetaTileEntity meta = ItemMachines.getMetaTileEntity(stack);
+        if (meta == null || !StatCollector.canTranslate(summaryKey)) return;
+        if (meta instanceof ISecondaryDescribable && ((ISecondaryDescribable) meta).isDisplaySecondaryDescription())
+            return;
+        String[] raw = meta.getDescription();
+        if (raw == null || raw.length == 0) return;
+        List<String> description = description(stack, lines, meta, raw);
+        int index = Collections.indexOfSubList(lines, description);
         String warning = warningKey == null ? null : StatCollector.translateToLocal(warningKey);
         if (index >= 0 && !TooltipPages.expanded(stack)) {
             lines.subList(index, index + description.size())

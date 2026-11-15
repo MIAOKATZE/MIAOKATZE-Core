@@ -14,9 +14,14 @@ import net.minecraftforge.common.MinecraftForge;
 import com.miaokatze.miaokatzecore.api.tooltip.TooltipPages;
 import com.miaokatze.miaokatzecore.api.tooltip.component.NativeTooltips;
 import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipBlock;
+import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipChart;
+import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipGuide;
+import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipPageBody;
 import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipTable;
 import com.slprime.chromatictooltips.api.ITooltipComponent;
+import com.slprime.chromatictooltips.api.TooltipModifier;
 import com.slprime.chromatictooltips.event.TextLinesConverterEvent;
+import com.slprime.chromatictooltips.event.TooltipEnricherEvent;
 
 import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -53,6 +58,8 @@ public final class NativeTooltipClient implements NativeTooltips.Backend {
         if (installed) return;
         installed = true;
         registerRenderer(TooltipTable.class, NativeTableComponent::new);
+        registerRenderer(TooltipGuide.class, NativeGuideComponent::new);
+        registerRenderer(TooltipChart.class, NativeChartComponent::new);
         NativeTooltipClient adapter = new NativeTooltipClient();
         NativeTooltips.install(adapter);
         MinecraftForge.EVENT_BUS.register(adapter);
@@ -71,9 +78,10 @@ public final class NativeTooltipClient implements NativeTooltips.Backend {
     @Override
     public boolean prepare(String item, List<String> expected, TooltipBlock snapshot) {
         if (Thread.currentThread() != clientThread) return false;
-        if (!renderers.containsKey(snapshot.getClass())) return false;
+        boolean page = snapshot instanceof TooltipPageBody;
+        if (!page && !renderers.containsKey(snapshot.getClass())) return false;
         // Group title is caller-owned and stable across runtime value updates.
-        bindings.put(item + "\u0000" + expected.get(0), new Binding(item, expected, snapshot));
+        bindings.put(item + "\u0000" + (page ? "\u0000page" : expected.get(0)), new Binding(item, expected, snapshot));
         return true;
     }
 
@@ -82,10 +90,45 @@ public final class NativeTooltipClient implements NativeTooltips.Backend {
         if (Thread.currentThread() != clientThread) return;
         String item = TooltipPages.identity(event.target.getItem());
         if (item.isEmpty()) return;
+        convert(item, event.list);
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void positionTier(TooltipEnricherEvent event) {
+        if (Thread.currentThread() != clientThread || event.context.getActiveModifier() != TooltipModifier.NONE) return;
+        TierHeaderSlot.place(event.context.getSection("header"), event.context.getSection("body"));
+    }
+
+    void convert(String item, List<Object> lines) {
         for (Binding binding : new ArrayList<>(bindings.values())) {
             if (!binding.item.equals(item)) continue;
-            int start = Collections.indexOfSubList(event.list, binding.expected);
+            int start = Collections.indexOfSubList(lines, binding.expected);
             if (start < 0) continue;
+            if (binding.snapshot instanceof TooltipPageBody) {
+                if (Collections.lastIndexOfSubList(lines, binding.expected) != start) continue;
+                List<TooltipPageBody.Span> spans = ((TooltipPageBody) binding.snapshot).spans;
+                // Reverse order preserves offsets, including equal text in different owned spans.
+                for (int i = spans.size() - 1; i >= 0; i--) {
+                    TooltipPageBody.Span span = spans.get(i);
+                    BiFunction<String, TooltipBlock, ITooltipComponent> factory = renderers.get(span.block.getClass());
+                    if (factory == null) continue;
+                    ITooltipComponent part;
+                    try {
+                        part = factory.apply(item, span.block);
+                    } catch (RuntimeException | LinkageError unavailable) {
+                        continue;
+                    }
+                    if (part != null) {
+                        if (span.block instanceof TooltipGuide
+                            && ((TooltipGuide) span.block).kind == TooltipGuide.Kind.TIER)
+                            part = new TierHeaderSlot(part);
+                        lines.subList(start + span.from, start + span.to)
+                            .clear();
+                        lines.add(start + span.from, part);
+                    }
+                }
+                continue;
+            }
             BiFunction<String, TooltipBlock, ITooltipComponent> renderer = renderers.get(binding.snapshot.getClass());
             ITooltipComponent component;
             try {
@@ -94,9 +137,9 @@ public final class NativeTooltipClient implements NativeTooltips.Backend {
                 continue;
             }
             if (component == null) continue;
-            event.list.subList(start, start + binding.expected.size())
+            lines.subList(start, start + binding.expected.size())
                 .clear();
-            event.list.add(start, component);
+            lines.add(start, component);
         }
     }
 }

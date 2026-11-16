@@ -16,7 +16,7 @@ Chromatic 的 `[shift]` 修饰键栏属于独立的页首组件，并非正文�
 
 ### 操作提示：键帽与鼠标（0.2.18）
 
-正文用 `page.input("按[key-right:Shift+右击]解锁")`；表格在 `TooltipTable.of(...)` 后调用 `.withInputIcons()`，仅解析数据格。支持 `key`、`left`、`right`、`middle` 以及 `key-left/right/middle`（如 `[left:左击]勾选`）。源码标记内只写本地化键名。组件和文本回退均用半角方括号显示，如 `[右击]`、`[Shift+右击]`；组合整体一对，行为写在框外，状态和结果列不重复标。空白键帽和鼠标均为 12×9；动画仅移动选中的按钮，静帧保留高亮。未启用组件或表格过窄时仍显示完整文字；普通 `line` 和旧表保持字面文本。图集源为工具仓 `gallery/mouse-click.js`，由 `render/mouse_atlas.py` 写入或以 `--check` 逐像素核对。
+正文用 `page.input("按[key-right:Shift+右击]解锁")`；表格在 `TooltipTable.of(...)` 后调用 `.withInputIcons()`，仅解析数据格。支持 `key`、`left`、`right`、`middle` 以及 `key-left/right/middle`（如 `[left:左击]勾选`）。源码标记内只写本地化键名。组件和文本回退均用半角方括号显示，如 `[右击]`、`[Shift+右击]`；组合整体一对，行为写在框外，状态和结果列不重复标。空白键帽和鼠标均为 12×9；动画仅移动选中的按钮，静帧保留高亮。未启用组件或表格过窄时仍显示完整文字；普通 `line` 和未启用按键图标的旧表仍把键鼠标记当作字面文本。图集源为工具仓 `gallery/mouse-click.js`，由 `render/mouse_atlas.py` 写入或以 `--check` 逐像素核对。
 
 ### 地址与二维码（0.2.18）
 
@@ -25,3 +25,11 @@ Chromatic 的 `[shift]` 修饰键栏属于独立的页首组件，并非正文�
 ### 普通物品与两档页（0.2.19）
 
 普通物品在自身 `addInformation` 中以 `page.appendTo(stack, lines)` 追加正文，保留原有和其他 Mod 的提示。GT 机器仍用 `page.apply(stack, eventLines)` 替换自己拥有的描述，保留结构页。小体量物品在读取档位前调用 `page.twoTiers()`，默认常规，Alt+V 仅在常规与简略间切换。既有三档调用无需更改。
+
+### 行内材料、单档和图表读数（0.2.20）
+
+业务在译文中明确写出注册身份，例如 `投入[item:minecraft:dye@4|青金石]，加入[fluid:water|水]。`。普通行、操作行、警告、表格标题/表头/数据、图例/图轴/标签均可使用；普通词如“水位”不会触发绑定。Forge 注册名按原样查找，包括 `ammonium chloride` 等名称内部的空格。物品按对应子类型走游戏的库存绘制器，流体用注册纹理和着色。图标占 10×10 像素，右留 1 像素接半角 `[显示名]`；图标前和名称后各留一个半角空格，已有空白不叠加，紧接标点或符号时不补。没有可选组件、找不到注册项或纹理仍显示带方括号的名称。物品名称与图标、键名与键帽在通常的窄屏换行中保持一组。
+
+表格与图表使用同一正文宽度和边距；各列按内容定宽后均分多余空间。表头线止于表格边缘；窄屏时先缩列并换行，跨页重复表头，连一组完整名称都放不下时使用完整文字回退。只需常规正文时调用 `page.singleTier()`，省略档位提示，也不占用 Alt+V。通用静态条目可交给 `NativeTooltipBlocks.append(page, json)`：支持 line、warning、divider、table、heat、bars 和已解析实际地址的 link；未识别类型返回 false。消费端负责语言、状态、动态配方和真实物品绑定。
+
+用 `TooltipChart.bars(...).barColumn(c)` 把同尺度柱放在从零起的数值列旁；旧累计改装图仍可保留分段柱。函数图可在 `lines(...).range(...)` 后调用 `plot(xTicks, yTicks, probe, readouts, colors)`。刻度严格递增并覆盖给定轴范围；共享的实际横轴样本应包含每个拐点和探针，数据缺失用 NaN。Core 在精确探针上标出每条曲线的位置，图例给出业务传入的同条件读数和颜色。纯文字可见图名、轴、样本和探针读数；固定图不登记可切换状态。

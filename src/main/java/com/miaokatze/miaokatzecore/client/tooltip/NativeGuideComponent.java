@@ -22,13 +22,23 @@ import com.slprime.chromatictooltips.util.TooltipFontContext;
 public final class NativeGuideComponent implements ITooltipComponent {
 
     private static final ResourceLocation SHEET = new ResourceLocation("miaokatzecore", "textures/tooltip/guides.png");
-    private static final ResourceLocation MOUSE = new ResourceLocation("miaokatzecore", "textures/tooltip/mouse_clicks.png");
+    private static final ResourceLocation MOUSE = new ResourceLocation(
+        "miaokatzecore",
+        "textures/tooltip/mouse_clicks.png");
     private static final int[] BEATS = { 0, 0, 1, 2, 3, 3, 5, 6, 0, 0 };
     private final String item;
     private final TooltipGuide guide;
     private final String[] runs;
+    private final ITooltipComponent content;
+    private final boolean showIcon;
 
     NativeGuideComponent(String item, TooltipGuide guide) {
+        this(item, guide, new NativeInputComponent(item, guide.line), true);
+    }
+
+    private NativeGuideComponent(String item, TooltipGuide guide, ITooltipComponent content, boolean showIcon) {
+        this.content = content;
+        this.showIcon = showIcon;
         this.item = item;
         this.guide = guide;
         this.runs = guide.kind == TooltipGuide.Kind.TIER ? guide.text.split("(?=§[7b])") : null;
@@ -40,12 +50,12 @@ public final class NativeGuideComponent implements ITooltipComponent {
 
     @Override
     public int getWidth() {
-        return 15 + TooltipFontContext.getStringWidth(guide.text);
+        return 15 + content.getWidth();
     }
 
     @Override
     public int getHeight() {
-        return Math.max(9, TooltipFontContext.getFontHeight());
+        return Math.max(9, content.getHeight());
     }
 
     @Override
@@ -55,8 +65,13 @@ public final class NativeGuideComponent implements ITooltipComponent {
 
     @Override
     public ITooltipComponent[] paginate(TooltipContext c, int w, int h) {
-        return getWidth() <= w ? new ITooltipComponent[] { this }
-            : new TextComponent(guide.text).paginate(c, Math.max(1, w), h);
+        if (getWidth() <= w && getHeight() <= h) return new ITooltipComponent[] { this };
+        if (guide.kind == TooltipGuide.Kind.TIER || w <= 15)
+            return new TextComponent(guide.text).paginate(c, Math.max(1, w), h);
+        ITooltipComponent[] pieces = content.paginate(c, w - 15, h);
+        for (int i = 0; i < pieces.length; i++)
+            pieces[i] = new NativeGuideComponent(item, guide, pieces[i], i == 0 && showIcon);
+        return pieces;
     }
 
     static void sprite(String item, int row, int x, int y, boolean held) {
@@ -91,9 +106,9 @@ public final class NativeGuideComponent implements ITooltipComponent {
     @Override
     public void draw(int x, int y, int width, TooltipContext context) {
         int row = guide.kind == TooltipGuide.Kind.TIER ? 0 : guide.kind == TooltipGuide.Kind.WARNING ? 1 : 2;
-        sprite(item, row, x, y, guide.kind == TooltipGuide.Kind.TIER && TooltipController.tierHeld());
+        if (showIcon) sprite(item, row, x, y, guide.kind == TooltipGuide.Kind.TIER && TooltipController.tierHeld());
         if (guide.kind != TooltipGuide.Kind.TIER) {
-            TooltipFontContext.drawString(guide.text, x + 15, y);
+            content.draw(x + 15, y, width - 15, context);
             return;
         }
         double brightness = TooltipPages.animationEnabled(item)

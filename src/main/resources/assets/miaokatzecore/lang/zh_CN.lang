@@ -12,3 +12,4 @@ miaokatzecore.page.common=常规
 miaokatzecore.page.detail=详细
 miaokatzecore.page.select=按[Tab]选图
 miaokatzecore.page.variant=按[%s]切换
+miaokatzecore.page.probe=取 %s：

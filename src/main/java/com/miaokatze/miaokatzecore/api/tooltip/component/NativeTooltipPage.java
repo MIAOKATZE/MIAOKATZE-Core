@@ -36,6 +36,7 @@ public final class NativeTooltipPage {
 
         Tier tier = Tier.COMMON;
         boolean compact;
+        boolean single;
         String selected = "";
         Map<String, Integer> visible = Collections.emptyMap();
         final Map<String, Integer> variants = new HashMap<>();
@@ -44,6 +45,7 @@ public final class NativeTooltipPage {
     private static final Tier[] ALL_HINTS = { Tier.DETAIL, Tier.COMMON, Tier.QUICK };
     private static final Tier[] TWO_HINTS = { Tier.COMMON, Tier.QUICK };
     private boolean compact;
+    private boolean single;
     private final String key;
     private final List<Object> blocks = new ArrayList<>();
     private final Map<String, Integer> visible = new LinkedHashMap<>();
@@ -62,7 +64,14 @@ public final class NativeTooltipPage {
         return this;
     }
 
+    /** Fixed authored page without a tier hint or tier shortcut. */
+    public NativeTooltipPage singleTier() {
+        single = true;
+        return this;
+    }
+
     public Tier tier() {
+        if (single) return Tier.COMMON;
         synchronized (states) {
             State s = states.get(key);
             return s == null || (compact && s.tier == Tier.DETAIL) ? Tier.COMMON : s.tier;
@@ -78,7 +87,7 @@ public final class NativeTooltipPage {
     }
 
     public void line(String text) {
-        blocks.add(Objects.requireNonNull(text));
+        blocks.add(TooltipInput.hasMaterial(text) ? TooltipInput.materials(text) : Objects.requireNonNull(text));
     }
 
     public void block(TooltipBlock block) {
@@ -126,9 +135,9 @@ public final class NativeTooltipPage {
             StatCollector.translateToLocalFormatted("miaokatzecore.page.tier", TooltipPages.effectKeyLabel(), tiers));
     }
 
-    private TooltipPageBody body() {
+    TooltipPageBody body() {
         List<Object> parts = new ArrayList<>();
-        parts.add(hint());
+        if (!single) parts.add(hint());
         parts.addAll(blocks);
         return new TooltipPageBody(parts);
     }
@@ -149,7 +158,7 @@ public final class NativeTooltipPage {
         if (replaceMachineDescription) {
             if (!MachineTooltipPages.replaceDescription(stack, lines, strings)) return false;
         } else lines.addAll(strings);
-        bind(key, visible, compact);
+        bind(key, visible, compact, single);
         NativeTooltips.replace(stack, lines, strings, body);
         return true;
     }
@@ -159,9 +168,15 @@ public final class NativeTooltipPage {
     }
 
     private static void bind(String key, Map<String, Integer> visible, boolean compact) {
+        bind(key, visible, compact, false);
+    }
+
+    static void bind(String key, Map<String, Integer> visible, boolean compact, boolean single) {
         synchronized (states) {
             State s = states.computeIfAbsent(key, k -> new State());
             s.compact = compact;
+            s.single = single;
+            if (single) s.tier = Tier.COMMON;
             if (compact && s.tier == Tier.DETAIL) s.tier = Tier.COMMON;
             s.visible = new LinkedHashMap<>(visible);
             if (!s.visible.isEmpty() && !s.visible.containsKey(s.selected)) s.selected = s.visible.keySet()
@@ -203,6 +218,7 @@ public final class NativeTooltipPage {
             State s = states.get(key);
             if (s == null) return false;
             if (action == Action.TIER) {
+                if (s.single) return false;
                 s.tier = s.compact ? (s.tier == Tier.COMMON ? Tier.QUICK : Tier.COMMON)
                     : Tier.values()[(s.tier.ordinal() + 1) % Tier.values().length];
                 s.visible = Collections.emptyMap(); // Don't switch a stale chart before its new page is built.

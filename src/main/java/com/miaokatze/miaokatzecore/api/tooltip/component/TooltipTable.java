@@ -25,6 +25,7 @@ public final class TooltipTable implements TooltipBlock {
     private final List<Alignment> alignments;
     private final TooltipArt art;
     private final Map<String, TooltipInput> inputs;
+    private final boolean keys;
 
     private TooltipTable(String title, List<String> headers, List<List<String>> rows, List<Alignment> alignments,
         TooltipArt art) {
@@ -49,15 +50,15 @@ public final class TooltipTable implements TooltipBlock {
         this.measurementRows = measurementRows == null ? this.rows : measurementRows;
         this.alignments = Collections.unmodifiableList(new ArrayList<>(alignments));
         this.art = Objects.requireNonNull(art, "art");
-        if (inputIcons) {
-            Map<String, TooltipInput> parsed = new HashMap<>();
-            for (List<String> row : this.measurementRows) {
-                for (String value : row) {
-                    if (value.indexOf('[') >= 0) parsed.computeIfAbsent(value, TooltipInput::of);
-                }
+        this.keys = inputIcons;
+        Map<String, TooltipInput> parsed = new HashMap<>();
+        for (List<String> row : this.measurementRows) {
+            for (String value : row) {
+                if (inputIcons && value.indexOf('[') >= 0) parsed.computeIfAbsent(value, TooltipInput::of);
+                else if (TooltipInput.hasMaterial(value)) parsed.computeIfAbsent(value, TooltipInput::materials);
             }
-            this.inputs = Collections.unmodifiableMap(parsed);
-        } else this.inputs = null;
+        }
+        this.inputs = parsed;
     }
 
     public static TooltipTable of(String title, List<String> headers, List<List<String>> rows) {
@@ -72,11 +73,11 @@ public final class TooltipTable implements TooltipBlock {
     }
 
     public boolean hasInputIcons() {
-        return inputs != null;
+        return keys;
     }
 
     public TooltipInput input(String value) {
-        return inputs == null ? null : inputs.get(value);
+        return inputs.get(value);
     }
 
     public TooltipTable withArt(TooltipArt art) {
@@ -90,7 +91,14 @@ public final class TooltipTable implements TooltipBlock {
             if (row.size() != headers.size()) throw new IllegalArgumentException("Measurement row width");
             copy.add(cells(row));
         }
-        return new TooltipTable(title, headers, rows, alignments, art, Collections.unmodifiableList(copy), hasInputIcons());
+        return new TooltipTable(
+            title,
+            headers,
+            rows,
+            alignments,
+            art,
+            Collections.unmodifiableList(copy),
+            hasInputIcons());
     }
 
     public TooltipTable align(int column, Alignment alignment) {
@@ -100,7 +108,14 @@ public final class TooltipTable implements TooltipBlock {
     }
 
     public TooltipTable slice(int from, int to) {
-        return new TooltipTable(title, headers, rows.subList(from, to), alignments, art, measurementRows, hasInputIcons());
+        return new TooltipTable(
+            title,
+            headers,
+            rows.subList(from, to),
+            alignments,
+            art,
+            measurementRows,
+            hasInputIcons());
     }
 
     public String title() {
@@ -131,13 +146,13 @@ public final class TooltipTable implements TooltipBlock {
     @Override
     public List<String> fallbackLines() {
         List<String> result = new ArrayList<>();
-        if (!title.isEmpty()) result.add(title);
+        if (!title.isEmpty()) result.add(TooltipInput.plainMaterials(title));
         for (List<String> row : rows) {
             StringBuilder line = new StringBuilder();
             for (int i = 0; i < row.size(); i++) {
                 if (i > 0) line.append("  |  ");
                 TooltipInput input = input(row.get(i));
-                line.append(headers.get(i))
+                line.append(TooltipInput.plainMaterials(headers.get(i)))
                     .append(": ")
                     .append(input == null ? row.get(i) : input.plain());
             }
@@ -172,6 +187,7 @@ public final class TooltipTable implements TooltipBlock {
             && rows.equals(t.rows)
             && measurementRows.equals(t.measurementRows)
             && alignments.equals(t.alignments)
-            && art == t.art && hasInputIcons() == t.hasInputIcons();
+            && art == t.art
+            && hasInputIcons() == t.hasInputIcons();
     }
 }

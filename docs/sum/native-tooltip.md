@@ -21,3 +21,7 @@ Chromatic 的 `[shift]` 修饰键栏属于独立的页首组件，并非正文�
 ### 地址与二维码（0.2.18）
 
 `page.qr("蓝图站：", url)` 显示一行可读地址，并从同一字符串现场编码；纯文本消费者或放不下整个组件时只显示这行地址。适用于 1–512 个 UTF-8 字节的单行文本。组件用整数方格绘制，四周保留四格白边，外加一像素边框。最近使用的矩阵最多缓存 16 个；不请求网络、不注册纹理、不随包分发二维码图片。内部编码器为 [Project Nayuki v1.8.0](https://github.com/nayuki/QR-Code-generator/tree/v1.8.0)，仅引入基础编码源码，保留 MIT 许可。
+
+### 普通物品与两档页（0.2.19）
+
+普通物品在自身 `addInformation` 中以 `page.appendTo(stack, lines)` 追加正文，保留原有和其他 Mod 的提示。GT 机器仍用 `page.apply(stack, eventLines)` 替换自己拥有的描述，保留结构页。小体量物品在读取档位前调用 `page.twoTiers()`，默认常规，Alt+V 仅在常规与简略间切换。既有三档调用无需更改。

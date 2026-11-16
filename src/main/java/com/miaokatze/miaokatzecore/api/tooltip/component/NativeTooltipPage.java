@@ -75,6 +75,15 @@ public final class NativeTooltipPage {
         blocks.add(Objects.requireNonNull(block));
     }
 
+    /** Input hints use explicit [right:label], [key:label], or [key-right:label] markers. */
+    public void input(String text) {
+        block(TooltipInput.of(text));
+    }
+
+    public void qr(String prefix, String value) {
+        block(TooltipQr.of(prefix, value));
+    }
+
     public void warning(String text) {
         block(new TooltipGuide(TooltipGuide.Kind.WARNING, text));
     }

@@ -12,6 +12,7 @@ import org.lwjgl.opengl.GL11;
 import com.miaokatze.miaokatzecore.api.tooltip.TooltipAnimationClock;
 import com.miaokatze.miaokatzecore.api.tooltip.TooltipPages;
 import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipGuide;
+import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipInput;
 import com.slprime.chromatictooltips.api.ITooltipComponent;
 import com.slprime.chromatictooltips.api.TooltipContext;
 import com.slprime.chromatictooltips.component.TextComponent;
@@ -21,6 +22,7 @@ import com.slprime.chromatictooltips.util.TooltipFontContext;
 public final class NativeGuideComponent implements ITooltipComponent {
 
     private static final ResourceLocation SHEET = new ResourceLocation("miaokatzecore", "textures/tooltip/guides.png");
+    private static final ResourceLocation MOUSE = new ResourceLocation("miaokatzecore", "textures/tooltip/mouse_clicks.png");
     private static final int[] BEATS = { 0, 0, 1, 2, 3, 3, 5, 6, 0, 0 };
     private final String item;
     private final TooltipGuide guide;
@@ -62,6 +64,16 @@ public final class NativeGuideComponent implements ITooltipComponent {
         int frame = TooltipPages.animationEnabled(item)
             ? (row == 0 ? held ? 3 : BEATS[(int) Math.floorMod(ms / 150, 10L)] : (int) Math.floorMod(ms / 300, 8L))
             : 0;
+        drawSprite(SHEET, frame, row, x, y);
+    }
+
+    static void mouse(String item, TooltipInput.Mouse button, int x, int y) {
+        long ms = TooltipAnimationClock.nowNanos() / 1000000L;
+        int frame = TooltipPages.animationEnabled(item) ? BEATS[(int) Math.floorMod(ms / 150, 10L)] : 0;
+        drawSprite(MOUSE, frame, button.ordinal(), x, y);
+    }
+
+    private static void drawSprite(ResourceLocation sheet, int frame, int row, int x, int y) {
         GL11.glPushAttrib(GL11.GL_ENABLE_BIT | GL11.GL_CURRENT_BIT | GL11.GL_TEXTURE_BIT | GL11.GL_COLOR_BUFFER_BIT);
         try {
             GL11.glEnable(GL11.GL_TEXTURE_2D);
@@ -69,7 +81,7 @@ public final class NativeGuideComponent implements ITooltipComponent {
             GL11.glColor4f(1, 1, 1, 1);
             Minecraft.getMinecraft()
                 .getTextureManager()
-                .bindTexture(SHEET);
+                .bindTexture(sheet);
             Gui.func_146110_a(x, y, 12 * frame, 9 * row, 12, 9, 96, 27);
         } finally {
             GL11.glPopAttrib();

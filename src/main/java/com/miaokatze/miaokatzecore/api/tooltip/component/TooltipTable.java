@@ -3,7 +3,9 @@ package com.miaokatze.miaokatzecore.api.tooltip.component;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import com.miaokatze.miaokatzecore.api.tooltip.TooltipArt;
@@ -22,14 +24,15 @@ public final class TooltipTable implements TooltipBlock {
     private final List<List<String>> measurementRows;
     private final List<Alignment> alignments;
     private final TooltipArt art;
+    private final Map<String, TooltipInput> inputs;
 
     private TooltipTable(String title, List<String> headers, List<List<String>> rows, List<Alignment> alignments,
         TooltipArt art) {
-        this(title, headers, rows, alignments, art, null);
+        this(title, headers, rows, alignments, art, null, false);
     }
 
     private TooltipTable(String title, List<String> headers, List<List<String>> rows, List<Alignment> alignments,
-        TooltipArt art, List<List<String>> measurementRows) {
+        TooltipArt art, List<List<String>> measurementRows, boolean inputIcons) {
         this.title = cell(title);
         if (headers == null || headers.isEmpty() || headers.size() > 8)
             throw new IllegalArgumentException("1–8 table columns required");
@@ -46,6 +49,15 @@ public final class TooltipTable implements TooltipBlock {
         this.measurementRows = measurementRows == null ? this.rows : measurementRows;
         this.alignments = Collections.unmodifiableList(new ArrayList<>(alignments));
         this.art = Objects.requireNonNull(art, "art");
+        if (inputIcons) {
+            Map<String, TooltipInput> parsed = new HashMap<>();
+            for (List<String> row : this.measurementRows) {
+                for (String value : row) {
+                    if (value.indexOf('[') >= 0) parsed.computeIfAbsent(value, TooltipInput::of);
+                }
+            }
+            this.inputs = Collections.unmodifiableMap(parsed);
+        } else this.inputs = null;
     }
 
     public static TooltipTable of(String title, List<String> headers, List<List<String>> rows) {
@@ -54,8 +66,21 @@ public final class TooltipTable implements TooltipBlock {
         return new TooltipTable(title, headers, rows, alignments, TooltipArt.PLAIN);
     }
 
+    /** Decorate explicit input labels in body cells; legacy tables keep literal brackets. */
+    public TooltipTable withInputIcons() {
+        return hasInputIcons() ? this : new TooltipTable(title, headers, rows, alignments, art, measurementRows, true);
+    }
+
+    public boolean hasInputIcons() {
+        return inputs != null;
+    }
+
+    public TooltipInput input(String value) {
+        return inputs == null ? null : inputs.get(value);
+    }
+
     public TooltipTable withArt(TooltipArt art) {
-        return new TooltipTable(title, headers, rows, alignments, art, measurementRows);
+        return new TooltipTable(title, headers, rows, alignments, art, measurementRows, hasInputIcons());
     }
 
     /** Stable column widths when the current variant displays only a subset of the possible rows. */
@@ -65,17 +90,17 @@ public final class TooltipTable implements TooltipBlock {
             if (row.size() != headers.size()) throw new IllegalArgumentException("Measurement row width");
             copy.add(cells(row));
         }
-        return new TooltipTable(title, headers, rows, alignments, art, Collections.unmodifiableList(copy));
+        return new TooltipTable(title, headers, rows, alignments, art, Collections.unmodifiableList(copy), hasInputIcons());
     }
 
     public TooltipTable align(int column, Alignment alignment) {
         List<Alignment> next = new ArrayList<>(alignments);
         next.set(column, Objects.requireNonNull(alignment));
-        return new TooltipTable(title, headers, rows, next, art, measurementRows);
+        return new TooltipTable(title, headers, rows, next, art, measurementRows, hasInputIcons());
     }
 
     public TooltipTable slice(int from, int to) {
-        return new TooltipTable(title, headers, rows.subList(from, to), alignments, art, measurementRows);
+        return new TooltipTable(title, headers, rows.subList(from, to), alignments, art, measurementRows, hasInputIcons());
     }
 
     public String title() {
@@ -111,9 +136,10 @@ public final class TooltipTable implements TooltipBlock {
             StringBuilder line = new StringBuilder();
             for (int i = 0; i < row.size(); i++) {
                 if (i > 0) line.append("  |  ");
+                TooltipInput input = input(row.get(i));
                 line.append(headers.get(i))
                     .append(": ")
-                    .append(row.get(i));
+                    .append(input == null ? row.get(i) : input.plain());
             }
             result.add(line.toString());
         }
@@ -135,7 +161,7 @@ public final class TooltipTable implements TooltipBlock {
 
     @Override
     public int hashCode() {
-        return Objects.hash(title, headers, rows, measurementRows, alignments, art);
+        return Objects.hash(title, headers, rows, measurementRows, alignments, art, hasInputIcons());
     }
 
     @Override
@@ -146,6 +172,6 @@ public final class TooltipTable implements TooltipBlock {
             && rows.equals(t.rows)
             && measurementRows.equals(t.measurementRows)
             && alignments.equals(t.alignments)
-            && art == t.art;
+            && art == t.art && hasInputIcons() == t.hasInputIcons();
     }
 }

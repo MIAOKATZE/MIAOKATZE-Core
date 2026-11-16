@@ -8,6 +8,7 @@ import net.minecraft.util.EnumChatFormatting;
 
 import com.miaokatze.miaokatzecore.api.tooltip.TooltipArt;
 import com.miaokatze.miaokatzecore.api.tooltip.TooltipPages;
+import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipInput;
 import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipTable;
 import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipTableLayout;
 import com.miaokatze.miaokatzecore.client.tooltip.art.TooltipArtRenderer;
@@ -66,6 +67,10 @@ public final class NativeTableComponent implements ITooltipComponent {
         return java.util.Collections.unmodifiableMap(result);
     }
 
+    private int rowHeight() {
+        return table.hasInputIcons() ? Math.max(9, TooltipFontContext.getFontHeight()) : TooltipFontContext.getFontHeight();
+    }
+
     private int titleHeight() {
         return table.title()
             .isEmpty() ? 0 : TooltipFontContext.getFontHeight() + 3;
@@ -80,8 +85,7 @@ public final class NativeTableComponent implements ITooltipComponent {
 
     @Override
     public int getHeight() {
-        return titleHeight() + (table.rows()
-            .size() + 1) * TooltipFontContext.getFontHeight() + 3;
+        return titleHeight() + TooltipFontContext.getFontHeight() + 3 + table.rows().size() * rowHeight();
     }
 
     @Override
@@ -92,7 +96,7 @@ public final class NativeTableComponent implements ITooltipComponent {
     @Override
     public ITooltipComponent[] paginate(TooltipContext context, int maxWidth, int maxHeight) {
         int line = TooltipFontContext.getFontHeight();
-        int rows = (maxHeight - titleHeight() - line - 3) / line;
+        int rows = (maxHeight - titleHeight() - line - 3) / rowHeight();
         if (getWidth() > maxWidth || rows < 1) {
             // Keep complete values/units and repeat labels when a three-column view will not fit.
             return new TextComponent(table.fallbackLines())
@@ -133,14 +137,17 @@ public final class NativeTableComponent implements ITooltipComponent {
         y += TooltipFontContext.getFontHeight() + 3;
         for (List<String> row : table.rows()) {
             drawRow(row, layout, x, y, false);
-            y += TooltipFontContext.getFontHeight();
+            y += rowHeight();
         }
     }
 
-    private static void drawRow(List<String> cells, TooltipTableLayout layout, int x, int y, boolean header) {
+    private void drawRow(List<String> cells, TooltipTableLayout layout, int x, int y, boolean header) {
         for (int c = 0; c < cells.size(); c++) {
             String value = cells.get(c);
-            TooltipFontContext.drawString((header ? "§7" : "") + value, x + layout.cellX(value, c), y);
+            int left = x + layout.cellX(value, c, header);
+            TooltipInput input = header ? null : table.input(value);
+            if (input == null) TooltipFontContext.drawString((header ? "§7" : "") + value, left, y);
+            else NativeInputComponent.drawLine(item, input, left, y);
         }
     }
 

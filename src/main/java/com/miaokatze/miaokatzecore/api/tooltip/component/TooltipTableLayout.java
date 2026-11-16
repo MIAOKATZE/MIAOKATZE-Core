@@ -23,7 +23,7 @@ public final class TooltipTableLayout {
                 table.headers()
                     .get(c));
             for (java.util.List<String> row : table.measurementRows())
-                widths[c] = Math.max(widths[c], measure.applyAsInt(row.get(c)));
+                widths[c] = Math.max(widths[c], bodyWidth(row.get(c)));
             total += widths[c] + (c > 0 ? GAP : 0);
         }
         width = total;
@@ -37,9 +37,18 @@ public final class TooltipTableLayout {
         return widths[c];
     }
 
+    private int bodyWidth(String text) {
+        TooltipInput input = table.input(text);
+        return input == null ? measure.applyAsInt(text) : input.width(measure);
+    }
+
     public int cellX(String text, int c) {
+        return cellX(text, c, false);
+    }
+
+    public int cellX(String text, int c, boolean header) {
         int x = 0;
         for (int i = 0; i < c; i++) x += widths[i] + GAP;
-        return x + (table.alignment(c) == TooltipTable.Alignment.RIGHT ? widths[c] - measure.applyAsInt(text) : 0);
+        return x + (table.alignment(c) == TooltipTable.Alignment.RIGHT ? widths[c] - (header ? measure.applyAsInt(text) : bodyWidth(text)) : 0);
     }
 }

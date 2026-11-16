@@ -14,6 +14,7 @@ import com.miaokatze.miaokatzecore.client.tooltip.NativePageAdapterContracts;
 public final class NativePageContracts {
 
     public static void main(String[] args) {
+        InputHintContracts.main(args);
         MachinePageSpanContracts.run();
         String item = "test:item@6";
         NativeTooltipPage p = new NativeTooltipPage(item);

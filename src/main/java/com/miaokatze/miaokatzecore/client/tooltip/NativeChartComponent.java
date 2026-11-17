@@ -16,6 +16,7 @@ import net.minecraftforge.fluids.FluidRegistry;
 import org.lwjgl.opengl.GL11;
 
 import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipChart;
+import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipInput;
 import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipTable;
 import com.slprime.chromatictooltips.api.ITooltipComponent;
 import com.slprime.chromatictooltips.api.TooltipContext;
@@ -32,6 +33,7 @@ public final class NativeChartComponent implements ITooltipComponent {
     private FontRenderer measuredFont;
     private boolean measuredUnicode;
     private int[] widths;
+    private final java.util.Map<String, TooltipInput> marked = new java.util.HashMap<>();
 
     public NativeChartComponent(String item, TooltipChart chart) {
         this(
@@ -60,12 +62,15 @@ public final class NativeChartComponent implements ITooltipComponent {
         return TooltipFontContext.getFontHeight();
     }
 
-    private static int width(String text) {
-        return TooltipFontContext.getStringWidth(text);
+    private int width(String text) {
+        return TooltipInput.hasMaterial(text) ? marked.computeIfAbsent(text, TooltipInput::materials)
+            .width(TooltipFontContext::getStringWidth) : TooltipFontContext.getStringWidth(text);
     }
 
-    private static void text(String s, int x, int y) {
-        TooltipFontContext.drawString(s, x, y);
+    private void text(String s, int x, int y) {
+        if (TooltipInput.hasMaterial(s))
+            NativeInputComponent.drawLine(item, marked.computeIfAbsent(s, TooltipInput::materials), x, y);
+        else TooltipFontContext.drawString(s, x, y);
     }
 
     private static void box(int x, int y, int w, int h, int color) {
@@ -131,7 +136,7 @@ public final class NativeChartComponent implements ITooltipComponent {
     }
 
     private int rowHeight() {
-        return font() + (chart.kind == TooltipChart.Kind.BARS ? 9 : 4);
+        return font() + (chart.kind == TooltipChart.Kind.BARS && chart.barColumn < 0 ? 9 : 4);
     }
 
     private int overhead() {
@@ -164,10 +169,11 @@ public final class NativeChartComponent implements ITooltipComponent {
                 .get(col));
         if (chart.kind == TooltipChart.Kind.BARS) {
             for (List<String> row : t.measurementRows()) w = Math.max(w, width(row.get(col)));
+            if (chart.barColumn == col) w += 32;
         } else if (col == 0) {
             for (int r = 0; r < t.rows()
                 .size(); r++) {
-                boolean icon = hasIcon(chart.rowFluids.get(r));
+                boolean icon = hasIcon(chart.rowFluids.get(r)) && !TooltipInput.hasMaterial(rowLabel(r));
                 int name = (!chart.compact || !icon) ? width(rowLabel(r)) + 3 : 0;
                 int badge = medium() ? width(chart.rowFactors.get(r)) + 4 : 0;
                 int rate = (medium() && !chart.compact) ? width(chart.rowRates.get(r)) + 4 : 0;
@@ -175,7 +181,9 @@ public final class NativeChartComponent implements ITooltipComponent {
             }
         } else {
             if (chart.kind == TooltipChart.Kind.HEAT && medium()) {
-                boolean icon = hasIcon(chart.columnFluids.get(col - 1));
+                boolean icon = hasIcon(chart.columnFluids.get(col - 1)) && !TooltipInput.hasMaterial(
+                    t.headers()
+                        .get(col));
                 if (chart.compact && icon) w = 0;
                 w = Math.max(w, (icon ? 13 : 0) + width(chart.columnFactors.get(col - 1)));
                 if (!chart.compact) w = Math.max(w, width(chart.columnRates.get(col - 1)));
@@ -194,7 +202,7 @@ public final class NativeChartComponent implements ITooltipComponent {
     private int naturalWidth() {
         int w;
         if (chart.kind == TooltipChart.Kind.LINES) {
-            w = Math.max(215, Math.max(width(chart.xAxis), width(chart.yAxis)) + 36);
+            w = Math.max(chart.probeIndex >= 0 ? 280 : 215, Math.max(width(chart.xAxis), width(chart.yAxis)) + 36);
             for (String l : chart.legends) w = Math.max(w, width(l) + 18);
         } else {
             w = 4;
@@ -215,6 +223,8 @@ public final class NativeChartComponent implements ITooltipComponent {
     }
 
     private int lineHeight() {
+        if (chart.probeIndex >= 0) return 70 + 2 * font() + readouts(0, 0, getWidth(), false);
+
         return (chart.legends.size() + 2) * font() + 73;
     }
 
@@ -267,37 +277,38 @@ public final class NativeChartComponent implements ITooltipComponent {
         }
     }
 
-    private void tabs(int x, int y, int w) {
-        int n = chart.variants.size(), a = chart.active, first = a, last = a;
-        String active = "[" + chart.variants.get(a) + "]";
+    private String tab(int index) {
+        String label = chart.variants.get(index);
+        return TooltipInput.hasMaterial(label) ? label : "[" + label + "]";
+    }
+
+    private void tabs(int x, int y, int w, TooltipContext context, int originX, int originY, float scale) {
+        int n = chart.variants.size(), a = chart.active;
+        String active = tab(a);
         int max = w - 32;
         if (width(active) > max) {
-            String name = chart.variants.get(a);
+            String name = TooltipInput.materials(chart.variants.get(a))
+                .plain()
+                .trim();
+            if (name.startsWith("[") && name.endsWith("]")) name = name.substring(1, name.length() - 1);
             while (name.length() > 1 && width("[" + name + "…]") > max) name = name.substring(0, name.length() - 1);
             active = "[" + name + "…]";
         }
-        int span = width(active) + 8;
-        boolean left = true;
-        while (first > 0 || last < n - 1) {
-            boolean before = first > 0 && (left || last == n - 1);
-            int i = before ? first - 1 : last + 1, cost = width("[" + chart.variants.get(i) + "]") + 8;
-            if (span + cost + (first > 0 ? 12 : 0) + (last < n - 1 ? 12 : 0) > w) break;
-            span += cost;
-            if (before) first--;
-            else last++;
-            left = !left;
+        TooltipTabLayout layout = new TooltipTabLayout(n, a, w, this::tab, active, this::width);
+        if (layout.before) text("§8…", x, y + 1);
+        for (TooltipTabLayout.Label label : layout.labels) {
+            NativeInputComponent.text(item, label.text, x + label.x, y + 1, label.index == a ? 0xffffe093 : 0xffa9a1b1);
+            if (n > 1) NativeTooltipMouse.chartLabel(
+                context,
+                item,
+                chart.chartId,
+                label.index,
+                label.text,
+                originX + (x + label.x) * scale,
+                originY + (y + 1) * scale,
+                scale);
         }
-        if (first > 0) {
-            text("§8…", x, y + 1);
-            x += 12;
-        }
-        for (int i = first; i <= last; i++) {
-            String name = i == a ? active : "[" + chart.variants.get(i) + "]";
-            int ww = width(name) + 6;
-            TooltipFontContext.drawString(name, x + 3, y + 1, i == a ? 0xffffe093 : 0xffa9a1b1);
-            x += ww + 2;
-        }
-        if (last < n - 1) text("§8…", x, y + 1);
+        if (layout.after) text("§8…", x + layout.end, y + 1);
     }
 
     @Override
@@ -309,16 +320,16 @@ public final class NativeChartComponent implements ITooltipComponent {
             try {
                 GL11.glTranslatef(x, y, 0);
                 GL11.glScalef(scale, scale, 1);
-                drawContent(0, 0, naturalWidth());
+                drawContent(0, 0, naturalWidth(), context, x, y, scale);
             } finally {
                 GL11.glPopMatrix();
             }
-        } else drawContent(x, y, Math.max(getWidth(), Math.min(available, limit)));
+        } else drawContent(x, y, Math.max(getWidth(), Math.min(available, limit)), context, 0, 0, 1);
     }
 
-    private void drawContent(int x, int y, int w) {
+    private void drawContent(int x, int y, int w, TooltipContext context, int originX, int originY, float scale) {
         if (!chart.variants.isEmpty()) {
-            tabs(x + 2, y, w - 4);
+            tabs(x + 2, y, w - 4, context, originX, originY, scale);
             y += tabsHeight();
         }
         if (!chart.title.isEmpty()) {
@@ -345,7 +356,7 @@ public final class NativeChartComponent implements ITooltipComponent {
             int xx = edges[c] + 2;
             if (c > 0 && medium()) {
                 String id = chart.columnFluids.get(c - 1);
-                boolean has = hasIcon(id);
+                boolean has = hasIcon(id) && !TooltipInput.hasMaterial(label);
                 if (has) icon(id, xx, y);
                 String badge = chart.columnFactors.get(c - 1);
                 text((!has && chart.compact ? label + " " : "") + badge, xx + (has ? 13 : 0), y + 1);
@@ -365,7 +376,7 @@ public final class NativeChartComponent implements ITooltipComponent {
                     .get(c);
                 if (c == 0 && !chart.rowFluids.isEmpty()) {
                     String id = chart.rowFluids.get(r);
-                    boolean has = hasIcon(id);
+                    boolean has = hasIcon(id) && !TooltipInput.hasMaterial(s);
                     if (has) {
                         icon(id, xx, y);
                         xx += 13;
@@ -380,13 +391,21 @@ public final class NativeChartComponent implements ITooltipComponent {
                         xx += width(s) + 4;
                     }
                     if (medium() && !chart.compact) text("§7" + chart.rowRates.get(r), xx, y + 1);
+                } else if (c == chart.barColumn && chart.kind == TooltipChart.Kind.BARS) {
+                    int bw = 28, bx = edges[c + 1] - bw - 3;
+                    text(s, xx, y + 1);
+                    box(bx, y + 3, bw, 4, 0xff33283c);
+                    box(bx, y + 3, scale(chart.value(0, r), chart.maximum, bw), 4, 0xff62b8ab);
                 } else if (c > 0 && chart.kind == TooltipChart.Kind.HEAT) {
                     double f = Math.min(1, chart.value(r, c - 1) / chart.maximum);
                     int color = (255 << 24) | ((36 + (int) (149 * f)) << 16)
                         | ((38 + (int) (178 * f)) << 8)
                         | (55 + (int) (131 * f));
+                    if (!medium()) color = 0xff000000 | ((15 + (int) Math.round(38 * f)) << 16)
+                        | ((24 + (int) Math.round(80 * f)) << 8)
+                        | (34 + (int) Math.round(77 * f));
                     box(edges[c], y, cw + 3, rowHeight() - 1, color);
-                    TooltipFontContext.drawString(s, xx + 1, y + 1, f > 0.47 ? 0xff11131a : 0xfff0f5ef, false);
+                    NativeInputComponent.text(item, s, xx + 1, y + 1, medium() && f > 0.47 ? 0xff11131a : 0xfff0f5ef);
                 } else if (c > 0 && chart.kind == TooltipChart.Kind.COLUMNS) {
                     double max = 0;
                     int figures = 0;
@@ -409,7 +428,7 @@ public final class NativeChartComponent implements ITooltipComponent {
                     text(s, xx, y + 1);
                 }
             }
-            if (chart.kind == TooltipChart.Kind.BARS) {
+            if (chart.kind == TooltipChart.Kind.BARS && chart.barColumn < 0) {
                 int px = x + 3, py = y + font() + 2, bw = w - 6, n = scale(chart.value(0, r), chart.maximum, bw),
                     prior = scale(chart.previous(r), chart.maximum, bw);
                 box(px, py, bw, 3, 0xff302a38);
@@ -440,7 +459,110 @@ public final class NativeChartComponent implements ITooltipComponent {
         }
     }
 
+    private int seriesColor(int series) {
+        return chart.colors.isEmpty() ? COLORS[series % COLORS.length] : chart.colors.get(series);
+    }
+
+    private void drawSeries(int left, int right, int top, int bottom) {
+        // Batch the complete rasterized plot; individual pixels must not become individual GL draws.
+        GL11.glPushAttrib(GL11.GL_ENABLE_BIT | GL11.GL_CURRENT_BIT);
+        try {
+            GL11.glDisable(GL11.GL_TEXTURE_2D);
+            GL11.glDisable(GL11.GL_CULL_FACE);
+            Tessellator mesh = Tessellator.instance;
+            mesh.startDrawingQuads();
+            for (int s = 0; s < chart.legends.size(); s++) {
+                int px = 0, py = 0;
+                boolean valid = false;
+                mesh.setColorOpaque_I(seriesColor(s));
+                for (int i = 0; i < chart.points(); i++) {
+                    double val = chart.value(s, i);
+                    if (Double.isNaN(val) || chart.x(i) > chart.xMax || val > chart.yMax) {
+                        valid = false;
+                        continue;
+                    }
+                    int xx = left + scale(chart.x(i), chart.xMax, right - left),
+                        yy = bottom - scale(val, chart.yMax, bottom - top);
+                    segment(mesh, valid ? px : xx, valid ? py : yy, xx, yy);
+                    px = xx;
+                    py = yy;
+                    valid = true;
+                }
+            }
+            mesh.draw();
+        } finally {
+            GL11.glPopAttrib();
+        }
+    }
+
+    private static String tick(double value) {
+        return value >= 1e6 ? TooltipChart.number(value / 1e6) + "M"
+            : value >= 1e3 ? TooltipChart.number(value / 1e3) + "k" : TooltipChart.number(value);
+    }
+
+    /** Same flow for measurement and paint; the colored legend is the numerical probe readout. */
+    private int readouts(int x, int y, int w, boolean draw) {
+        String prefix = net.minecraft.util.StatCollector
+            .translateToLocalFormatted("miaokatzecore.page.probe", tick(chart.x(chart.probeIndex)));
+        int pen = width(prefix) + 2, off = 0;
+        if (draw) text(prefix, x, y);
+        for (int i = 0; i < chart.legends.size(); i++) {
+            String readout = chart.legends.get(i) + " " + chart.readouts.get(i);
+            int ww = width(readout) + 10;
+            if (pen > 0 && pen + ww > w) {
+                off += font();
+                pen = 0;
+            }
+            if (draw) {
+                box(x + pen, y + off + 3, 5, 2, seriesColor(i));
+                NativeInputComponent.text(item, readout, x + pen + 7, y + off, seriesColor(i));
+            }
+            pen += ww;
+        }
+        return off + font();
+    }
+
+    private void drawProbePlot(int x, int y, int w) {
+        text("§7" + chart.yAxis, x, y);
+        int top = y + font() + 4, bottom = top + 50, left = x, right = x + w - 4;
+        for (double v : chart.yTicks) left = Math.max(left, x + width(tick(v)) + 5);
+        for (double v : chart.yTicks) {
+            int yy = bottom - scale(v, chart.yMax, bottom - top);
+            box(left, yy, right - left, 1, 0xff49394c);
+            text("§7" + tick(v), x, yy - 3);
+        }
+        box(left, top, 1, bottom - top + 1, 0xff988a9d);
+        int last = x - 3;
+        for (double v : chart.xTicks) {
+            int xx = left + scale(v, chart.xMax, right - left);
+            String label = tick(v);
+            int at = clamp(xx - width(label) / 2, x, x + w - width(label));
+            box(xx, bottom, 1, 3, 0xff988a9d);
+            // Reserve the end label in advance on a narrow viewport.
+            int end = x + w - width(tick(chart.xMax));
+            if (at < last + 2 || (v != chart.xMax && at + width(label) + 2 > end)) continue;
+            text("§7" + label, at, bottom + 5);
+            last = at + width(label);
+        }
+        int index = chart.probeIndex;
+        int xx = left + scale(chart.x(index), chart.xMax, right - left);
+        for (int yy = top; yy < bottom; yy += 4) box(xx, yy, 1, 2, 0xff877481);
+        drawSeries(left, right, top, bottom);
+        for (int i = 0; i < chart.legends.size(); i++) {
+            double value = chart.value(i, index);
+            if (Double.isFinite(value) && value <= chart.yMax)
+                box(xx - 1, bottom - scale(value, chart.yMax, bottom - top) - 1, 3, 3, seriesColor(i));
+        }
+        int axis = y + font() + 66;
+        text("§7" + chart.xAxis, x, axis);
+        readouts(x, axis + font(), w, true);
+    }
+
     private void drawLines(int x, int y, int w) {
+        if (chart.probeIndex >= 0) {
+            drawProbePlot(x, y, w);
+            return;
+        }
         for (int s = 0; s < chart.legends.size(); s++) {
             box(x + 2, y + 4, 9, 2, COLORS[s % COLORS.length]);
             text(chart.legends.get(s), x + 14, y);
@@ -457,35 +579,7 @@ public final class NativeChartComponent implements ITooltipComponent {
         }
         box(left, y, 1, 53, 0xff9a919d);
         box(left, bottom, right - left + 1, 1, 0xff9a919d);
-        // Batch the complete rasterized plot; individual pixels must not become individual GL draws.
-        GL11.glPushAttrib(GL11.GL_ENABLE_BIT | GL11.GL_CURRENT_BIT);
-        try {
-            GL11.glDisable(GL11.GL_TEXTURE_2D);
-            GL11.glDisable(GL11.GL_CULL_FACE);
-            Tessellator mesh = Tessellator.instance;
-            mesh.startDrawingQuads();
-            for (int s = 0; s < chart.legends.size(); s++) {
-                int px = 0, py = 0;
-                boolean valid = false;
-                mesh.setColorOpaque_I(COLORS[s % COLORS.length]);
-                for (int i = 0; i < chart.points(); i++) {
-                    double val = chart.value(s, i);
-                    if (Double.isNaN(val) || chart.x(i) > chart.xMax || val > chart.yMax) {
-                        valid = false;
-                        continue;
-                    }
-                    int xx = left + scale(chart.x(i), chart.xMax, right - left),
-                        yy = bottom - scale(val, chart.yMax, 52);
-                    segment(mesh, valid ? px : xx, valid ? py : yy, xx, yy);
-                    px = xx;
-                    py = yy;
-                    valid = true;
-                }
-            }
-            mesh.draw();
-        } finally {
-            GL11.glPopAttrib();
-        }
+        drawSeries(left, right, y, bottom);
         if (Double.isFinite(chart.markX) && chart.markX <= chart.xMax && chart.markY <= chart.yMax) {
             int xx = left + scale(chart.markX, chart.xMax, right - left),
                 yy = bottom - scale(chart.markY, chart.yMax, 52);

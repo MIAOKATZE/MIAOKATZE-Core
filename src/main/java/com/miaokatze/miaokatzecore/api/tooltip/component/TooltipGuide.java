@@ -17,10 +17,12 @@ public final class TooltipGuide implements TooltipBlock {
 
     public final Kind kind;
     public final String text;
+    public final TooltipInput line;
 
     TooltipGuide(Kind kind, String text) {
         this.kind = Objects.requireNonNull(kind);
-        this.text = Objects.requireNonNull(text);
+        this.line = TooltipInput.of(Objects.requireNonNull(text));
+        this.text = line.plain();
     }
 
     @Override
@@ -30,7 +32,7 @@ public final class TooltipGuide implements TooltipBlock {
 
     @Override
     public boolean equals(Object o) {
-        return o instanceof TooltipGuide && ((TooltipGuide) o).kind == kind && ((TooltipGuide) o).text.equals(text);
+        return o instanceof TooltipGuide && ((TooltipGuide) o).kind == kind && ((TooltipGuide) o).line.equals(line);
     }
 
     @Override

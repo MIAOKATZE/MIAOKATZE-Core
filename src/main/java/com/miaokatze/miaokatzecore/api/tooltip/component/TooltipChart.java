@@ -28,6 +28,11 @@ public final class TooltipChart implements TooltipBlock {
     public final String chartId;
     public final int active;
     public final boolean compact;
+    public final int barColumn;
+    public final List<Double> xTicks, yTicks;
+    public final List<String> readouts;
+    public final List<Integer> colors;
+    public final int probeIndex;
 
     private static final class Options {
 
@@ -36,6 +41,10 @@ public final class TooltipChart implements TooltipBlock {
         String id = "";
         int active;
         boolean compact;
+        int barColumn = -1, probeIndex = -1;
+        List<Double> xTicks = Collections.emptyList(), yTicks = xTicks;
+        List<String> readouts = Collections.emptyList();
+        List<Integer> colors = Collections.emptyList();
 
         Options() {}
 
@@ -52,6 +61,12 @@ public final class TooltipChart implements TooltipBlock {
             id = c.chartId;
             active = c.active;
             compact = c.compact;
+            barColumn = c.barColumn;
+            xTicks = c.xTicks;
+            yTicks = c.yTicks;
+            probeIndex = c.probeIndex;
+            readouts = c.readouts;
+            colors = c.colors;
         }
     }
 
@@ -82,6 +97,12 @@ public final class TooltipChart implements TooltipBlock {
         active = o.active;
         chartId = o.id;
         compact = o.compact;
+        barColumn = o.barColumn;
+        xTicks = o.xTicks;
+        yTicks = o.yTicks;
+        probeIndex = o.probeIndex;
+        readouts = o.readouts;
+        colors = o.colors;
     }
 
     private TooltipChart options(Options o) {
@@ -257,6 +278,44 @@ public final class TooltipChart implements TooltipBlock {
         return options(o);
     }
 
+    /** Draw the bar beside its value, in this zero-based table column. */
+    public TooltipChart barColumn(int column) {
+        require(
+            kind == Kind.BARS && column >= 0
+                && column < table.headers()
+                    .size());
+        Options o = new Options(this);
+        o.barColumn = column;
+        return options(o);
+    }
+
+    /** Authored ticks, exact probe sample, localized readout per series and its RGB color. */
+    public TooltipChart plot(double[] xTicks, double[] yTicks, double probe, List<String> readouts, int[] colors) {
+        require(kind == Kind.LINES && colors.length == legends.size());
+        Options o = new Options(this);
+        o.xTicks = ticks(xTicks, xMax);
+        o.yTicks = ticks(yTicks, yMax);
+        o.probeIndex = Arrays.binarySearch(axis, probe);
+        require(o.probeIndex >= 0 && probe <= xMax);
+        o.readouts = labels(readouts, legends.size());
+        List<Integer> copy = new ArrayList<>();
+        for (int rgb : colors) copy.add(rgb | 0xff000000);
+        o.colors = Collections.unmodifiableList(copy);
+        return options(o);
+    }
+
+    private static List<Double> ticks(double[] ticks, double max) {
+        require(ticks.length >= 2 && ticks[0] == 0 && ticks[ticks.length - 1] == max);
+        List<Double> copy = new ArrayList<>();
+        double previous = -1;
+        for (double tick : ticks) {
+            require(Double.isFinite(tick) && tick > previous);
+            copy.add(tick);
+            previous = tick;
+        }
+        return Collections.unmodifiableList(copy);
+    }
+
     TooltipChart variants(String id, List<String> labels, int selected) {
         require(!id.isEmpty() && !labels.isEmpty() && selected >= 0 && selected < labels.size());
         Options o = new Options(this);
@@ -328,8 +387,13 @@ public final class TooltipChart implements TooltipBlock {
                 }
                 out.add(s.toString());
             }
+            if (probeIndex >= 0) {
+                for (int r = 0; r < data.length; r++)
+                    out.add(xAxis + " " + number(x(probeIndex)) + ": " + legends.get(r) + " " + readouts.get(r));
+            }
             if (Double.isFinite(markX)) out.add("(" + number(markX) + ", " + number(markY) + ")");
         }
+        out.replaceAll(TooltipInput::plainMaterials);
         return Collections.unmodifiableList(out);
     }
 
@@ -359,7 +423,13 @@ public final class TooltipChart implements TooltipBlock {
             && variants.equals(c.variants)
             && active == c.active
             && chartId.equals(c.chartId)
-            && compact == c.compact;
+            && compact == c.compact
+            && barColumn == c.barColumn
+            && probeIndex == c.probeIndex
+            && xTicks.equals(c.xTicks)
+            && yTicks.equals(c.yTicks)
+            && readouts.equals(c.readouts)
+            && colors.equals(c.colors);
     }
 
     @Override

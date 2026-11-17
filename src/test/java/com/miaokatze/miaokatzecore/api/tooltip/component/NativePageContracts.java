@@ -14,6 +14,8 @@ import com.miaokatze.miaokatzecore.client.tooltip.NativePageAdapterContracts;
 public final class NativePageContracts {
 
     public static void main(String[] args) {
+        InputHintContracts.main(args);
+        com.miaokatze.miaokatzecore.client.tooltip.TooltipMouseContracts.run();
         MachinePageSpanContracts.run();
         String item = "test:item@6";
         NativeTooltipPage p = new NativeTooltipPage(item);
@@ -28,6 +30,15 @@ public final class NativePageContracts {
                 && NativeTooltipPage.selected(item, "dimension"));
         for (int i = 0; i < 48; i++) NativeTooltipPage.act(item, NativeTooltipPage.Action.VARIANT);
         check(p.variant("route", 3) == 1 && p.variant("dimension", 47) == 1);
+        check(NativeTooltipPage.selectVariant(item, "route", 2) && NativeTooltipPage.selected(item, "route"));
+        check(p.variant("route", 3) == 2 && p.variant("dimension", 47) == 1);
+        check(
+            !NativeTooltipPage.selectVariant(item, "route", 3) && !NativeTooltipPage.selectVariant(item, "missing", 0));
+        check(
+            !NativeTooltipPage.selectVariant(item, "route", -1)
+                && !NativeTooltipPage.selectVariant("missing", "route", 0));
+        check(NativeTooltipPage.selectVariant(item, "dimension", 46));
+        check(NativeTooltipPage.act(item, NativeTooltipPage.Action.VARIANT) && p.variant("dimension", 47) == 0);
         NativeTooltipPage.act(item, NativeTooltipPage.Action.TIER);
         NativeTooltipPage.bind(item, charts);
         check(p.tier() == NativeTooltipPage.Tier.DETAIL && NativeTooltipPage.selected(item, "dimension"));
@@ -75,6 +86,52 @@ public final class NativePageContracts {
             curve.x(1) == 1 && curve.value(0, 1) == .5
                 && curve.fallbackLines()
                     .contains("(1, 0.5)"));
+        TooltipChart authored = curve.plot(
+            new double[] { 0, 1, 5 },
+            new double[] { 0, .5, 1 },
+            1,
+            Collections.singletonList("0.5"),
+            new int[] { 0x61c9cc });
+        check(
+            authored.value(0, authored.probeIndex) == .5 && authored.xTicks.get(1) == authored.x(authored.probeIndex));
+        check(
+            authored.colors.get(0) == 0xff61c9cc && authored.fallbackLines()
+                .contains("x 1: f(x) 0.5"));
+        boolean missingProbe = false;
+        try {
+            curve.plot(
+                new double[] { 0, 5 },
+                new double[] { 0, 1 },
+                2,
+                Collections.singletonList(".5"),
+                new int[] { 0 });
+        } catch (IllegalArgumentException expected) {
+            missingProbe = true;
+        }
+        check(missingProbe);
+        NativeTooltipPage fixed = new NativeTooltipPage("fixed").singleTier();
+        fixed.line("使用[item:test:widget@7|端子]。");
+        com.google.gson.JsonObject json = new com.google.gson.JsonParser()
+            .parse(
+                "{'type':'heat','title':'能耗','rowTitle':'输入','columnTitle':'配方','unit':'EU/t','columns':['A'],"
+                    + "'rows':['[fluid:water|水]'],'values':[[42]]}")
+            .getAsJsonObject();
+        check(NativeTooltipBlocks.append(fixed, json));
+        TooltipPageBody fixedBody = fixed.body();
+        check(
+            fixedBody.fallbackLines()
+                .get(0)
+                .equals("使用 [端子]。") && fixedBody.spans.size() == 2);
+        TooltipChart fixedHeat = (TooltipChart) fixedBody.spans.get(1).block;
+        check(
+            fixedHeat.value(0, 0) == 42 && fixedHeat.maximum == 42
+                && fixedHeat.fallbackLines()
+                    .get(0)
+                    .contains("EU/t"));
+        NativeTooltipPage.bind("fixed", Collections.emptyMap(), false, true);
+        check(
+            fixed.tier() == NativeTooltipPage.Tier.COMMON
+                && !NativeTooltipPage.act("fixed", NativeTooltipPage.Action.TIER));
         boolean invalid = false;
         try {
             TooltipChart.bars("bad", table, new double[] { 1, 2 }, new double[] { 0, 3 }, 2);

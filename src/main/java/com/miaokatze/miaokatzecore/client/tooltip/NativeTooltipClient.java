@@ -16,7 +16,9 @@ import com.miaokatze.miaokatzecore.api.tooltip.component.NativeTooltips;
 import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipBlock;
 import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipChart;
 import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipGuide;
+import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipInput;
 import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipPageBody;
+import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipQr;
 import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipTable;
 import com.slprime.chromatictooltips.api.ITooltipComponent;
 import com.slprime.chromatictooltips.api.TooltipModifier;
@@ -58,6 +60,8 @@ public final class NativeTooltipClient implements NativeTooltips.Backend {
         if (installed) return;
         installed = true;
         registerRenderer(TooltipTable.class, NativeTableComponent::new);
+        registerRenderer(TooltipQr.class, NativeQrComponent::new);
+        registerRenderer(TooltipInput.class, NativeInputComponent::new);
         registerRenderer(TooltipGuide.class, NativeGuideComponent::new);
         registerRenderer(TooltipChart.class, NativeChartComponent::new);
         NativeTooltipClient adapter = new NativeTooltipClient();
@@ -94,8 +98,11 @@ public final class NativeTooltipClient implements NativeTooltips.Backend {
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public void positionTier(TooltipEnricherEvent event) {
-        if (Thread.currentThread() != clientThread || event.context.getActiveModifier() != TooltipModifier.NONE) return;
+    public void positionHeader(TooltipEnricherEvent event) {
+        if (Thread.currentThread() != clientThread) return;
+        String item = TooltipPages.identity(event.context.getItem());
+        if (!item.isEmpty()) TierHeaderSlot.pin(event.context.getSection("header"), new NativePinComponent(item));
+        if (event.context.getActiveModifier() != TooltipModifier.NONE) return;
         TierHeaderSlot.place(event.context.getSection("header"), event.context.getSection("body"));
     }
 
@@ -141,5 +148,6 @@ public final class NativeTooltipClient implements NativeTooltips.Backend {
                 .clear();
             lines.add(start, component);
         }
+        NativeLinkComponent.convert(lines);
     }
 }

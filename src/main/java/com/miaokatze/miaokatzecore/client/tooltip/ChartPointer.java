@@ -5,7 +5,6 @@ import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.util.StatCollector;
 
-import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 
 import com.miaokatze.miaokatzecore.api.tooltip.TooltipPages;
@@ -42,6 +41,7 @@ final class ChartPointer {
     }
 
     static void rendered(RenderTooltipEvent event) {
+        NativeTooltipMouse.rendered(event);
         if (owner == null) return;
         try {
             if (owner != event.context || !target) return;
@@ -57,7 +57,8 @@ final class ChartPointer {
             int height = (int) (screen.getScaledHeight() / s);
             String variant = StatCollector
                 .translateToLocalFormatted("miaokatzecore.page.variant", TooltipPages.detailKeyLabel());
-            String select = StatCollector.translateToLocal("miaokatzecore.page.select");
+            String select = StatCollector
+                .translateToLocalFormatted("miaokatzecore.page.select", TooltipController.selectKeyLabel());
             boolean multi = NativeTooltipPage.multiple(item);
             int vw = TooltipFontContext.getStringWidth(variant) + 18,
                 sw = TooltipFontContext.getStringWidth(select) + 17;
@@ -81,7 +82,7 @@ final class ChartPointer {
                 if (multi) {
                     int cy = Math.max(0, first - 12);
                     Gui.drawRect(x - 1, cy - 1, x + sw + 1, cy + 10, 0xe0191723);
-                    NativeGuideComponent.sprite(item, 0, x, cy, Keyboard.isKeyDown(Keyboard.KEY_TAB));
+                    NativeGuideComponent.sprite(item, 0, x, cy, TooltipController.selectHeld());
                     TooltipFontContext.drawString(select, x + 14, cy, 0xffd8e2cf);
                 }
                 Gui.drawRect(x - 1, y - 1, x + vw + 1, y + 10, 0xe0191723);
@@ -103,7 +104,10 @@ final class ChartPointer {
     }
 
     static void follow(String key) {
-        TooltipContext c = TooltipHandler.getLastTooltipContext();
+        follow(TooltipHandler.getLastTooltipContext(), key);
+    }
+
+    static void follow(TooltipContext c, String key) {
         if (c == null || !key.equals(TooltipPages.identity(c.getItem()))) return;
         SectionComponent first = c.getActivePageComponent();
         if (first == null) return;

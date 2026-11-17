@@ -8,15 +8,15 @@ A shared library for rendering, cameras, UI and task management across MIAOKATZE
 
 | Core | GTNH | Minecraft / Forge | Java | 下载 / Download |
 | --- | --- | --- | --- | --- |
-| 0.2.17（源码 / source） | 2.9.0 | 1.7.10 / 10.13.4.1614 | 8+ | [版本列表 / Releases](https://github.com/MIAOKATZE/MIAOKATZE-Core/releases) |
+| 0.2.21（源码 / source） | 2.9.0 | 1.7.10 / 10.13.4.1614 | 8+ | [版本列表 / Releases](https://github.com/MIAOKATZE/MIAOKATZE-Core/releases) |
 
-可在「选项 → 控制 → MIAOKATZE Core · 物品提示」改键，提示会显示当前绑定。较长的物品说明默认展开。悬停时按 **V** 切换收纳；按 **Alt+V** 可为当前物品关闭动画；收纳状态与文字警告仍会保留。设置按物品注册名和子类型保存在本机 `config/miaokatzecore/tooltip.properties`，不会写入物品或服务端。模组只需提供自己的简述和关键参数，未接入的物品保持原样。
+可在「选项 → 控制 → MIAOKATZE Core Tooltip 组件」更改切图、选图、固定键，默认分别为 **V／Tab／C**，提示显示实际绑定；换档使用 **Alt+当前切图键**。在 GTNH 2.9.0 的 Chromatic Tooltips 绘制层，所有物品和机器名称下方自动显示图钉、空白键帽与固定提示。按 **C** 固定当前悬浮窗，移开或悬停其他物品仍可继续阅读；再按一次解除。关闭背包返回游玩会清除固定，下次打开不保留。
 
-Rebind the shortcuts under Options → Controls → MIAOKATZE Core · Item tooltips. On supported items, **V** toggles details and **Alt+V** toggles the animated warning. Choices persist per item type on this client.
+Rebind cycle, chart selection and pin under Options → Controls → MIAOKATZE Core Tooltip components (defaults **V / Tab / C**). With the GTNH 2.9.0 Chromatic renderer, item and machine tooltips show a shared pin hint below the name. **C** pins or releases the current tooltip; returning to play clears it. Reading levels use **Alt + the current cycle key**.
 
-接入[三档机器说明](docs/sum/native-tooltip.md)的物品有单独操作：**Alt+V** 换阅读档位，**Tab** 选图，**V** 换所选图的数据；按住**左 Shift** 查看原生结构页。普通收纳物品的操作不变。
+接入[原生说明组件](docs/sum/native-tooltip.md)的物品使用 **Alt+V** 换阅读档位，**Tab** 选图，**V** 换所选图的数据，也可点击图内标签直接选择；按住**左 Shift** 查看原生结构页。固定后仍可切档、选图、切图和点击可读地址。较长的旧式说明保持 **V** 收纳、**Alt+V** 切换动画；这些本机偏好按物品注册名和子类型存入 `config/miaokatzecore/tooltip.properties`，固定状态不存盘。
 
-On machines with authored tooltip pages, **Alt+V** cycles reading levels, **Tab** selects a chart and **V** changes its data. Hold **left Shift** for the original GT structure guide.
+On authored pages, **Alt+V** cycles reading levels, **Tab** selects a chart and **V** changes its data; chart labels also accept clicks. Hold **left Shift** for the original GT structure guide. Pinned pages retain these controls and clickable web addresses. Legacy foldable descriptions keep **V** for details and **Alt+V** for animation; local preferences persist per item type, while pins last only for the open screen.
 
 客户端和服务端安装同一版 Core，具体最低版本以所用模组的依赖要求为准。
 

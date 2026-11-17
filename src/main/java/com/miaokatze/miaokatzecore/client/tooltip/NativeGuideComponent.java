@@ -12,6 +12,7 @@ import org.lwjgl.opengl.GL11;
 import com.miaokatze.miaokatzecore.api.tooltip.TooltipAnimationClock;
 import com.miaokatze.miaokatzecore.api.tooltip.TooltipPages;
 import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipGuide;
+import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipInput;
 import com.slprime.chromatictooltips.api.ITooltipComponent;
 import com.slprime.chromatictooltips.api.TooltipContext;
 import com.slprime.chromatictooltips.component.TextComponent;
@@ -21,12 +22,23 @@ import com.slprime.chromatictooltips.util.TooltipFontContext;
 public final class NativeGuideComponent implements ITooltipComponent {
 
     private static final ResourceLocation SHEET = new ResourceLocation("miaokatzecore", "textures/tooltip/guides.png");
+    private static final ResourceLocation MOUSE = new ResourceLocation(
+        "miaokatzecore",
+        "textures/tooltip/mouse_clicks.png");
     private static final int[] BEATS = { 0, 0, 1, 2, 3, 3, 5, 6, 0, 0 };
     private final String item;
     private final TooltipGuide guide;
     private final String[] runs;
+    private final ITooltipComponent content;
+    private final boolean showIcon;
 
     NativeGuideComponent(String item, TooltipGuide guide) {
+        this(item, guide, new NativeInputComponent(item, guide.line), true);
+    }
+
+    private NativeGuideComponent(String item, TooltipGuide guide, ITooltipComponent content, boolean showIcon) {
+        this.content = content;
+        this.showIcon = showIcon;
         this.item = item;
         this.guide = guide;
         this.runs = guide.kind == TooltipGuide.Kind.TIER ? guide.text.split("(?=§[7b])") : null;
@@ -38,12 +50,12 @@ public final class NativeGuideComponent implements ITooltipComponent {
 
     @Override
     public int getWidth() {
-        return 15 + TooltipFontContext.getStringWidth(guide.text);
+        return 15 + content.getWidth();
     }
 
     @Override
     public int getHeight() {
-        return Math.max(9, TooltipFontContext.getFontHeight());
+        return Math.max(9, content.getHeight());
     }
 
     @Override
@@ -53,8 +65,13 @@ public final class NativeGuideComponent implements ITooltipComponent {
 
     @Override
     public ITooltipComponent[] paginate(TooltipContext c, int w, int h) {
-        return getWidth() <= w ? new ITooltipComponent[] { this }
-            : new TextComponent(guide.text).paginate(c, Math.max(1, w), h);
+        if (getWidth() <= w && getHeight() <= h) return new ITooltipComponent[] { this };
+        if (guide.kind == TooltipGuide.Kind.TIER || w <= 15)
+            return new TextComponent(guide.text).paginate(c, Math.max(1, w), h);
+        ITooltipComponent[] pieces = content.paginate(c, w - 15, h);
+        for (int i = 0; i < pieces.length; i++)
+            pieces[i] = new NativeGuideComponent(item, guide, pieces[i], i == 0 && showIcon);
+        return pieces;
     }
 
     static void sprite(String item, int row, int x, int y, boolean held) {
@@ -62,6 +79,16 @@ public final class NativeGuideComponent implements ITooltipComponent {
         int frame = TooltipPages.animationEnabled(item)
             ? (row == 0 ? held ? 3 : BEATS[(int) Math.floorMod(ms / 150, 10L)] : (int) Math.floorMod(ms / 300, 8L))
             : 0;
+        drawSprite(SHEET, frame, row, x, y);
+    }
+
+    static void mouse(String item, TooltipInput.Mouse button, int x, int y) {
+        long ms = TooltipAnimationClock.nowNanos() / 1000000L;
+        int frame = TooltipPages.animationEnabled(item) ? BEATS[(int) Math.floorMod(ms / 150, 10L)] : 0;
+        drawSprite(MOUSE, frame, button.ordinal(), x, y);
+    }
+
+    private static void drawSprite(ResourceLocation sheet, int frame, int row, int x, int y) {
         GL11.glPushAttrib(GL11.GL_ENABLE_BIT | GL11.GL_CURRENT_BIT | GL11.GL_TEXTURE_BIT | GL11.GL_COLOR_BUFFER_BIT);
         try {
             GL11.glEnable(GL11.GL_TEXTURE_2D);
@@ -69,7 +96,7 @@ public final class NativeGuideComponent implements ITooltipComponent {
             GL11.glColor4f(1, 1, 1, 1);
             Minecraft.getMinecraft()
                 .getTextureManager()
-                .bindTexture(SHEET);
+                .bindTexture(sheet);
             Gui.func_146110_a(x, y, 12 * frame, 9 * row, 12, 9, 96, 27);
         } finally {
             GL11.glPopAttrib();
@@ -79,9 +106,9 @@ public final class NativeGuideComponent implements ITooltipComponent {
     @Override
     public void draw(int x, int y, int width, TooltipContext context) {
         int row = guide.kind == TooltipGuide.Kind.TIER ? 0 : guide.kind == TooltipGuide.Kind.WARNING ? 1 : 2;
-        sprite(item, row, x, y, guide.kind == TooltipGuide.Kind.TIER && TooltipController.tierHeld());
+        if (showIcon) sprite(item, row, x, y, guide.kind == TooltipGuide.Kind.TIER && TooltipController.tierHeld());
         if (guide.kind != TooltipGuide.Kind.TIER) {
-            TooltipFontContext.drawString(guide.text, x + 15, y);
+            content.draw(x + 15, y, width - 15, context);
             return;
         }
         double brightness = TooltipPages.animationEnabled(item)

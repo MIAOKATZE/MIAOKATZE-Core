@@ -42,6 +42,14 @@ tasks.register<JavaExec>("runNativePageContracts") {
 }
 tasks.named("check") { dependsOn("runNativePageContracts") }
 
+tasks.register<JavaExec>("runTooltipPinContracts") {
+    group = "verification"
+    description = "Checks unique tooltip pins, current-hover restoration, confirmation suspension and return-to-play cleanup."
+    mainClass = "com.miaokatze.miaokatzecore.client.tooltip.TooltipPinStateContracts"
+    classpath = sourceSets.test.get().runtimeClasspath
+}
+tasks.named("check") { dependsOn("runTooltipPinContracts") }
+
 tasks.register<JavaExec>("runModelRendererMeshContracts") {
     group = "verification"
     mainClass = "com.miaokatze.miaokatzecore.client.preview.ModelRendererMeshContracts"

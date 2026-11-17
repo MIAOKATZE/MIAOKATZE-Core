@@ -16,6 +16,21 @@ final class TierHeaderSlot implements ITooltipComponent {
         this.hint = hint;
     }
 
+    /** Item names own this shared row, including ordinary items and the native structure page. */
+    static boolean pin(SectionComponent header, ITooltipComponent pin) {
+        if (header == null) return false;
+        for (ITooltipComponent part : header.getComponents()) {
+            if (!(part instanceof SectionComponent)) continue;
+            SectionComponent title = (SectionComponent) part;
+            if (!"title".equals(title.getSectionId()) || title.isEmpty()) continue;
+            for (ITooltipComponent child : title.getComponents())
+                if (child instanceof NativePinComponent || child == pin) return true;
+            title.addComponent(pin);
+            return true;
+        }
+        return false;
+    }
+
     static void place(SectionComponent header, SectionComponent body) {
         if (header == null || body == null) return;
         SectionComponent title = null;

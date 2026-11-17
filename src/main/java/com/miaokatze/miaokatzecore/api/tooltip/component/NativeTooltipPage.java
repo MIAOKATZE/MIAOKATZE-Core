@@ -212,6 +212,18 @@ public final class NativeTooltipPage {
         }
     }
 
+    /** Select a drawn variant and make its chart the target of the next variant shortcut. */
+    public static boolean selectVariant(String key, String chartId, int index) {
+        synchronized (states) {
+            State s = states.get(key);
+            Integer count = s == null ? null : s.visible.get(chartId);
+            if (count == null || index < 0 || index >= count) return false;
+            s.selected = chartId;
+            s.variants.put(chartId, index);
+            return true;
+        }
+    }
+
     /** Dispatch only after the local client has verified hover, modifiers and search-field focus. */
     public static boolean act(String key, Action action) {
         synchronized (states) {

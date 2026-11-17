@@ -37,12 +37,18 @@ final class NativeQrComponent implements ITooltipComponent {
     @Override
     public ITooltipComponent[] paginate(TooltipContext context, int width, int height) {
         if (width >= getWidth() && height >= getHeight()) return new ITooltipComponent[] { this };
-        return new TextComponent(qr.text).paginate(context, Math.max(1, width), height);
+        java.util.List<Object> lines = new java.util.ArrayList<>();
+        lines.add(qr.text);
+        NativeLinkComponent.convert(lines);
+        Object line = lines.get(0);
+        return (line instanceof ITooltipComponent ? (ITooltipComponent) line : new TextComponent(qr.text))
+            .paginate(context, Math.max(1, width), height);
     }
 
     @Override
     public void draw(int x, int y, int width, TooltipContext context) {
         TooltipFontContext.drawString(qr.text, x, y);
+        NativeTooltipMouse.textLinks(context, qr.text, x, y);
         y += TooltipFontContext.getFontHeight() + 3;
         int side = qr.side(), scale = qr.scale(), inset = TooltipQr.BORDER + TooltipQr.QUIET * scale;
         GL11.glPushAttrib(GL11.GL_ENABLE_BIT | GL11.GL_CURRENT_BIT);
@@ -61,7 +67,10 @@ final class NativeQrComponent implements ITooltipComponent {
             for (int row = 0; row < qr.modules(); row++) {
                 int col = 0;
                 while (col < qr.modules()) {
-                    if (!qr.dark(col, row)) { col++; continue; }
+                    if (!qr.dark(col, row)) {
+                        col++;
+                        continue;
+                    }
                     int start = col++;
                     while (col < qr.modules() && qr.dark(col, row)) col++;
                     rect(mesh, x + inset + start * scale, y + inset + row * scale, (col - start) * scale, scale);

@@ -5,6 +5,7 @@ package com.miaokatze.miaokatzecore.client.tooltip;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.client.settings.KeyBinding;
@@ -28,14 +29,19 @@ import com.miaokatze.miaokatzecore.api.tooltip.component.NativeTooltipPage;
 import codechicken.nei.LayoutManager;
 import codechicken.nei.guihook.GuiContainerManager;
 import cpw.mods.fml.client.registry.ClientRegistry;
+import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.TickEvent;
 
 public final class TooltipController {
 
-    private static final String CATEGORY = "miaokatzecore.keys.category";
+    private static final String CATEGORY = "miaokatzecore.keys.tooltip.category";
     private final KeyBinding details = new KeyBinding("miaokatzecore.keys.details", Keyboard.KEY_V, CATEGORY);
-    private KeyBinding effects;
+    private final KeyBinding select = new KeyBinding("miaokatzecore.keys.select", Keyboard.KEY_TAB, CATEGORY);
+    private final KeyBinding pin = new KeyBinding("miaokatzecore.keys.pin", Keyboard.KEY_C, CATEGORY);
+    private static TooltipController installed;
+    private final boolean chromatic = Loader.isModLoaded("chromatictooltips");
 
     private GuiScreen screen;
     private String key = "";
@@ -50,25 +56,24 @@ public final class TooltipController {
 
     public static void install() {
         TooltipController input = new TooltipController();
+        installed = input;
         ClientRegistry.registerKeyBinding(input.details);
-        if (Loader.isModLoaded("controlling") && Chords.available(input.details)) {
-            input.effects = Chords.registerEffects();
-        }
-        TooltipPages.bindLabels(() -> input.label(false), () -> input.label(true));
-        tierHeld = () -> {
-            int code = (input.effects == null ? input.details : input.effects).getKeyCode();
-            boolean down = code > 0 ? Keyboard.isKeyDown(code) : code < 0 && Mouse.isButtonDown(code + 100);
-            return down && (input.effects != null ? Chords.matches(input.effects, code)
-                : Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU));
-        };
+        ClientRegistry.registerKeyBinding(input.select);
+        ClientRegistry.registerKeyBinding(input.pin);
+        TooltipPages.bindLabels(() -> label(input.details), () -> "Alt+" + label(input.details));
+        tierHeld = () -> held(input.details) && alt() && matches(input.details, input.details.getKeyCode(), true);
         MinecraftForge.EVENT_BUS.register(input);
-        if (Loader.isModLoaded("chromatictooltips")) {
+        FMLCommonHandler.instance()
+            .bus()
+            .register(input);
+        if (input.chromatic) {
             MinecraftForge.EVENT_BUS.register(new ChromaticHover(input));
             com.miaokatze.miaokatzecore.client.tooltip.NativeTooltipClient.install();
         }
     }
 
     private void hovered(GuiScreen gui, ItemStack stack) {
+        if (pinned()) return;
         screen = gui;
         key = TooltipPages.identity(stack);
         TooltipPages.rendered(key);
@@ -80,6 +85,21 @@ public final class TooltipController {
     @SubscribeEvent
     public void newFrame(net.minecraftforge.client.event.GuiScreenEvent.DrawScreenEvent.Pre event) {
         key = "";
+        if (chromatic) {
+            TooltipPinning.beginFrame(event.gui);
+            NativeTooltipMouse.newFrame();
+        }
+    }
+
+    @SubscribeEvent
+    public void tick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.START) return;
+        GuiScreen current = Minecraft.getMinecraft().currentScreen;
+        if (chromatic) TooltipPinning.screen(current);
+        if (current == null || current != screen) {
+            screen = null;
+            key = "";
+        }
     }
 
     @SubscribeEvent
@@ -101,55 +121,100 @@ public final class TooltipController {
     @SubscribeEvent
     public void mouse(MouseInputEvent.Pre event) {
         int button = Mouse.getEventButton();
-        if (button >= 0 && Mouse.getEventButtonState() && pressed(event.gui, button - 100)) event.setCanceled(true);
+        if (button < 0) return;
+        if (chromatic) {
+            Minecraft mc = Minecraft.getMinecraft();
+            ScaledResolution size = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
+            int x = Mouse.getEventX() * size.getScaledWidth() / mc.displayWidth;
+            int y = size.getScaledHeight() - Mouse.getEventY() * size.getScaledHeight() / mc.displayHeight - 1;
+            boolean consumed = Mouse.getEventButtonState() ? NativeTooltipMouse.click(event.gui, x, y, button)
+                : NativeTooltipMouse.consumeRelease(event.gui, x, y, button);
+            if (consumed) {
+                event.setCanceled(true);
+                return;
+            }
+        }
+        if (!Mouse.getEventButtonState()) return;
+        if (pressed(event.gui, button - 100)) event.setCanceled(true);
     }
 
-    private String label(boolean effect) {
-        KeyBinding binding = effect && effects != null ? effects : details;
+    private static String label(KeyBinding binding) {
         if (binding.getKeyCode() == Keyboard.KEY_NONE)
             return StatCollector.translateToLocal("miaokatzecore.keys.unbound");
-        if (effects != null) return Chords.label(binding);
-        String name = GameSettings.getKeyDisplayString(binding.getKeyCode());
-        return effect ? "Alt+" + name : name;
+        if (Loader.isModLoaded("controlling") && Chords.available(binding)) return Chords.label(binding);
+        return GameSettings.getKeyDisplayString(binding.getKeyCode());
+    }
+
+    public static String pinKeyLabel() {
+        return installed == null ? "C" : label(installed.pin);
+    }
+
+    public static String selectKeyLabel() {
+        return installed == null ? "Tab" : label(installed.select);
+    }
+
+    public static boolean selectHeld() {
+        return installed != null && held(installed.select);
+    }
+
+    public static boolean pinned() {
+        return installed != null && installed.chromatic && TooltipPinning.pinned();
+    }
+
+    public static boolean isPinned(String item) {
+        return pinned() && item.equals(TooltipPinning.key());
+    }
+
+    private static boolean alt() {
+        return Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU);
+    }
+
+    private static boolean held(KeyBinding binding) {
+        int code = binding.getKeyCode();
+        return code > 0 ? Keyboard.isKeyDown(code) : code < 0 && Mouse.isButtonDown(code + 100);
     }
 
     private boolean pressed(GuiScreen gui, int code) {
-        boolean page = NativeTooltipPage.supports(key);
-        boolean select = page && code == Keyboard.KEY_TAB
-            && !GuiScreen.isCtrlKeyDown()
-            && !GuiScreen.isShiftKeyDown()
-            && !Keyboard.isKeyDown(Keyboard.KEY_LMENU)
-            && !Keyboard.isKeyDown(Keyboard.KEY_RMENU);
-        if (page && Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) return false;
-        if (code == Keyboard.KEY_NONE
-            || (!select && code != details.getKeyCode() && (effects == null || effects.getKeyCode() != code)))
-            return false;
-        if (gui == null || gui != screen
+        boolean fixed = pinned();
+        String item = fixed ? TooltipPinning.key() : key;
+        boolean page = NativeTooltipPage.supports(item);
+        boolean choose = matches(select, code, false);
+        boolean pinning = chromatic && matches(pin, code, false);
+        boolean cycle = matches(details, code, true);
+        if (code == Keyboard.KEY_NONE || (!choose && !pinning && !cycle)) return false;
+        if (gui == null || (!fixed && gui != screen)
             || gui != Minecraft.getMinecraft().currentScreen
-            || !(page || TooltipPages.supports(key))
-            || com.miaokatze.miaokatzecore.api.tooltip.TooltipAnimationClock.nowNanos() - lastRender > 300000000L)
+            || (fixed && !TooltipPinning.active(gui))
+            || (!fixed && (item.isEmpty()
+                || com.miaokatze.miaokatzecore.api.tooltip.TooltipAnimationClock.nowNanos() - lastRender > 300000000L)))
             return false;
-        if ((mouseX != Mouse.getX() || mouseY != Mouse.getY())
-            && !(nei && gui instanceof GuiContainer && NeiInput.sameItem((GuiContainer) gui, key))) return false;
+        if (!fixed && (mouseX != Mouse.getX() || mouseY != Mouse.getY())
+            && !(nei && gui instanceof GuiContainer && NeiInput.sameItem((GuiContainer) gui, item))) return false;
         ModularScreen modular = ModularScreen.getCurrent();
         if (modular != null && modular.getContext()
             .getFocusedWidget() != null || nei && NeiInput.focused() || typingInVanillaField(gui)) return false;
-        boolean effect;
-        if (select) {
-            boolean changed = NativeTooltipPage.act(key, NativeTooltipPage.Action.SELECT);
-            if (changed && Loader.isModLoaded("chromatictooltips")) ChromaticHover.follow(key);
+        if (pinning) return TooltipPinning.toggle(gui);
+        if (page && Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) return false;
+        if (choose) {
+            boolean changed = page && NativeTooltipPage.act(item, NativeTooltipPage.Action.SELECT);
+            if (changed && chromatic) {
+                if (fixed) TooltipPinning.followSelected();
+                else ChromaticHover.follow(item);
+            }
             return changed;
         }
-        if (effects != null) {
-            effect = Chords.matches(effects, code);
-            if (!effect && !Chords.matches(details, code)) return false;
-        } else {
-            if (GuiScreen.isCtrlKeyDown() || GuiScreen.isShiftKeyDown()) return false;
-            effect = Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU);
-        }
-        return page
-            ? NativeTooltipPage.act(key, effect ? NativeTooltipPage.Action.TIER : NativeTooltipPage.Action.VARIANT)
-            : TooltipPages.toggle(key, effect);
+        boolean changed = page
+            ? NativeTooltipPage.act(item, alt() ? NativeTooltipPage.Action.TIER : NativeTooltipPage.Action.VARIANT)
+            : TooltipPages.toggle(item, alt());
+        if (changed && fixed) TooltipPinning.refresh();
+        return changed;
+    }
+
+    private static boolean matches(KeyBinding binding, int code, boolean allowAlt) {
+        if (binding.getKeyCode() != code || code == Keyboard.KEY_NONE) return false;
+        if (Loader.isModLoaded("controlling") && Chords.available(binding))
+            return Chords.matches(binding, code, allowAlt);
+        return !GuiScreen.isCtrlKeyDown() && !GuiScreen.isShiftKeyDown() && (allowAlt || !alt());
     }
 
     // Optional GTNH Controlling adapter. Match exactly the chord configured in the Controls screen.
@@ -159,24 +224,16 @@ public final class TooltipController {
             return key instanceof ComboKeyBinding;
         }
 
-        static KeyBinding registerEffects() {
-            KeyBinding key = new KeyBinding("miaokatzecore.keys.effects", Keyboard.KEY_V, CATEGORY);
-            ComboKeyBinding combo = (ComboKeyBinding) key;
-            combo.controlling$setDefaultKeyModifier(KeyModifier.ALT);
-            combo.controlling$setKeyModifier(KeyModifier.ALT);
-            ClientRegistry.registerKeyBinding(key);
-            return key;
-        }
-
         static String label(KeyBinding binding) {
             return ((ComboKeyBinding) binding).controlling$getDisplayName();
         }
 
-        static boolean matches(KeyBinding binding, int code) {
+        static boolean matches(KeyBinding binding, int code, boolean allowAlt) {
             if (binding.getKeyCode() != code) return false;
             KeyModifier wanted = ((ComboKeyBinding) binding).controlling$getKeyModifier();
             for (KeyModifier modifier : KeyModifier.VALUES) {
                 if (modifier == KeyModifier.NONE || modifier.matches(code)) continue;
+                if (allowAlt && modifier == KeyModifier.ALT && wanted != KeyModifier.ALT) continue;
                 if (modifier.isActive() != (modifier == wanted)) return false;
             }
             return true;
@@ -218,6 +275,7 @@ public final class TooltipController {
 
         @SubscribeEvent
         public void rendered(com.slprime.chromatictooltips.event.RenderTooltipEvent event) {
+            TooltipPinning.rendered(event);
             input.hovered(Minecraft.getMinecraft().currentScreen, event.context.getItem());
             ChartPointer.rendered(event);
         }

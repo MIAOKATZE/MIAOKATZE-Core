@@ -98,8 +98,11 @@ public final class NativeTooltipClient implements NativeTooltips.Backend {
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public void positionTier(TooltipEnricherEvent event) {
-        if (Thread.currentThread() != clientThread || event.context.getActiveModifier() != TooltipModifier.NONE) return;
+    public void positionHeader(TooltipEnricherEvent event) {
+        if (Thread.currentThread() != clientThread) return;
+        String item = TooltipPages.identity(event.context.getItem());
+        if (!item.isEmpty()) TierHeaderSlot.pin(event.context.getSection("header"), new NativePinComponent(item));
+        if (event.context.getActiveModifier() != TooltipModifier.NONE) return;
         TierHeaderSlot.place(event.context.getSection("header"), event.context.getSection("body"));
     }
 
@@ -145,5 +148,6 @@ public final class NativeTooltipClient implements NativeTooltips.Backend {
                 .clear();
             lines.add(start, component);
         }
+        NativeLinkComponent.convert(lines);
     }
 }

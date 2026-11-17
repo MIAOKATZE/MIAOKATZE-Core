@@ -23,6 +23,7 @@ import com.slprime.chromatictooltips.util.TooltipFontContext;
 public final class NativePageAdapterContracts {
 
     public static void run(TooltipPageBody body, TooltipPageBody tierPage) {
+        TooltipPinVisualContracts.run();
         NativeTooltipClient register = new NativeTooltipClient();
         NativeTooltipClient.registerRenderer(TooltipChart.class, NativeChartComponent::new);
         ITooltipComponent tier = fixedLine();
@@ -60,7 +61,7 @@ public final class NativePageAdapterContracts {
         List<Object> rows = new ArrayList<>(body.fallbackLines());
         register.convert("solar", rows);
         ITooltipComponent converted = (ITooltipComponent) rows.get(0);
-        ITooltipComponent name = fixedLine(), third = fixedLine(), warning = fixedLine();
+        ITooltipComponent name = fixedLine(), third = fixedLine(), warning = fixedLine(), pin = fixedLine();
         KeyboardModifierComponent keys = new KeyboardModifierComponent(
             EnumSet.noneOf(TooltipModifier.class),
             TooltipModifier.NONE) {
@@ -82,14 +83,20 @@ public final class NativePageAdapterContracts {
             section("third-party", third));
         SectionComponent info = section("itemInfo", converted, warning), content = section("body", info);
         assertOrder(section("page", header, content), name, keys, third, hint, warning); // The observed regression.
+        if (!TierHeaderSlot.pin(header, pin) || !TierHeaderSlot.pin(header, pin))
+            throw new AssertionError("Pin missing");
         TierHeaderSlot.place(header, content);
         TierHeaderSlot.place(header, content);
-        assertOrder(section("page", header, content), name, hint, keys, third, warning);
+        assertOrder(section("page", header, content), name, pin, hint, keys, third, warning);
         // Routes without our tier block must keep the original key bar and structure untouched.
         SectionComponent normalHeader = section("header", section("title", name), section("keyboard-modifier", keys));
         SectionComponent structure = section("body", section("itemInfo", warning));
         TierHeaderSlot.place(normalHeader, structure);
         assertOrder(section("page", normalHeader, structure), name, keys, warning);
+        TierHeaderSlot.pin(normalHeader, pin);
+        assertOrder(section("page", normalHeader, structure), name, pin, keys, warning);
+        if (TierHeaderSlot.pin(section("header", section("other", third)), pin))
+            throw new AssertionError("A non-item/headerless tooltip gained a status row");
     }
 
     private static ITooltipComponent fixedLine() {

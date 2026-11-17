@@ -282,8 +282,8 @@ public final class NativeChartComponent implements ITooltipComponent {
         return TooltipInput.hasMaterial(label) ? label : "[" + label + "]";
     }
 
-    private void tabs(int x, int y, int w) {
-        int n = chart.variants.size(), a = chart.active, first = a, last = a;
+    private void tabs(int x, int y, int w, TooltipContext context, int originX, int originY, float scale) {
+        int n = chart.variants.size(), a = chart.active;
         String active = tab(a);
         int max = w - 32;
         if (width(active) > max) {
@@ -294,28 +294,21 @@ public final class NativeChartComponent implements ITooltipComponent {
             while (name.length() > 1 && width("[" + name + "…]") > max) name = name.substring(0, name.length() - 1);
             active = "[" + name + "…]";
         }
-        int span = width(active) + 8;
-        boolean left = true;
-        while (first > 0 || last < n - 1) {
-            boolean before = first > 0 && (left || last == n - 1);
-            int i = before ? first - 1 : last + 1, cost = width(tab(i)) + 8;
-            if (span + cost + (first > 0 ? 12 : 0) + (last < n - 1 ? 12 : 0) > w) break;
-            span += cost;
-            if (before) first--;
-            else last++;
-            left = !left;
+        TooltipTabLayout layout = new TooltipTabLayout(n, a, w, this::tab, active, this::width);
+        if (layout.before) text("§8…", x, y + 1);
+        for (TooltipTabLayout.Label label : layout.labels) {
+            NativeInputComponent.text(item, label.text, x + label.x, y + 1, label.index == a ? 0xffffe093 : 0xffa9a1b1);
+            if (n > 1) NativeTooltipMouse.chartLabel(
+                context,
+                item,
+                chart.chartId,
+                label.index,
+                label.text,
+                originX + (x + label.x) * scale,
+                originY + (y + 1) * scale,
+                scale);
         }
-        if (first > 0) {
-            text("§8…", x, y + 1);
-            x += 12;
-        }
-        for (int i = first; i <= last; i++) {
-            String name = i == a ? active : tab(i);
-            int ww = width(name) + 6;
-            NativeInputComponent.text(item, name, x + 3, y + 1, i == a ? 0xffffe093 : 0xffa9a1b1);
-            x += ww + 2;
-        }
-        if (last < n - 1) text("§8…", x, y + 1);
+        if (layout.after) text("§8…", x + layout.end, y + 1);
     }
 
     @Override
@@ -327,16 +320,16 @@ public final class NativeChartComponent implements ITooltipComponent {
             try {
                 GL11.glTranslatef(x, y, 0);
                 GL11.glScalef(scale, scale, 1);
-                drawContent(0, 0, naturalWidth());
+                drawContent(0, 0, naturalWidth(), context, x, y, scale);
             } finally {
                 GL11.glPopMatrix();
             }
-        } else drawContent(x, y, Math.max(getWidth(), Math.min(available, limit)));
+        } else drawContent(x, y, Math.max(getWidth(), Math.min(available, limit)), context, 0, 0, 1);
     }
 
-    private void drawContent(int x, int y, int w) {
+    private void drawContent(int x, int y, int w, TooltipContext context, int originX, int originY, float scale) {
         if (!chart.variants.isEmpty()) {
-            tabs(x + 2, y, w - 4);
+            tabs(x + 2, y, w - 4, context, originX, originY, scale);
             y += tabsHeight();
         }
         if (!chart.title.isEmpty()) {

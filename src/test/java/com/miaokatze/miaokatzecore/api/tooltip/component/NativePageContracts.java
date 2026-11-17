@@ -15,6 +15,7 @@ public final class NativePageContracts {
 
     public static void main(String[] args) {
         InputHintContracts.main(args);
+        com.miaokatze.miaokatzecore.client.tooltip.TooltipMouseContracts.run();
         MachinePageSpanContracts.run();
         String item = "test:item@6";
         NativeTooltipPage p = new NativeTooltipPage(item);
@@ -29,6 +30,15 @@ public final class NativePageContracts {
                 && NativeTooltipPage.selected(item, "dimension"));
         for (int i = 0; i < 48; i++) NativeTooltipPage.act(item, NativeTooltipPage.Action.VARIANT);
         check(p.variant("route", 3) == 1 && p.variant("dimension", 47) == 1);
+        check(NativeTooltipPage.selectVariant(item, "route", 2) && NativeTooltipPage.selected(item, "route"));
+        check(p.variant("route", 3) == 2 && p.variant("dimension", 47) == 1);
+        check(
+            !NativeTooltipPage.selectVariant(item, "route", 3) && !NativeTooltipPage.selectVariant(item, "missing", 0));
+        check(
+            !NativeTooltipPage.selectVariant(item, "route", -1)
+                && !NativeTooltipPage.selectVariant("missing", "route", 0));
+        check(NativeTooltipPage.selectVariant(item, "dimension", 46));
+        check(NativeTooltipPage.act(item, NativeTooltipPage.Action.VARIANT) && p.variant("dimension", 47) == 0);
         NativeTooltipPage.act(item, NativeTooltipPage.Action.TIER);
         NativeTooltipPage.bind(item, charts);
         check(p.tier() == NativeTooltipPage.Tier.DETAIL && NativeTooltipPage.selected(item, "dimension"));

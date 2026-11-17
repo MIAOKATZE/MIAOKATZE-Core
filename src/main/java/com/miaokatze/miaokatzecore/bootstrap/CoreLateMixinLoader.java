@@ -3,6 +3,7 @@
 
 package com.miaokatze.miaokatzecore.bootstrap;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -25,9 +26,13 @@ public final class CoreLateMixinLoader implements ILateMixinLoader {
     @Override
     public List<String> getMixins(Set<String> loadedMods) {
         if (!FMLLaunchHandler.side()
-            .isClient() || !loadedMods.contains("betterquesting")) {
+            .isClient()) {
             return Collections.emptyList();
         }
-        return Arrays.asList("bq.MixinNetQuestSync", "bq.MixinNetChapterSync");
+        List<String> mixins = new ArrayList<>();
+        if (loadedMods.contains("betterquesting"))
+            mixins.addAll(Arrays.asList("bq.MixinNetQuestSync", "bq.MixinNetChapterSync"));
+        if (loadedMods.contains("chromatictooltips")) mixins.add("tooltip.MixinTooltipHandler");
+        return mixins;
     }
 }

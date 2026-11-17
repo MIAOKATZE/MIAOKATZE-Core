@@ -107,6 +107,14 @@ final class NativeInputComponent implements ITooltipComponent {
     public void draw(int x, int y, int width, TooltipContext context) {
         for (List<TooltipInput.Run> row : rows) {
             drawRuns(item, row, x, y, 0xffffffff);
+            int pen = x;
+            for (TooltipInput.Run run : row) {
+                if (run.key) pen += TooltipInput.ADVANCE;
+                if (run.mouse != null) pen += TooltipInput.ADVANCE;
+                if (run.itemId != null || run.fluidId != null) pen += TooltipInput.MATERIAL_ADVANCE;
+                NativeTooltipMouse.textLinks(context, run.text, pen, y);
+                pen += TooltipFontContext.getStringWidth(run.text);
+            }
             y += TooltipFontContext.getFontHeight();
         }
     }

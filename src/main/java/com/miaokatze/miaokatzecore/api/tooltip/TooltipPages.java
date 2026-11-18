@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.StatCollector;
 
@@ -19,6 +20,7 @@ import org.apache.logging.log4j.LogManager;
 
 import com.miaokatze.miaokatzecore.api.io.AtomicFilePublisher;
 
+import cpw.mods.fml.common.registry.GameData;
 import cpw.mods.fml.common.registry.GameRegistry;
 
 /** Opt-in presentation state. No ItemStack, NBT, server state or translated label is used as storage. */
@@ -69,8 +71,11 @@ public final class TooltipPages {
     }
 
     public static String identity(ItemStack stack) {
-        if (stack == null || stack.getItem() == null) return "";
-        GameRegistry.UniqueIdentifier id = GameRegistry.findUniqueIdentifierFor(stack.getItem());
+        if (stack == null) return "";
+        Item item = stack.getItem();
+        // Forge 1.7.10's unique identifier lookup assumes the item already has a registry name.
+        if (item == null || GameData.getItemRegistry().getNameForObject(item) == null) return "";
+        GameRegistry.UniqueIdentifier id = GameRegistry.findUniqueIdentifierFor(item);
         if (id == null) return "";
         int meta = stack.getHasSubtypes() || "gregtech:gt.blockmachines".equals(id.toString()) ? stack.getItemDamage()
             : 0;

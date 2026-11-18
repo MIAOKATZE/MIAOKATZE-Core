@@ -101,7 +101,8 @@ public final class NativeTooltipClient implements NativeTooltips.Backend {
     public void positionHeader(TooltipEnricherEvent event) {
         if (Thread.currentThread() != clientThread) return;
         String item = TooltipPages.identity(event.context.getItem());
-        if (!item.isEmpty()) TierHeaderSlot.pin(event.context.getSection("header"), new NativePinComponent(item));
+        if (item.isEmpty()) return;
+        TierHeaderSlot.pin(event.context.getSection("header"), new NativePinComponent(item));
         if (event.context.getActiveModifier() != TooltipModifier.NONE) return;
         TierHeaderSlot.place(event.context.getSection("header"), event.context.getSection("body"));
     }

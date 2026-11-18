@@ -1,10 +1,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 package com.miaokatze.miaokatzecore.client.tooltip;
 
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraftforge.fluids.Fluid;
+import net.minecraftforge.fluids.FluidStack;
 
 import com.google.gson.JsonObject;
 import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipChart;
@@ -52,6 +58,24 @@ public final class NativePageAdapterContracts {
         register.convert("solar", changed);
         if (!copy.equals(changed)) throw new AssertionError("Partial match converted");
         headerOrder(register, tierPage, tier);
+        unregisteredTarget(register);
+    }
+
+    private static void unregisteredTarget(NativeTooltipClient adapter) {
+        TooltipTarget target;
+        try {
+            // Build the real Chromatic target without loading the vanilla fluid-container registry in this JVM.
+            Constructor<TooltipTarget> constructor = TooltipTarget.class
+                .getDeclaredConstructor(ItemStack.class, FluidStack.class, long.class, Fluid.class, long.class);
+            constructor.setAccessible(true);
+            target = constructor.newInstance(new ItemStack(new Item()), null, 1L, null, 0L);
+        } catch (ReflectiveOperationException exception) {
+            throw new AssertionError("Could not create an unregistered item target", exception);
+        }
+        List<Object> text = Arrays.asList("NEI usage tooltip", "https://example.com/");
+        TextLinesConverterEvent event = new TextLinesConverterEvent(target, new ArrayList<>(text));
+        adapter.convert(event);
+        if (!event.list.equals(text)) throw new AssertionError("Unregistered item tooltip was modified");
     }
 
     private static final TooltipStyle STYLE = new TooltipStyle(new JsonObject());

@@ -4,6 +4,8 @@
 
 消费端先照常输出完整的可读字符串，再用 `NativeTooltips.replace(stack, lines, expected, snapshot)` 登记其自己拥有的一段。`TooltipTable` 保存同一时点的标题、表头、行和对齐方式。Core 在 Chromatic Tooltips 1.0.36-GTNH 的 `TextLinesConverterEvent` 里按目标物品身份与整段原文匹配，成功才把该组转换为组件。原 `ItemTooltipEvent` 列表不放组件令牌，NEI 搜索、纯文本 UI、未加载可选绘制层、译文已改到不能匹配时都保有原文字。不会为了替换失败而删除或改写其他 Mod 行。
 
+物品身份先通过 Forge 注册表反查注册名。未注册的临时物品栈，例如配方界面传入的展示对象，保留原 Tooltip，跳过 Core 的组件转换和固定行。已注册目标继续使用原物品标识及子类型规则。
+
 表格用当前 Tooltip 字体测量单元格；默认名称左对齐，数值和单位靠右。长表参与 Chromatic 分页，各页仍以整表数据计算列宽。业务方可以提供其他数据集的行作为共同列宽基准。独立表的标题效果见[标题动效](../tooltip-art.md)。
 
 三档页通过 `NativeTooltipPage.forItem(stack)` 构造；按 `tier()` 和 `variant(id, count)` 提供当前档的文字、警告、结构指引和数据。用 `chart(id, labels, chart)` 登记可切换图，固定算例使用 `block(chart)`，不会成为 Tab/V 的目标。Core 没有机器注册号、流体配方、运行数值或世界查询。GTSR 提供维度锅炉的库存曲线、维度与介质热图、固定算例，以及巨型轮机的阶段表、功率柱和增量。

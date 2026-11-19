@@ -20,8 +20,10 @@ import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipInput;
 import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipPageBody;
 import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipQr;
 import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipTable;
+import com.miaokatze.miaokatzecore.mixin.tooltip.TooltipContextAccessor;
 import com.slprime.chromatictooltips.api.ITooltipComponent;
 import com.slprime.chromatictooltips.api.TooltipModifier;
+import com.slprime.chromatictooltips.component.SectionComponent;
 import com.slprime.chromatictooltips.event.TextLinesConverterEvent;
 import com.slprime.chromatictooltips.event.TooltipEnricherEvent;
 
@@ -101,9 +103,17 @@ public final class NativeTooltipClient implements NativeTooltips.Backend {
     public void positionHeader(TooltipEnricherEvent event) {
         if (Thread.currentThread() != clientThread) return;
         String item = TooltipPages.identity(event.context.getItem());
-        if (!item.isEmpty()) TierHeaderSlot.pin(event.context.getSection("header"), new NativePinComponent(item));
-        if (event.context.getActiveModifier() != TooltipModifier.NONE) return;
-        TierHeaderSlot.place(event.context.getSection("header"), event.context.getSection("body"));
+        if (item.isEmpty() && !event.context.getTarget()
+            .isFluid()) return;
+        SectionComponent header = event.context.getSection("header");
+        SectionComponent body = event.context.getActiveModifier() == TooltipModifier.NONE
+            ? event.context.getSection("body")
+            : null;
+        SectionComponent keys = TierHeaderSlot.compose(header, body, new NativePinComponent(item));
+        if (keys != header) {
+            List<SectionComponent> sections = ((TooltipContextAccessor) event.context).miaokatze$getSections();
+            sections.set(sections.indexOf(header), keys);
+        }
     }
 
     void convert(String item, List<Object> lines) {

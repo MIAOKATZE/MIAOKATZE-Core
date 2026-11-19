@@ -42,7 +42,7 @@ public final class NativeTooltipPage {
         final Map<String, Integer> variants = new HashMap<>();
     }
 
-    private static final Tier[] ALL_HINTS = { Tier.DETAIL, Tier.COMMON, Tier.QUICK };
+    private static final Tier[] ALL_HINTS = { Tier.COMMON, Tier.DETAIL, Tier.QUICK };
     private static final Tier[] TWO_HINTS = { Tier.COMMON, Tier.QUICK };
     private boolean compact;
     private boolean single;

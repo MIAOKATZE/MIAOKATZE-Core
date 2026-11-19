@@ -34,6 +34,7 @@ public final class NativeChartComponent implements ITooltipComponent {
     private boolean measuredUnicode;
     private int[] widths;
     private final java.util.Map<String, TooltipInput> marked = new java.util.HashMap<>();
+    private NativeTooltipMouse.Drawing drawing;
 
     public NativeChartComponent(String item, TooltipChart chart) {
         this(
@@ -68,8 +69,14 @@ public final class NativeChartComponent implements ITooltipComponent {
     }
 
     private void text(String s, int x, int y) {
-        if (TooltipInput.hasMaterial(s))
-            NativeInputComponent.drawLine(item, marked.computeIfAbsent(s, TooltipInput::materials), x, y);
+        if (TooltipInput.hasMaterial(s)) NativeInputComponent.drawRuns(
+            item,
+            marked.computeIfAbsent(s, TooltipInput::materials)
+                .runs(),
+            x,
+            y,
+            0xffffffff,
+            drawing);
         else TooltipFontContext.drawString(s, x, y);
     }
 
@@ -97,7 +104,7 @@ public final class NativeChartComponent implements ITooltipComponent {
                     .getIconName());
     }
 
-    private static void icon(String id, int x, int y) {
+    private void icon(String id, int x, int y) {
         Fluid f = fluid(id);
         if (f == null) return;
         IIcon sprite = f.getStillIcon();
@@ -117,6 +124,12 @@ public final class NativeChartComponent implements ITooltipComponent {
         } finally {
             GL11.glPopAttrib();
         }
+        drawing.material(MaterialSprite.fluid(id), x, y, 10, 10);
+    }
+
+    private void fluidName(String id, String name, int x, int y) {
+        text(name, x, y);
+        if (!TooltipInput.hasMaterial(name)) drawing.material(MaterialSprite.fluid(id), x, y, width(name), font());
     }
 
     private int tabsHeight() {
@@ -297,7 +310,8 @@ public final class NativeChartComponent implements ITooltipComponent {
         TooltipTabLayout layout = new TooltipTabLayout(n, a, w, this::tab, active, this::width);
         if (layout.before) text("§8…", x, y + 1);
         for (TooltipTabLayout.Label label : layout.labels) {
-            NativeInputComponent.text(item, label.text, x + label.x, y + 1, label.index == a ? 0xffffe093 : 0xffa9a1b1);
+            NativeInputComponent
+                .text(item, label.text, x + label.x, y + 1, label.index == a ? 0xffffe093 : 0xffa9a1b1, drawing);
             if (n > 1) NativeTooltipMouse.chartLabel(
                 context,
                 item,
@@ -315,16 +329,22 @@ public final class NativeChartComponent implements ITooltipComponent {
     public void draw(int x, int y, int available, TooltipContext context) {
         if (!chart.variants.isEmpty()) ChartPointer.anchor(context, item, chart.chartId, y);
         float scale = fit();
-        if (scale < 1) {
-            GL11.glPushMatrix();
-            try {
-                GL11.glTranslatef(x, y, 0);
-                GL11.glScalef(scale, scale, 1);
-                drawContent(0, 0, naturalWidth(), context, x, y, scale);
-            } finally {
-                GL11.glPopMatrix();
-            }
-        } else drawContent(x, y, Math.max(getWidth(), Math.min(available, limit)), context, 0, 0, 1);
+        drawing = scale < 1 ? new NativeTooltipMouse.Drawing(context, x, y, scale)
+            : new NativeTooltipMouse.Drawing(context);
+        try {
+            if (scale < 1) {
+                GL11.glPushMatrix();
+                try {
+                    GL11.glTranslatef(x, y, 0);
+                    GL11.glScalef(scale, scale, 1);
+                    drawContent(0, 0, naturalWidth(), context, x, y, scale);
+                } finally {
+                    GL11.glPopMatrix();
+                }
+            } else drawContent(x, y, Math.max(getWidth(), Math.min(available, limit)), context, 0, 0, 1);
+        } finally {
+            drawing = null;
+        }
     }
 
     private void drawContent(int x, int y, int w, TooltipContext context, int originX, int originY, float scale) {
@@ -359,9 +379,12 @@ public final class NativeChartComponent implements ITooltipComponent {
                 boolean has = hasIcon(id) && !TooltipInput.hasMaterial(label);
                 if (has) icon(id, xx, y);
                 String badge = chart.columnFactors.get(c - 1);
-                text((!has && chart.compact ? label + " " : "") + badge, xx + (has ? 13 : 0), y + 1);
+                if (!has && chart.compact) {
+                    fluidName(id, label, xx, y + 1);
+                    text(badge, xx + width(label + " "), y + 1);
+                } else text(badge, xx + (has ? 13 : 0), y + 1);
                 if (!chart.compact) {
-                    text("§b" + label, xx, y + font() + 1);
+                    fluidName(id, "§b" + label, xx, y + font() + 1);
                     text("§7" + chart.columnRates.get(c - 1), xx, y + 2 * font() + 1);
                 }
             } else text("§7" + label, xx, y + 1);
@@ -387,7 +410,7 @@ public final class NativeChartComponent implements ITooltipComponent {
                         xx += width(factor) + 4;
                     }
                     if (!chart.compact || !has) {
-                        text(s, xx, y + 1);
+                        fluidName(id, s, xx, y + 1);
                         xx += width(s) + 4;
                     }
                     if (medium() && !chart.compact) text("§7" + chart.rowRates.get(r), xx, y + 1);
@@ -405,7 +428,8 @@ public final class NativeChartComponent implements ITooltipComponent {
                         | ((24 + (int) Math.round(80 * f)) << 8)
                         | (34 + (int) Math.round(77 * f));
                     box(edges[c], y, cw + 3, rowHeight() - 1, color);
-                    NativeInputComponent.text(item, s, xx + 1, y + 1, medium() && f > 0.47 ? 0xff11131a : 0xfff0f5ef);
+                    NativeInputComponent
+                        .text(item, s, xx + 1, y + 1, medium() && f > 0.47 ? 0xff11131a : 0xfff0f5ef, drawing);
                 } else if (c > 0 && chart.kind == TooltipChart.Kind.COLUMNS) {
                     double max = 0;
                     int figures = 0;
@@ -515,7 +539,7 @@ public final class NativeChartComponent implements ITooltipComponent {
             }
             if (draw) {
                 box(x + pen, y + off + 3, 5, 2, seriesColor(i));
-                NativeInputComponent.text(item, readout, x + pen + 7, y + off, seriesColor(i));
+                NativeInputComponent.text(item, readout, x + pen + 7, y + off, seriesColor(i), drawing);
             }
             pen += ww;
         }

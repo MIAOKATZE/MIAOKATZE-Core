@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 package com.miaokatze.miaokatzecore.client.tooltip;
 
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -45,7 +48,21 @@ public final class TooltipMouseContracts {
                 .equals("说明") && plainLines.get(1) instanceof NativeLinkComponent
                 && plainLines.get(2)
                     .equals("file:///tmp/a"));
-        System.out.println("TooltipMouseContracts: PASS (drawn tab windows, original indices, HTTP(S) glyph spans)");
+        childPlacement();
+        System.out.println("TooltipMouseContracts: PASS (tab windows, HTTP(S) spans and child placement)");
+    }
+
+    private static void childPlacement() {
+        Dimension child = new Dimension(20, 25);
+        Rectangle source = new Rectangle(32, 23, 12, 10);
+        Point right = TooltipPinning.placeChild(new Rectangle(10, 10, 60, 34), source, child, 100, 100);
+        check(right.equals(new Point(74, 23)));
+        Point left = TooltipPinning.placeChild(new Rectangle(20, 10, 75, 34), source, new Dimension(15, 25), 100, 100);
+        check(left.equals(new Point(1, 23)));
+        Point below = TooltipPinning.placeChild(new Rectangle(0, 10, 100, 34), source, child, 100, 100);
+        check(below.equals(new Point(32, 48)));
+        Point above = TooltipPinning.placeChild(new Rectangle(0, 50, 100, 46), source, child, 100, 100);
+        check(above.equals(new Point(32, 21)));
     }
 
     private static void check(boolean valid) {

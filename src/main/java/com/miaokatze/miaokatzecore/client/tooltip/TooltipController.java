@@ -11,6 +11,7 @@ import net.minecraft.client.settings.GameSettings;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.StatCollector;
+import net.minecraftforge.client.event.GuiScreenEvent.InitGuiEvent;
 import net.minecraftforge.common.MinecraftForge;
 
 import org.lwjgl.input.Keyboard;
@@ -26,11 +27,17 @@ import com.gtnewhorizon.gtnhlib.client.event.RenderTooltipEvent;
 import com.miaokatze.miaokatzecore.api.tooltip.TooltipPages;
 import com.miaokatze.miaokatzecore.api.tooltip.component.NativeTooltipPage;
 
+import codechicken.nei.KeyManager;
 import codechicken.nei.LayoutManager;
+import codechicken.nei.NEIClientConfig;
 import codechicken.nei.guihook.GuiContainerManager;
+import codechicken.nei.item.ItemFluidDisplay;
+import codechicken.nei.recipe.GuiCraftingRecipe;
+import codechicken.nei.recipe.GuiUsageRecipe;
 import cpw.mods.fml.client.registry.ClientRegistry;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Loader;
+import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
 
@@ -92,6 +99,11 @@ public final class TooltipController {
     }
 
     @SubscribeEvent
+    public void enterGui(InitGuiEvent.Post event) {
+        if (chromatic) TooltipPinning.screen(Minecraft.getMinecraft().currentScreen);
+    }
+
+    @SubscribeEvent
     public void tick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.START) return;
         GuiScreen current = Minecraft.getMinecraft().currentScreen;
@@ -118,11 +130,17 @@ public final class TooltipController {
         if (pressed(event.gui, Keyboard.getEventKey())) event.setCanceled(true);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void mouse(MouseInputEvent.Pre event) {
         int button = Mouse.getEventButton();
         if (button < 0) return;
         if (chromatic) {
+            if (Mouse.getEventButtonState() && nei
+                && NeiInput.recognizes(button - 100)
+                && handleRecipe(event.gui, button - 100)) {
+                event.setCanceled(true);
+                return;
+            }
             Minecraft mc = Minecraft.getMinecraft();
             ScaledResolution size = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
             int x = Mouse.getEventX() * size.getScaledWidth() / mc.displayWidth;
@@ -131,11 +149,15 @@ public final class TooltipController {
                 : NativeTooltipMouse.consumeRelease(event.gui, x, y, button);
             if (consumed) {
                 event.setCanceled(true);
-                return;
             }
         }
+    }
+
+    @SubscribeEvent
+    public void mouseKey(MouseInputEvent.Pre event) {
         if (!Mouse.getEventButtonState()) return;
-        if (pressed(event.gui, button - 100)) event.setCanceled(true);
+        int button = Mouse.getEventButton();
+        if (button >= 0 && pressed(event.gui, button - 100)) event.setCanceled(true);
     }
 
     private static String label(KeyBinding binding) {
@@ -175,25 +197,22 @@ public final class TooltipController {
     }
 
     private boolean pressed(GuiScreen gui, int code) {
+        if (gui == null || gui != Minecraft.getMinecraft().currentScreen || code == Keyboard.KEY_NONE) return false;
+        if (chromatic && nei && NeiInput.recognizes(code) && handleRecipe(gui, code)) return true;
         boolean fixed = pinned();
         String item = fixed ? TooltipPinning.key() : key;
         boolean page = NativeTooltipPage.supports(item);
         boolean choose = matches(select, code, false);
         boolean pinning = chromatic && matches(pin, code, false);
         boolean cycle = matches(details, code, true);
-        if (code == Keyboard.KEY_NONE || (!choose && !pinning && !cycle)) return false;
-        if (gui == null || (!fixed && gui != screen)
-            || gui != Minecraft.getMinecraft().currentScreen
-            || (fixed && !TooltipPinning.active(gui))
+        if (!choose && !pinning && !cycle || typing(gui)) return false;
+        if (pinning) return TooltipPinning.toggle(gui);
+        if ((!fixed && gui != screen) || (fixed && !TooltipPinning.active(gui))
             || (!fixed && (item.isEmpty()
                 || com.miaokatze.miaokatzecore.api.tooltip.TooltipAnimationClock.nowNanos() - lastRender > 300000000L)))
             return false;
         if (!fixed && (mouseX != Mouse.getX() || mouseY != Mouse.getY())
             && !(nei && gui instanceof GuiContainer && NeiInput.sameItem((GuiContainer) gui, item))) return false;
-        ModularScreen modular = ModularScreen.getCurrent();
-        if (modular != null && modular.getContext()
-            .getFocusedWidget() != null || nei && NeiInput.focused() || typingInVanillaField(gui)) return false;
-        if (pinning) return TooltipPinning.toggle(gui);
         if (page && Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) return false;
         if (choose) {
             boolean changed = page && NativeTooltipPage.act(item, NativeTooltipPage.Action.SELECT);
@@ -208,6 +227,20 @@ public final class TooltipController {
             : TooltipPages.toggle(item, alt());
         if (changed && fixed) TooltipPinning.refresh();
         return changed;
+    }
+
+    private boolean handleRecipe(GuiScreen gui, int code) {
+        if (typing(gui)) return false;
+        MaterialSprite.Material material = TooltipPinning.recipeMaterial(gui);
+        if (material == null) return TooltipPinning.active(gui) && TooltipPinning.coversMouse(gui);
+        NeiInput.open(code, material);
+        return true;
+    }
+
+    private boolean typing(GuiScreen gui) {
+        ModularScreen modular = ModularScreen.getCurrent();
+        return modular != null && modular.getContext()
+            .getFocusedWidget() != null || nei && NeiInput.focused() || typingInVanillaField(gui);
     }
 
     private static boolean matches(KeyBinding binding, int code, boolean allowAlt) {
@@ -286,6 +319,22 @@ public final class TooltipController {
     }
 
     private static final class NeiInput {
+
+        private static final String RECIPE = "recipe.recipe";
+        private static final String USAGE = "recipe.usage";
+
+        static boolean recognizes(int code) {
+            return code != Keyboard.KEY_NONE && NEIClientConfig.isEnabled()
+                && (code == KeyManager.getKeyCode(RECIPE) || code == KeyManager.getKeyCode(USAGE));
+        }
+
+        static void open(int code, MaterialSprite.Material material) {
+            ItemStack stack = material.item == null ? ItemFluidDisplay.createStack(material.fluid, 0L)
+                : new ItemStack(material.item, 1, material.meta);
+            if (stack == null) return;
+            if (code == KeyManager.getKeyCode(RECIPE)) GuiCraftingRecipe.openRecipeGui("item", stack);
+            else GuiUsageRecipe.openRecipeGui("item", stack);
+        }
 
         static boolean sameItem(GuiContainer gui, String key) {
             return key.equals(TooltipPages.identity(GuiContainerManager.getStackMouseOver(gui)));

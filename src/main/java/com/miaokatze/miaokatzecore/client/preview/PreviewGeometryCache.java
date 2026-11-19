@@ -42,7 +42,7 @@ public final class PreviewGeometryCache {
 
     private static final int MAX_SEGMENTS = 4096;
     private static final int MAX_SLICE_POSITIONS = 2048;
-    private static final int MAX_POSITIONS = 2_000_000;
+    static final int MAX_POSITIONS = 2_000_000;
     private static final int MAX_VERTEX_INTS = 16_777_216;
     private static WeakReference<PreviewGeometryCache> active = new WeakReference<>(null);
     private static boolean registered;
@@ -156,6 +156,11 @@ public final class PreviewGeometryCache {
                 } else segment.captureRejected = true;
             } else render(segment, renderer, allFaces);
         }
+    }
+
+    boolean hasStaticSegments() {
+        for (Segment segment : segments) if (segment.cacheable) return true;
+        return false;
     }
 
     private void render(Segment segment, RenderBlocks renderer, boolean allFaces) {

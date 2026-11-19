@@ -12,6 +12,20 @@ Core 将连续静态坐标按最多 2,048 个拆分。单个活动场景保留�
 
 `TessellatorSlice` 是 vanilla `Tessellator` 顶点数据的不可变 CPU 副本。它只向正在构建的现有批次追加顶点，不绘制、不清空或重启批次，也不持有 OpenGL 资源。源码合同见 `src/main/java/com/miaokatze/miaokatzecore/client/render/TessellatorSlice.java`；CPU 数据合同见 `TessellatorSliceContracts`。
 
+## BlockRenderer6343 NEI 多方块预览
+
+Core 0.2.26 在 GTNH 2.9.0 客户端通过独立的可选 Mixin 接入 BlockRenderer6343 1.4.25。机器沿用 GTNH 的预览构造协议即可使用。Core 记录假世界修订，核对可见集合的内容与顺序，按原顺序分段复用已核对的静态方块几何。搜索淡化、动态或未知方块渲染器、仓室 TESR 和叠加继续实时绘制。场景和资源重载时失效，适配失败或缺少必要钩子时继续原生绘制。首次构造耗时由机器自身和 BlockRenderer 的构造流程决定。
+
+## StructureLib 手持投影仪
+
+GTNH 2.9.0 的 StructureLib 1.4.47 将手持投影仪的方块提示保存在 `ClientProxy`，在 `RenderWorldLastEvent` 中按距离绘制透明提示。
+
+Core 在匹配版本的客户端修正原生循环。列表完成排序后清除脏标记，新增提示、提示过期及玩家移动仍沿原有规则触发排序。容量提交后重置原有批次计数，视锥裁剪、透明顺序、深度模式和原生顶点生成继续由 StructureLib 负责。
+
+每个客户端 tick 最多分配 4,000 个附带装饰粒子，与 1.7.10 原生粒子层的保留容量一致。提示坐标、颜色、寿命和碰撞处理均在这个限制前登记。方块提示数量不受装饰粒子预算影响。未装 StructureLib、版本不同或运行在专服时沿用原入口。
+
+投影补丁通过独立的可选 Mixin 配置加载。未找到注入点时保留对应原生路径。排序仅在实际投影组发布钩子接管脏标记后才启用复用，避免只应用排序钩子时遗漏新增或移除的提示组。装饰粒子的预算按客户端 tick 计算，可以独立生效。
+
 ## 捕获与 null 结果
 
 `capture(tessellator, commands)` 要求可识别的 vanilla `Tessellator`、正在绘制的 `GL_QUADS` 批次及一致的 8-int 顶点布局和缓冲区状态。子类、其他绘制模式或无效布局可能不受支持。

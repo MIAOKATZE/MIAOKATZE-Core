@@ -14,6 +14,7 @@ import com.miaokatze.miaokatzecore.internal.qrcode.QrCode;
 public final class TooltipQr implements TooltipBlock {
 
     private static final Map<String, QrCode> CODES = new LinkedHashMap<String, QrCode>(16, .75f, true) {
+
         @Override
         protected boolean removeEldestEntry(Map.Entry<String, QrCode> eldest) {
             return size() > 16;
@@ -28,9 +29,13 @@ public final class TooltipQr implements TooltipBlock {
     private TooltipQr(String prefix, String value) {
         Objects.requireNonNull(prefix);
         Objects.requireNonNull(value);
-        if (value.isEmpty() || value.length() > 512 || value.getBytes(StandardCharsets.UTF_8).length > 512
-            || value.chars().anyMatch(Character::isISOControl) || value.indexOf('§') >= 0
-            || prefix.indexOf('\n') >= 0 || prefix.indexOf('\r') >= 0)
+        if (value.isEmpty() || value.length() > 512
+            || value.getBytes(StandardCharsets.UTF_8).length > 512
+            || value.chars()
+                .anyMatch(Character::isISOControl)
+            || value.indexOf('§') >= 0
+            || prefix.indexOf('\n') >= 0
+            || prefix.indexOf('\r') >= 0)
             throw new IllegalArgumentException("Single-line QR value required (1–512 UTF-8 bytes)");
         this.value = value;
         this.text = prefix + value;

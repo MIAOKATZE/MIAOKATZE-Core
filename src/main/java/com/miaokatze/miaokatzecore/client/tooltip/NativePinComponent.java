@@ -4,6 +4,7 @@ package com.miaokatze.miaokatzecore.client.tooltip;
 import java.util.Objects;
 
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.StatCollector;
 
 import com.miaokatze.miaokatzecore.api.tooltip.TooltipAnimationClock;
 import com.miaokatze.miaokatzecore.api.tooltip.TooltipPages;
@@ -17,18 +18,28 @@ final class NativePinComponent implements ITooltipComponent {
 
     private static final ResourceLocation ATLAS = new ResourceLocation("miaokatzecore", "textures/tooltip/pin.png");
     private final String item;
+    private final boolean icon;
 
     NativePinComponent(String item) {
-        this.item = item;
+        this(item, true);
     }
 
-    private String binding() {
-        return TooltipController.pinKeyLabel() + "]";
+    private NativePinComponent(String item, boolean icon) {
+        this.item = item;
+        this.icon = icon;
+    }
+
+    private static String binding(boolean pinned) {
+        String state = StatCollector
+            .translateToLocal(pinned ? "miaokatzecore.tooltip.pin.pinned" : "miaokatzecore.tooltip.pin.floating");
+        return TooltipController.pinKeyLabel() + " " + state + "]";
     }
 
     @Override
     public int getWidth() {
-        return TooltipFontContext.getStringWidth("[" + binding()) + 14;
+        return TooltipFontContext.getStringWidth("[") + Math
+            .max(TooltipFontContext.getStringWidth(binding(false)), TooltipFontContext.getStringWidth(binding(true)))
+            + (icon ? 14 : 0);
     }
 
     @Override
@@ -44,7 +55,9 @@ final class NativePinComponent implements ITooltipComponent {
     @Override
     public ITooltipComponent[] paginate(TooltipContext context, int width, int height) {
         if (getWidth() <= width && getHeight() <= height) return new ITooltipComponent[] { this };
-        return new TextComponent("[" + binding()).paginate(context, Math.max(1, width), height);
+        if (icon) return new NativePinComponent(item, false).paginate(context, width, height);
+        return new TextComponent("[" + TooltipController.pinKeyLabel() + "]")
+            .paginate(context, Math.max(1, width), height);
     }
 
     @Override
@@ -53,19 +66,24 @@ final class NativePinComponent implements ITooltipComponent {
         int frame = TooltipPinVisual.frame(pinned, TooltipAnimationClock.nowNanos(), reduced);
         int ink = TooltipPinVisual.binding(pinned, frame, reduced);
         TooltipFontContext.drawString("[", x, y, ink);
-        int iconX = x + TooltipFontContext.getStringWidth("[") + 1;
-        NativeGuideComponent
-            .drawSprite(ATLAS, TooltipPinVisual.cel(pinned, frame) * 12, 0, 12, 12, 96, 12, iconX, y - 1);
-        TooltipFontContext.drawString(binding(), iconX + 13, y, ink);
+        int textX = x + TooltipFontContext.getStringWidth("[");
+        if (icon) {
+            NativeGuideComponent
+                .drawSprite(ATLAS, TooltipPinVisual.cel(pinned, frame) * 12, 0, 12, 12, 96, 12, textX + 1, y - 1);
+            textX += 14;
+        }
+        TooltipFontContext.drawString(binding(pinned), textX, y, ink);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(item);
+        return Objects.hash(item, icon);
     }
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof NativePinComponent && item.equals(((NativePinComponent) other).item);
+        if (!(other instanceof NativePinComponent)) return false;
+        NativePinComponent component = (NativePinComponent) other;
+        return icon == component.icon && item.equals(component.item);
     }
 }

@@ -16,5 +16,5 @@ miaokatzecore.page.detail=Detailed
 miaokatzecore.page.select=[%s] Select chart
 miaokatzecore.page.variant=[%s] Switch
 miaokatzecore.page.probe=At %s:
-miaokatzecore.tooltip.pin.floating=Press %s to pin this tooltip.
-miaokatzecore.tooltip.pin.pinned=Press %s to unpin this tooltip.
+miaokatzecore.tooltip.pin.floating=Hover
+miaokatzecore.tooltip.pin.pinned=Pinned

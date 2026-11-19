@@ -157,6 +157,7 @@ public final class NativeTableComponent implements ITooltipComponent {
 
     @Override
     public void draw(int x, int y, int availableWidth, TooltipContext context) {
+        NativeTooltipMouse.Drawing drawing = new NativeTooltipMouse.Drawing(context);
         TooltipTableLayout layout = layout();
         // Chromatic supplies one content width for every drawn component in this page.
         int width = Math.max(getWidth(), Math.min(availableWidth, limit));
@@ -164,7 +165,8 @@ public final class NativeTableComponent implements ITooltipComponent {
         lastGridWidth = gridWidth;
         if (!table.title()
             .isEmpty()) {
-            if (table.art() == TooltipArt.PLAIN) NativeInputComponent.text(item, table.title(), x, y, 0xffffffff);
+            if (table.art() == TooltipArt.PLAIN)
+                NativeInputComponent.text(item, table.title(), x, y, 0xffffffff, drawing);
             else {
                 final int titleY = y;
                 final String label = EnumChatFormatting.getTextWithoutFormattingCodes(table.title());
@@ -175,21 +177,22 @@ public final class NativeTableComponent implements ITooltipComponent {
                     NativeInputComponent.width(label),
                     TooltipPages.animationEnabled(item),
                     (java.util.function.IntConsumer) color -> NativeInputComponent
-                        .text(item, label, x + 10, titleY, color));
+                        .text(item, label, x + 10, titleY, color, drawing));
             }
             y += titleHeight();
         }
-        drawRow(table.headers(), layout, x + INSET, y, true, gridWidth);
+        drawRow(table.headers(), layout, x + INSET, y, true, gridWidth, drawing);
         y += rowHeight(table.headers(), true) + 1;
         net.minecraft.client.gui.Gui.drawRect(x + INSET, y, x + width - INSET, y + 1, 0xff674071);
         y += 2;
         for (List<String> row : table.rows()) {
-            drawRow(row, layout, x + INSET, y, false, gridWidth);
+            drawRow(row, layout, x + INSET, y, false, gridWidth, drawing);
             y += rowHeight(row, false);
         }
     }
 
-    private void drawRow(List<String> cells, TooltipTableLayout layout, int x, int y, boolean header, int gridWidth) {
+    private void drawRow(List<String> cells, TooltipTableLayout layout, int x, int y, boolean header, int gridWidth,
+        NativeTooltipMouse.Drawing drawing) {
         int left = x;
         for (int c = 0; c < cells.size(); c++) {
             TooltipInput cell = cell(cells.get(c), header);
@@ -203,7 +206,7 @@ public final class NativeTableComponent implements ITooltipComponent {
                     offset = w;
                     for (TooltipInput.Run run : runs) offset -= run.width(TooltipFontContext::getStringWidth);
                 }
-                NativeInputComponent.drawRuns(item, runs, left + offset, yy, 0xffffffff);
+                NativeInputComponent.drawRuns(item, runs, left + offset, yy, 0xffffffff, drawing);
                 yy += TooltipFontContext.getFontHeight();
             }
             left += w + TooltipTableLayout.GAP;

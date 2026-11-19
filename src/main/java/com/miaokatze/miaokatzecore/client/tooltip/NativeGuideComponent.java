@@ -79,16 +79,17 @@ public final class NativeGuideComponent implements ITooltipComponent {
         int frame = TooltipPages.animationEnabled(item)
             ? (row == 0 ? held ? 3 : BEATS[(int) Math.floorMod(ms / 150, 10L)] : (int) Math.floorMod(ms / 300, 8L))
             : 0;
-        drawSprite(SHEET, frame, row, x, y);
+        drawSprite(SHEET, 12 * frame, 9 * row, 12, 9, 96, 27, x, y);
     }
 
     static void mouse(String item, TooltipInput.Mouse button, int x, int y) {
         long ms = TooltipAnimationClock.nowNanos() / 1000000L;
         int frame = TooltipPages.animationEnabled(item) ? BEATS[(int) Math.floorMod(ms / 150, 10L)] : 0;
-        drawSprite(MOUSE, frame, button.ordinal(), x, y);
+        drawSprite(MOUSE, 12 * frame, 9 * button.ordinal(), 12, 9, 96, 27, x, y);
     }
 
-    private static void drawSprite(ResourceLocation sheet, int frame, int row, int x, int y) {
+    static void drawSprite(ResourceLocation sheet, int u, int v, int width, int height, int sheetWidth, int sheetHeight,
+        int x, int y) {
         GL11.glPushAttrib(GL11.GL_ENABLE_BIT | GL11.GL_CURRENT_BIT | GL11.GL_TEXTURE_BIT | GL11.GL_COLOR_BUFFER_BIT);
         try {
             GL11.glEnable(GL11.GL_TEXTURE_2D);
@@ -97,7 +98,7 @@ public final class NativeGuideComponent implements ITooltipComponent {
             Minecraft.getMinecraft()
                 .getTextureManager()
                 .bindTexture(sheet);
-            Gui.func_146110_a(x, y, 12 * frame, 9 * row, 12, 9, 96, 27);
+            Gui.func_146110_a(x, y, u, v, width, height, sheetWidth, sheetHeight);
         } finally {
             GL11.glPopAttrib();
         }
@@ -106,15 +107,16 @@ public final class NativeGuideComponent implements ITooltipComponent {
     @Override
     public void draw(int x, int y, int width, TooltipContext context) {
         int row = guide.kind == TooltipGuide.Kind.TIER ? 0 : guide.kind == TooltipGuide.Kind.WARNING ? 1 : 2;
-        if (showIcon) sprite(item, row, x, y, guide.kind == TooltipGuide.Kind.TIER && TooltipController.tierHeld());
         if (guide.kind != TooltipGuide.Kind.TIER) {
+            if (showIcon) sprite(item, row, x, y, false);
             content.draw(x + 15, y, width - 15, context);
             return;
         }
         double brightness = TooltipPages.animationEnabled(item)
             ? .90 + .075 * Math.sin(TooltipAnimationClock.phase(TooltipAnimationClock.nowNanos(), 3200) * 2 * Math.PI)
             : 1;
-        int pen = x + 15, tone = 0xb6b9c6;
+        int pen = x, tone = 0xb6b9c6;
+        boolean iconDrawn = false;
         // Hint copies use only the neutral and active inks. Keep all glyphs and advances fixed.
         for (String run : runs) {
             if (run.startsWith("§7") || run.startsWith("§b")) {
@@ -123,6 +125,16 @@ public final class NativeGuideComponent implements ITooltipComponent {
             }
             int rgb = (int) ((tone >> 16) * brightness) << 16 | (int) (((tone >> 8) & 255) * brightness) << 8
                 | (int) ((tone & 255) * brightness);
+            if (!iconDrawn && !run.isEmpty()) {
+                if (run.startsWith("[")) {
+                    TooltipFontContext.drawString("[", pen, y, 0xff000000 | rgb);
+                    pen += TooltipFontContext.getStringWidth("[");
+                    run = run.substring(1);
+                }
+                if (showIcon) sprite(item, row, pen + 1, y, TooltipController.tierHeld());
+                pen += 15;
+                iconDrawn = true;
+            }
             TooltipFontContext.drawString(run, pen, y, 0xff000000 | rgb);
             pen += TooltipFontContext.getStringWidth(run);
         }

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -21,6 +22,7 @@ import com.slprime.chromatictooltips.api.TooltipContext;
 import com.slprime.chromatictooltips.api.TooltipModifier;
 import com.slprime.chromatictooltips.api.TooltipStyle;
 import com.slprime.chromatictooltips.api.TooltipTarget;
+import com.slprime.chromatictooltips.component.InlineComponent;
 import com.slprime.chromatictooltips.component.KeyboardModifierComponent;
 import com.slprime.chromatictooltips.component.SectionComponent;
 import com.slprime.chromatictooltips.event.TextLinesConverterEvent;
@@ -32,7 +34,8 @@ public final class NativePageAdapterContracts {
         TooltipPinVisualContracts.run();
         NativeTooltipClient register = new NativeTooltipClient();
         NativeTooltipClient.registerRenderer(TooltipChart.class, NativeChartComponent::new);
-        ITooltipComponent tier = fixedLine();
+        List<String> draws = new ArrayList<>();
+        ITooltipComponent tier = fixedLine((x, y) -> draws.add("tier " + x + "," + y));
         NativeTooltipClient.registerRenderer(
             TooltipGuide.class,
             (item, guide) -> guide.kind == TooltipGuide.Kind.TIER ? tier : new NativeGuideComponent(item, guide));
@@ -57,7 +60,7 @@ public final class NativePageAdapterContracts {
         List<Object> copy = new ArrayList<>(changed);
         register.convert("solar", changed);
         if (!copy.equals(changed)) throw new AssertionError("Partial match converted");
-        headerOrder(register, tierPage, tier);
+        headerOrder(register, tierPage, draws);
         unregisteredTarget(register);
     }
 
@@ -80,12 +83,13 @@ public final class NativePageAdapterContracts {
 
     private static final TooltipStyle STYLE = new TooltipStyle(new JsonObject());
 
-    private static void headerOrder(NativeTooltipClient register, TooltipPageBody body, ITooltipComponent hint) {
+    private static void headerOrder(NativeTooltipClient register, TooltipPageBody body, List<String> draws) {
         register.prepare("solar", body.fallbackLines(), body);
         List<Object> rows = new ArrayList<>(body.fallbackLines());
         register.convert("solar", rows);
         ITooltipComponent converted = (ITooltipComponent) rows.get(0);
-        ITooltipComponent name = fixedLine(), third = fixedLine(), warning = fixedLine(), pin = fixedLine();
+        ITooltipComponent name = fixedLine((x, y) -> {}), third = fixedLine((x, y) -> {}),
+            warning = fixedLine((x, y) -> {}), pin = fixedLine((x, y) -> draws.add("pin " + x + "," + y));
         KeyboardModifierComponent keys = new KeyboardModifierComponent(
             EnumSet.noneOf(TooltipModifier.class),
             TooltipModifier.NONE) {
@@ -99,6 +103,11 @@ public final class NativePageAdapterContracts {
             public int getHeight() {
                 return 9;
             }
+
+            @Override
+            public void draw(int x, int y, int w, TooltipContext context) {
+                draws.add("native " + x + "," + y);
+            }
         };
         SectionComponent header = section(
             "header",
@@ -106,24 +115,32 @@ public final class NativePageAdapterContracts {
             section("keyboard-modifier", keys),
             section("third-party", third));
         SectionComponent info = section("itemInfo", converted, warning), content = section("body", info);
-        assertOrder(section("page", header, content), name, keys, third, hint, warning); // The observed regression.
-        if (!TierHeaderSlot.pin(header, pin) || !TierHeaderSlot.pin(header, pin))
-            throw new AssertionError("Pin missing");
-        TierHeaderSlot.place(header, content);
-        TierHeaderSlot.place(header, content);
-        assertOrder(section("page", header, content), name, pin, hint, keys, third, warning);
-        // Routes without our tier block must keep the original key bar and structure untouched.
-        SectionComponent normalHeader = section("header", section("title", name), section("keyboard-modifier", keys));
+        SectionComponent composed = TierHeaderSlot.compose(header, content, pin);
+        List<ITooltipComponent> leaves = pagedLeaves(section("page", composed, content));
+        if (leaves.size() != 4 || leaves.get(0) != name || leaves.get(2) != third || leaves.get(3) != warning)
+            throw new AssertionError("Unrelated header and body order changed: " + leaves);
+        assertInline(leaves.get(1), draws, "native 10,20", "pin 44,20", "tier 88,20");
+
         SectionComponent structure = section("body", section("itemInfo", warning));
-        TierHeaderSlot.place(normalHeader, structure);
-        assertOrder(section("page", normalHeader, structure), name, keys, warning);
-        TierHeaderSlot.pin(normalHeader, pin);
-        assertOrder(section("page", normalHeader, structure), name, pin, keys, warning);
-        if (TierHeaderSlot.pin(section("header", section("other", third)), pin))
-            throw new AssertionError("A non-item/headerless tooltip gained a status row");
+        leaves = pagedLeaves(section("page", TierHeaderSlot.compose(header, null, pin), structure));
+        assertInline(leaves.get(1), draws, "native 10,20", "pin 44,20");
+        if (leaves.get(3) != warning) throw new AssertionError("Structure content was moved");
+
+        SectionComponent withoutKeys = section("header", section("title", name), section("third-party", third));
+        leaves = pagedLeaves(section("page", TierHeaderSlot.compose(withoutKeys, null, pin), structure));
+        assertInline(leaves.get(1), draws, "pin 10,20");
+        if (leaves.get(2) != third || TierHeaderSlot.compose(null, null, pin) != null)
+            throw new AssertionError("Missing keyboard section fallback changed neighboring content");
     }
 
-    private static ITooltipComponent fixedLine() {
+    private static void assertInline(ITooltipComponent row, List<String> draws, String... expected) {
+        if (!(row instanceof InlineComponent)) throw new AssertionError("Controls do not share an inline row");
+        draws.clear();
+        row.draw(10, 20, 400, null);
+        if (!draws.equals(Arrays.asList(expected))) throw new AssertionError("Wrong key order or baseline: " + draws);
+    }
+
+    private static ITooltipComponent fixedLine(BiConsumer<Integer, Integer> drawAt) {
         return new ITooltipComponent() {
 
             @Override
@@ -142,7 +159,9 @@ public final class NativePageAdapterContracts {
             }
 
             @Override
-            public void draw(int x, int y, int w, TooltipContext c) {}
+            public void draw(int x, int y, int w, TooltipContext c) {
+                drawAt.accept(x, y);
+            }
         };
     }
 
@@ -163,13 +182,10 @@ public final class NativePageAdapterContracts {
         };
     }
 
-    private static void assertOrder(SectionComponent root, ITooltipComponent... expected) {
+    private static List<ITooltipComponent> pagedLeaves(SectionComponent root) {
         List<ITooltipComponent> actual = new ArrayList<>();
         for (ITooltipComponent page : root.paginate(null, 400, 300)) flatten(page, actual);
-        if (actual.size() != expected.length)
-            throw new AssertionError("Tier duplicated/lost in paginated sections: " + actual.size());
-        for (int i = 0; i < expected.length; i++)
-            if (actual.get(i) != expected[i]) throw new AssertionError("Incorrect paged header order at " + i);
+        return actual;
     }
 
     private static void flatten(ITooltipComponent part, List<ITooltipComponent> leaves) {

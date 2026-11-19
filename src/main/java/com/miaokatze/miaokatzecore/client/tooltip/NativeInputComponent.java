@@ -33,20 +33,20 @@ final class NativeInputComponent implements ITooltipComponent {
             .width(TooltipFontContext::getStringWidth) : TooltipFontContext.getStringWidth(value);
     }
 
-    static void text(String item, String value, int x, int y, int color) {
-        if (TooltipInput.hasMaterial(value)) drawLine(item, TooltipInput.materials(value), x, y, color);
+    static void text(String item, String value, int x, int y, int color, NativeTooltipMouse.Drawing drawing) {
+        if (TooltipInput.hasMaterial(value)) drawRuns(
+            item,
+            TooltipInput.materials(value)
+                .runs(),
+            x,
+            y,
+            color,
+            drawing);
         else TooltipFontContext.drawString(value, x, y, color);
     }
 
-    static void drawLine(String item, TooltipInput line, int x, int y) {
-        drawLine(item, line, x, y, 0xffffffff);
-    }
-
-    static void drawLine(String item, TooltipInput line, int x, int y, int color) {
-        drawRuns(item, line.runs(), x, y, color);
-    }
-
-    static void drawRuns(String item, List<TooltipInput.Run> runs, int x, int y, int color) {
+    static void drawRuns(String item, List<TooltipInput.Run> runs, int x, int y, int color,
+        NativeTooltipMouse.Drawing drawing) {
         for (TooltipInput.Run run : runs) {
             if (run.key) {
                 NativeGuideComponent.sprite(item, 0, x, y, false);
@@ -56,12 +56,20 @@ final class NativeInputComponent implements ITooltipComponent {
                 NativeGuideComponent.mouse(item, run.mouse, x, y);
                 x += TooltipInput.ADVANCE;
             }
+            int textWidth = TooltipFontContext.getStringWidth(run.text);
             if (run.itemId != null || run.fluidId != null) {
-                MaterialSprite.draw(run, x, y - 1);
+                MaterialSprite.Material material = MaterialSprite.material(run);
+                MaterialSprite.draw(material, x, y - 1);
+                drawing.material(
+                    material,
+                    x,
+                    y - 1,
+                    TooltipInput.MATERIAL_ADVANCE + textWidth,
+                    Math.max(10, TooltipFontContext.getFontHeight() + 1));
                 x += TooltipInput.MATERIAL_ADVANCE;
             }
             TooltipFontContext.drawString(run.text, x, y, color);
-            x += TooltipFontContext.getStringWidth(run.text);
+            x += textWidth;
         }
     }
 
@@ -105,8 +113,9 @@ final class NativeInputComponent implements ITooltipComponent {
 
     @Override
     public void draw(int x, int y, int width, TooltipContext context) {
+        NativeTooltipMouse.Drawing drawing = new NativeTooltipMouse.Drawing(context);
         for (List<TooltipInput.Run> row : rows) {
-            drawRuns(item, row, x, y, 0xffffffff);
+            drawRuns(item, row, x, y, 0xffffffff, drawing);
             int pen = x;
             for (TooltipInput.Run run : row) {
                 if (run.key) pen += TooltipInput.ADVANCE;

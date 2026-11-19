@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 package com.miaokatze.miaokatzecore.client.tooltip;
 
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -18,45 +21,103 @@ import com.slprime.chromatictooltips.event.RenderTooltipEvent;
 import com.slprime.chromatictooltips.util.TooltipFontContext;
 import com.slprime.chromatictooltips.util.TooltipUtils;
 
-/** Only the actual painted glyph rectangles become actions; tooltip bounds form a click fence. */
+/** Mouse regions are tied to drawn windows, including independent hit lists for two pins. */
 final class NativeTooltipMouse {
 
+    private static final long FRESH_NANOS = 300000000L;
     private static final Map<TooltipContext, List<Hit>> pending = new IdentityHashMap<>();
-    private static final List<Hit> active = new ArrayList<>();
-    private static GuiScreen owner;
-    private static String item = "";
-    private static long drawn;
-    private static double left, top, right, bottom;
+    private static final List<Painted> painted = new ArrayList<>();
+    private static final List<Painted> previous = new ArrayList<>();
 
-    private static final class Hit {
+    /** Coordinates of a component drawn inside a scaled chart, or directly in the tooltip. */
+    static final class Drawing {
 
-        final double x, y, width, height;
-        final Runnable action;
+        final TooltipContext context;
+        final int originX, originY;
+        final float scale;
 
-        Hit(double x, double y, double width, double height, Runnable action) {
-            this.x = x;
-            this.y = y;
-            this.width = width;
-            this.height = height;
-            this.action = action;
+        Drawing(TooltipContext context, int originX, int originY, float scale) {
+            this.context = context;
+            this.originX = originX;
+            this.originY = originY;
+            this.scale = scale;
         }
 
-        boolean contains(double px, double py) {
-            return px >= x && py >= y && px < x + width && py < y + height;
+        Drawing(TooltipContext context) {
+            this(context, 0, 0, 1);
+        }
+
+        void material(MaterialSprite.Material material, int x, int y, int width, int height) {
+            if (material != null)
+                add(context, originX + x * scale, originY + y * scale, width * scale, height * scale, null, material);
         }
     }
 
+    static final class MaterialHit {
+
+        final Rectangle2D bounds;
+        final MaterialSprite.Material material;
+
+        MaterialHit(Rectangle2D bounds, MaterialSprite.Material material) {
+            this.bounds = bounds;
+            this.material = material;
+        }
+    }
+
+    private static final class Hit {
+
+        final Rectangle2D bounds;
+        final Runnable action;
+        final MaterialSprite.Material material;
+
+        Hit(Rectangle2D bounds, Runnable action, MaterialSprite.Material material) {
+            this.bounds = bounds;
+            this.action = action;
+            this.material = material;
+        }
+    }
+
+    private static final class Painted {
+
+        final GuiScreen screen = Minecraft.getMinecraft().currentScreen;
+        final long time = TooltipAnimationClock.nowNanos();
+        final TooltipContext context;
+        final Rectangle bounds;
+        final List<Hit> hits = new ArrayList<>();
+
+        Painted(RenderTooltipEvent event) {
+            context = event.context;
+            bounds = new Rectangle(event.x, event.y, event.width, event.height);
+        }
+
+        boolean contains(GuiScreen gui, int x, int y) {
+            return gui != null && gui == screen
+                && gui == Minecraft.getMinecraft().currentScreen
+                && TooltipAnimationClock.nowNanos() - time <= FRESH_NANOS
+                && bounds.contains(x, y);
+        }
+    }
+
+    private NativeTooltipMouse() {}
+
     static void newFrame() {
         pending.clear();
-        active.clear();
-        owner = null;
+        previous.clear();
+        previous.addAll(painted);
+        painted.clear();
+    }
+
+    static void clear() {
+        pending.clear();
+        painted.clear();
+        previous.clear();
     }
 
     static void chartLabel(TooltipContext context, String key, String chart, int index, String label, double x,
         double y, float scale) {
         Runnable action = () -> {
             if (NativeTooltipPage.selectVariant(key, chart, index)) {
-                ChartPointer.follow(key);
+                ChartPointer.follow(context, key);
                 TooltipPinning.refresh();
             }
         };
@@ -64,14 +125,14 @@ final class NativeTooltipMouse {
             .runs()) {
             if (run.itemId != null || run.fluidId != null) x += TooltipInput.MATERIAL_ADVANCE * scale;
             int width = TooltipFontContext.getStringWidth(run.text);
-            add(context, x, y, width * scale, TooltipFontContext.getFontHeight() * scale, action);
+            add(context, x, y, width * scale, TooltipFontContext.getFontHeight() * scale, action, null);
             x += width * scale;
         }
     }
 
     static void link(TooltipContext context, String url, double x, double y, double width) {
         GuiScreen gui = Minecraft.getMinecraft().currentScreen;
-        add(context, x, y, width, TooltipFontContext.getFontHeight(), () -> TooltipLinkBrowser.open(gui, url));
+        add(context, x, y, width, TooltipFontContext.getFontHeight(), () -> TooltipLinkBrowser.open(gui, url), null);
     }
 
     static void textLinks(TooltipContext context, String text, int x, int y) {
@@ -82,29 +143,21 @@ final class NativeTooltipMouse {
         }
     }
 
-    private static void add(TooltipContext context, double x, double y, double width, double height, Runnable action) {
-        if (width <= 0 || height <= 0) return;
+    private static void add(TooltipContext context, double x, double y, double width, double height, Runnable action,
+        MaterialSprite.Material material) {
+        if (context == null || width <= 0 || height <= 0) return;
         pending.computeIfAbsent(context, ignored -> new ArrayList<>())
-            .add(new Hit(x, y, width, height, action));
+            .add(new Hit(new Rectangle2D.Double(x, y, width, height), action, material));
     }
 
     static void rendered(RenderTooltipEvent event) {
-        String key = TooltipPages.identity(event.context.getItem());
         List<Hit> hits = pending.remove(event.context);
-        // A hovered item underneath the pinned tooltip cannot replace its interaction regions.
-        if (TooltipController.pinned() && !TooltipController.isPinned(key)) return;
-        active.clear();
-        if (key.isEmpty()) {
-            owner = null;
+        if (!event.context.getTarget()
+            .isFluid() && TooltipPages.identity(event.context.getItem())
+                .isEmpty())
             return;
-        }
-        owner = Minecraft.getMinecraft().currentScreen;
-        item = key;
-        drawn = TooltipAnimationClock.nowNanos();
-        left = event.x;
-        top = event.y;
-        right = event.x + event.width;
-        bottom = event.y + event.height;
+        Painted window = new Painted(event);
+        painted.add(window);
         if (hits == null) return;
         double scale = event.context.getScaleFactor() / (double) TooltipUtils.getScaledResolution()
             .getScaleFactor();
@@ -115,19 +168,52 @@ final class NativeTooltipMouse {
             : event.y - event.page.getMargin()
                 .getTop() * scale;
         for (Hit hit : hits) {
-            double x = Math.max(left, dx + hit.x * scale), y = Math.max(top, dy + hit.y * scale);
-            double endX = Math.min(right, dx + (hit.x + hit.width) * scale);
-            double endY = Math.min(bottom, dy + (hit.y + hit.height) * scale);
-            if (endX > x && endY > y) active.add(new Hit(x, y, endX - x, endY - y, hit.action));
+            Rectangle2D bounds = hit.bounds;
+            Rectangle2D scaled = new Rectangle2D.Double(
+                dx + bounds.getX() * scale,
+                dy + bounds.getY() * scale,
+                bounds.getWidth() * scale,
+                bounds.getHeight() * scale);
+            Rectangle2D clipped = scaled.createIntersection(window.bounds);
+            if (!clipped.isEmpty()) window.hits.add(new Hit(clipped, hit.action, hit.material));
         }
     }
 
+    static Rectangle bounds(TooltipContext context) {
+        for (Painted window : painted) if (window.context == context) return window.bounds;
+        return null;
+    }
+
+    private static Painted windowAt(GuiScreen gui, int x, int y, List<Painted> windows) {
+        for (int i = windows.size() - 1; i >= 0; i--) {
+            Painted window = windows.get(i);
+            if (window.contains(gui, x, y)) return window;
+        }
+        return null;
+    }
+
+    static TooltipContext contextAt(GuiScreen gui, Point mouse, boolean beforeDraw) {
+        Painted window = windowAt(gui, mouse.x, mouse.y, beforeDraw ? previous : painted);
+        return window == null ? null : window.context;
+    }
+
+    static MaterialHit materialAt(GuiScreen gui, Point mouse, boolean beforeDraw) {
+        Painted window = windowAt(gui, mouse.x, mouse.y, beforeDraw ? previous : painted);
+        if (window == null) return null;
+        for (int i = window.hits.size() - 1; i >= 0; i--) {
+            Hit hit = window.hits.get(i);
+            if (hit.material != null && hit.bounds.contains(mouse)) return new MaterialHit(hit.bounds, hit.material);
+        }
+        return null;
+    }
+
     static boolean click(GuiScreen gui, int x, int y, int button) {
-        if (!consumeRelease(gui, x, y, button)) return false;
+        Painted window = windowAt(gui, x, y, painted);
+        if (window == null) return false;
         if (button == 0) {
-            for (int i = active.size() - 1; i >= 0; i--) {
-                Hit hit = active.get(i);
-                if (hit.contains(x, y)) {
+            for (int i = window.hits.size() - 1; i >= 0; i--) {
+                Hit hit = window.hits.get(i);
+                if (hit.action != null && hit.bounds.contains(x, y)) {
                     hit.action.run();
                     break;
                 }
@@ -137,11 +223,6 @@ final class NativeTooltipMouse {
     }
 
     static boolean consumeRelease(GuiScreen gui, int x, int y, int button) {
-        if (gui == null || gui != owner
-            || gui != Minecraft.getMinecraft().currentScreen
-            || TooltipAnimationClock.nowNanos() - drawn > 300000000L
-            || (TooltipController.pinned() && (!TooltipPinning.active(gui) || !TooltipController.isPinned(item))))
-            return false;
-        return x >= left && y >= top && x < right && y < bottom;
+        return windowAt(gui, x, y, painted) != null;
     }
 }

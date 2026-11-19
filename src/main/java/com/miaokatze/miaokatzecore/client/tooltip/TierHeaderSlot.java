@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 package com.miaokatze.miaokatzecore.client.tooltip;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import com.slprime.chromatictooltips.api.ITooltipComponent;
 import com.slprime.chromatictooltips.api.TooltipContext;
+import com.slprime.chromatictooltips.component.InlineComponent;
 import com.slprime.chromatictooltips.component.KeyboardModifierComponent;
 import com.slprime.chromatictooltips.component.SectionComponent;
 
-/** The authored tier hint stays in itemInfo unless the assembled header contains the native title and key bar. */
+/** A tier hint stays readable in its body until the assembled header accepts the inline row. */
 final class TierHeaderSlot implements ITooltipComponent {
 
     private final ITooltipComponent hint;
@@ -16,52 +21,67 @@ final class TierHeaderSlot implements ITooltipComponent {
         this.hint = hint;
     }
 
-    /** Item names own this shared row, including ordinary items and the native structure page. */
-    static boolean pin(SectionComponent header, ITooltipComponent pin) {
-        if (header == null) return false;
-        for (ITooltipComponent part : header.getComponents()) {
-            if (!(part instanceof SectionComponent)) continue;
-            SectionComponent title = (SectionComponent) part;
-            if (!"title".equals(title.getSectionId()) || title.isEmpty()) continue;
-            for (ITooltipComponent child : title.getComponents())
-                if (child instanceof NativePinComponent || child == pin) return true;
-            title.addComponent(pin);
-            return true;
+    static SectionComponent compose(SectionComponent header, SectionComponent body, ITooltipComponent pin) {
+        if (header == null) return null;
+        List<ITooltipComponent> sections = new ArrayList<>(header.getComponents());
+        TierHeaderSlot tier = findTier(body);
+        List<ITooltipComponent> controls = new ArrayList<>();
+        controls.add(pin);
+        if (tier != null) {
+            controls.add(tier.hint);
+            tier.moved = true;
         }
-        return false;
+        int afterTitle = sections.size();
+        for (int i = 0; i < sections.size(); i++) {
+            if (!(sections.get(i) instanceof SectionComponent)) continue;
+            SectionComponent section = (SectionComponent) sections.get(i);
+            if ("title".equals(section.getSectionId())) afterTitle = i + 1;
+            if (!"keyboard-modifier".equals(section.getSectionId())) continue;
+
+            List<ITooltipComponent> parts = new ArrayList<>(section.getComponents());
+            for (int j = 0; j < parts.size(); j++) {
+                ITooltipComponent nativeKeys = parts.get(j);
+                if (!(nativeKeys instanceof KeyboardModifierComponent)) continue;
+                controls.add(0, nativeKeys);
+                parts.set(j, new KeyRow(controls));
+                sections.set(i, new SectionComponent(section.getSectionId(), section, parts));
+                return new SectionComponent(header.getSectionId(), header, sections);
+            }
+        }
+        sections.add(afterTitle, new KeyRow(controls));
+        return new SectionComponent(header.getSectionId(), header, sections);
     }
 
-    static void place(SectionComponent header, SectionComponent body) {
-        if (header == null || body == null) return;
-        SectionComponent title = null;
-        boolean keyboardAfterTitle = false;
-        for (ITooltipComponent part : header.getComponents()) {
-            if (!(part instanceof SectionComponent)) continue;
-            SectionComponent section = (SectionComponent) part;
-            if ("title".equals(section.getSectionId()) && !section.isEmpty()) title = section;
-            if (title != null && "keyboard-modifier".equals(section.getSectionId())
-                && section.getComponents()
-                    .stream()
-                    .anyMatch(KeyboardModifierComponent.class::isInstance)) {
-                keyboardAfterTitle = true;
-                break;
-            }
-        }
-        if (!keyboardAfterTitle) return;
-
+    private static TierHeaderSlot findTier(SectionComponent body) {
+        if (body == null) return null;
         for (ITooltipComponent part : body.getComponents()) {
             if (!(part instanceof SectionComponent)) continue;
-            SectionComponent info = (SectionComponent) part;
-            if (!"itemInfo".equals(info.getSectionId())) continue;
-            for (ITooltipComponent component : info.getComponents()) {
-                if (!(component instanceof TierHeaderSlot)) continue;
-                TierHeaderSlot slot = (TierHeaderSlot) component;
-                if (!slot.moved) {
-                    title.addComponent(slot.hint);
-                    slot.moved = true;
-                }
-                return;
+            SectionComponent section = (SectionComponent) part;
+            if (!"itemInfo".equals(section.getSectionId())) continue;
+            for (ITooltipComponent component : section.getComponents())
+                if (component instanceof TierHeaderSlot && !((TierHeaderSlot) component).moved)
+                    return (TierHeaderSlot) component;
+        }
+        return null;
+    }
+
+    private static final class KeyRow extends InlineComponent {
+
+        KeyRow(List<ITooltipComponent> controls) {
+            super(Collections.singletonList(controls), 4, 0);
+        }
+
+        @Override
+        public ITooltipComponent[] paginate(TooltipContext context, int width, int height) {
+            List<ITooltipComponent> parts = new ArrayList<>();
+            for (ITooltipComponent control : lines.get(0)) {
+                // The body can register native modifiers after the header has been collected.
+                if (control instanceof KeyboardModifierComponent || control.getWidth() > width) {
+                    for (ITooltipComponent part : control.paginate(context, width, height))
+                        if (part.getHeight() > 0) parts.add(part);
+                } else if (control.getHeight() > 0) parts.add(control);
             }
+            return new InlineComponent(Collections.singletonList(parts), 4, 0).paginate(context, width, height);
         }
     }
 
@@ -82,7 +102,6 @@ final class TierHeaderSlot implements ITooltipComponent {
 
     @Override
     public ITooltipComponent[] paginate(TooltipContext context, int width, int height) {
-        // SectionComponent.paginate ignores zero-height parts and recalculates every parent section's size.
         return moved ? new ITooltipComponent[] { this } : hint.paginate(context, width, height);
     }
 

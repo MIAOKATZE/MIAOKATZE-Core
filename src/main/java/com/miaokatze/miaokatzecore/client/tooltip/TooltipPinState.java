@@ -1,20 +1,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 package com.miaokatze.miaokatzecore.client.tooltip;
 
-/** One local inventory-session pin. The caller owns the immutable rendered snapshot. */
+/** The root and one child can be fixed in the same GUI session. */
 final class TooltipPinState<T> {
 
     private Object owner;
     private T hover;
     private T fixed;
+    private T child;
 
-    void screen(Object current) {
-        // A confirmation screen may temporarily cover the inventory. Only returning to play ends the session.
-        if (current == null) {
-            owner = null;
-            hover = null;
-            fixed = null;
-        }
+    boolean screen(Object current) {
+        if (owner == current) return false;
+        owner = current;
+        hover = null;
+        fixed = null;
+        child = null;
+        return true;
     }
 
     void beginFrame(Object current) {
@@ -23,22 +24,20 @@ final class TooltipPinState<T> {
     }
 
     void hover(Object current, T snapshot) {
-        if (current == null || snapshot == null) return;
-        // Keep a temporary confirmation overlay suspended, but never let a hidden pin lock another item GUI.
-        // Only an actually rendered item in the other GUI retires the old owner and its unique fixed target.
-        if (fixed != null && current != owner) fixed = null;
-        if (fixed == null) owner = current;
-        hover = snapshot;
+        if (current != null && current == owner) hover = snapshot;
     }
 
-    boolean toggle(Object current) {
+    boolean toggle(Object current, T childHover) {
         if (current == null || current != owner) return false;
-        if (fixed != null) {
-            fixed = null;
-            return true;
+        if (child != null) {
+            child = null;
+        } else if (fixed != null) {
+            if (childHover != null) child = childHover;
+            else fixed = null;
+        } else {
+            if (hover == null) return false;
+            fixed = hover;
         }
-        if (hover == null) return false;
-        fixed = hover;
         return true;
     }
 
@@ -48,6 +47,10 @@ final class TooltipPinState<T> {
 
     T fixed() {
         return fixed;
+    }
+
+    T child() {
+        return child;
     }
 
     T hovered() {

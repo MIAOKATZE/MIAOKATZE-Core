@@ -1,5 +1,15 @@
 # TessellatorSlice：现有 GL_QUADS 批次的 CPU 捕获与重放
 
+## 大型结构预览
+
+`client.preview.PreviewGeometryCache` 为静止预览场景管理一组 `TessellatorSlice`。调用方提供预览世界、结构修订号和静态方块判定，继续负责原生渲染批次、相机、仓室和覆盖层。集成中心和临界机器使用同一个 Core 缓存及 BlockRenderer 接入点。
+
+1. 预览世界改动时递增结构修订号。选择集合在原位编辑时调用 `invalidate()`。
+2. 在绘制前检查 `supports(tessellator)`，对非淡化的稳定坐标集合调用 `prepare(positions)`，坐标使用 GTNHLib 打包。返回 `false` 时按调用方原生流程绘制。
+3. 在已启动的四边形批次中调用 `append()`。原生顺序中的未知方块继续实时渲染。只有可安全重放、依赖当前预览方块与纹理状态的渲染器可进入缓存。
+
+Core 将连续静态坐标按最多 2,048 个拆分。单个活动场景保留最多 64 MiB 的顶点整数，顶点写掩码单独计入内存。切换 GUI、重载纹理或进入另一个预览会释放旧缓存。
+
 `TessellatorSlice` 是 vanilla `Tessellator` 顶点数据的不可变 CPU 副本。它只向正在构建的现有批次追加顶点，不绘制、不清空或重启批次，也不持有 OpenGL 资源。源码合同见 `src/main/java/com/miaokatze/miaokatzecore/client/render/TessellatorSlice.java`；CPU 数据合同见 `TessellatorSliceContracts`。
 
 ## 捕获与 null 结果

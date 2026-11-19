@@ -133,7 +133,8 @@ public final class PreviewGeometryCache {
             if (segment.cacheable && !segment.captureRejected
                 && (segment.slice != null || retainedInts < MAX_VERTEX_INTS)
                 && renderRevision == sourceRevision.getAsLong()
-                && !renderer.hasOverrideBlockTexture() && !renderer.lockBlockBounds
+                && !renderer.hasOverrideBlockTexture()
+                && !renderer.lockBlockBounds
                 && supports(tessellator)) {
                 setup(renderer, allFaces);
                 if (segment.slice != null && segment.input.matches(renderer) && segment.slice.replay(tessellator)) {
@@ -236,7 +237,8 @@ public final class PreviewGeometryCache {
         }
 
         private boolean matches(RenderBlocks renderer) {
-            return ao == renderer.enableAO && tint == renderer.useInventoryTint && allFaces == renderer.renderAllFaces
+            return ao == renderer.enableAO && tint == renderer.useInventoryTint
+                && allFaces == renderer.renderAllFaces
                 && forgePass == ForgeHooksClient.getWorldRenderPass();
         }
     }

@@ -33,7 +33,6 @@ public final class TooltipPinning {
     private static final int GAP = 4;
     private static final TooltipPinState<Frame> state = new TooltipPinState<>();
     private static TooltipRequest pending;
-    private static Frame lastRoot;
     private static Frame preview;
     private static Rectangle2D source;
     private static boolean drawing;
@@ -175,7 +174,6 @@ public final class TooltipPinning {
     }
 
     private static void clearPaint() {
-        lastRoot = null;
         preview = null;
         source = null;
         pending = null;
@@ -192,7 +190,7 @@ public final class TooltipPinning {
         GuiScreen gui = Minecraft.getMinecraft().currentScreen;
         screen(gui);
         if (drawing) return false;
-        if (active(gui) || holdRoot(gui, request)) return true;
+        if (active(gui)) return true;
         pending = request;
         return false;
     }
@@ -208,30 +206,11 @@ public final class TooltipPinning {
             event.context,
             new Rectangle(event.x, event.y, event.width, event.height),
             null);
-        lastRoot = frame;
         state.hover(Minecraft.getMinecraft().currentScreen, frame);
     }
 
     private static boolean matchesTarget(TooltipTarget rendered, TooltipTarget requested) {
         return requested.equivalentTo(rendered) || rendered.equivalentTo(TooltipRegistry.sanitizeTarget(requested));
-    }
-
-    private static boolean holdRoot(GuiScreen gui, TooltipRequest next) {
-        if (lastRoot == null) return false;
-        Point mouse = TooltipUtils.getMousePosition();
-        TooltipContext hit = NativeTooltipMouse.contextAt(gui, mouse, true);
-        return canHoldRoot(
-            lastRoot.cursor,
-            lastRoot.bounds,
-            mouse,
-            next == null ? null : next.target,
-            hasContext(lastRoot, hit) || hasContext(preview, hit) || inGap(mouse));
-    }
-
-    static boolean canHoldRoot(Point start, Rectangle bounds, Point mouse, TooltipTarget requested,
-        boolean overWindowOrPreviewGap) {
-        if (hasTarget(requested)) return false;
-        return overWindowOrPreviewGap || !start.equals(mouse) && nearWindow(start, bounds, mouse, 3);
     }
 
     private static boolean hasTarget(TooltipTarget target) {
@@ -264,7 +243,7 @@ public final class TooltipPinning {
             hover.cursor,
             mouse,
             TooltipAnimationClock.nowNanos() - hover.captured,
-            hasContext(hover, hit) || hover == lastRoot && hasContext(preview, hit),
+            hasContext(hover, hit),
             pointed != null,
             sameStack);
     }
@@ -323,7 +302,7 @@ public final class TooltipPinning {
         if (state.fixed() != null) state.fixed().dirty = true;
         if (state.child() != null) state.child().dirty = true;
         if (preview != null) preview.dirty = true;
-        if (lastRoot != null) lastRoot.dirty = true;
+        if (state.hovered() != null) state.hovered().dirty = true;
     }
 
     static void followSelected() {
@@ -335,10 +314,8 @@ public final class TooltipPinning {
     public static boolean drawPinned() {
         GuiScreen gui = Minecraft.getMinecraft().currentScreen;
         screen(gui);
-        Frame root = state.fixed();
-        if (root == null && holdRoot(gui, pending)) root = lastRoot;
+        Frame root = state.pinnedRoot(gui);
         if (root == null) {
-            lastRoot = null;
             preview = null;
             source = null;
             return false;
@@ -348,7 +325,6 @@ public final class TooltipPinning {
         try {
             ScaledResolution size = TooltipUtils.getScaledResolution();
             root.drawAtSavedPosition(size);
-            if (!pinned()) state.hover(gui, root);
             if (state.child() != null) state.child()
                 .drawAtSavedPosition(size);
             else drawPreview(gui, root, size);

@@ -42,7 +42,12 @@ final class TooltipPinState<T> {
     }
 
     boolean active(Object current) {
-        return fixed != null && current == owner;
+        return pinnedRoot(current) != null;
+    }
+
+    /** Hover snapshots are candidates for the key only, never roots for the fixed render pass. */
+    T pinnedRoot(Object current) {
+        return current != null && current == owner ? fixed : null;
     }
 
     T fixed() {

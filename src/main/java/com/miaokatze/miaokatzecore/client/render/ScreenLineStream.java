@@ -61,6 +61,7 @@ public final class ScreenLineStream implements AutoCloseable {
     }
 
     private final Thread owner = Thread.currentThread();
+    private ContextCapabilities context;
     private ByteBuffer staging;
     private VertexBuffer buffer;
     private IVertexArrayObject array;
@@ -96,6 +97,7 @@ public final class ScreenLineStream implements AutoCloseable {
             || TessellatorCapture.active(tessellator)) return reject(Rejection.CAPTURE);
 
         ContextCapabilities caps = GLContext.getCapabilities();
+        if (context != null && context != caps) return reject(Rejection.UNSUPPORTED_GL);
         if (!caps.OpenGL30 || !VAOManager.isVaoEnabled()) return reject(Rejection.UNSUPPORTED_GL);
         angelica = Loader.isModLoaded("angelica");
         if (angelica) {
@@ -118,6 +120,7 @@ public final class ScreenLineStream implements AutoCloseable {
         if (staging == null) staging = MemoryUtilities.memAlloc(MAX_VERTICES * BYTES_PER_VERTEX)
             .order(ByteOrder.nativeOrder());
         GL11.glPushClientAttrib(GL11.GL_CLIENT_VERTEX_ARRAY_BIT);
+        context = caps;
         active = true;
         rejection = Rejection.NONE;
         passes++;
@@ -241,12 +244,21 @@ public final class ScreenLineStream implements AutoCloseable {
     public void close() {
         if (Thread.currentThread() != owner) throw new IllegalStateException("Screen lines require their owner thread");
         if (closed) return;
+        boolean sameContext = false;
         try {
-            if (active) end();
+            sameContext = context != null && GLContext.getCapabilities() == context;
+        } catch (IllegalStateException absent) {
+            // The originating context has already been destroyed. Its GL objects are no longer deletable.
+        }
+        try {
+            if (active && sameContext) end();
+            active = false;
         } finally {
             try {
-                if (array != null) array.delete();
-                else if (buffer != null) buffer.delete();
+                if (sameContext) {
+                    if (array != null) array.delete();
+                    else if (buffer != null) buffer.delete();
+                }
             } finally {
                 try {
                     if (staging != null) MemoryUtilities.memFree(staging);

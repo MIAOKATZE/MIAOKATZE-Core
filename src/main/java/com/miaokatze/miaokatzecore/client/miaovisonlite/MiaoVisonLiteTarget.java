@@ -19,6 +19,7 @@ import org.lwjgl.opengl.GLContext;
 public final class MiaoVisonLiteTarget implements AutoCloseable {
 
     private final Framebuffer framebuffer;
+    private final ContextCapabilities context = MiaoVisonLiteMaterialBatch.boundContext();
     private boolean closed;
 
     public MiaoVisonLiteTarget(int width, int height) {
@@ -26,7 +27,8 @@ public final class MiaoVisonLiteTarget implements AutoCloseable {
     }
 
     public boolean sizeMatches(int width, int height) {
-        return framebuffer.framebufferWidth == width && framebuffer.framebufferHeight == height;
+        return context == MiaoVisonLiteMaterialBatch.boundContext() && framebuffer.framebufferWidth == width
+            && framebuffer.framebufferHeight == height;
     }
 
     public int textureWidth() {
@@ -91,7 +93,7 @@ public final class MiaoVisonLiteTarget implements AutoCloseable {
     @Override
     public void close() {
         if (!closed) {
-            framebuffer.deleteFramebuffer();
+            if (context == MiaoVisonLiteMaterialBatch.boundContext()) framebuffer.deleteFramebuffer();
             closed = true;
         }
     }

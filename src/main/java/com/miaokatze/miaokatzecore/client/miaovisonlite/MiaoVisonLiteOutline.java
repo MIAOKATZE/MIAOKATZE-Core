@@ -19,6 +19,7 @@ public final class MiaoVisonLiteOutline implements AutoCloseable {
     private static final long MAX_RESIDENT_BYTES = 112L * 1024 * 1024;
     private static final long MAX_RECORD_BYTES_PER_FRAME = 16L * 1024 * 1024;
     private final List<Packet> packets = new ArrayList<>();
+    private final MiaoVisonLiteWideLinePacket.Staging staging = new MiaoVisonLiteWideLinePacket.Staging();
     private Object source, pose, outlines, selection;
     private OutlineFrame frame;
     private int selected, selectionVersion, density, seenOutlines, coveredOutlines;
@@ -50,7 +51,7 @@ public final class MiaoVisonLiteOutline implements AutoCloseable {
             && this.depth == depthBits
             && count >= seenOutlines;
         if (!same) {
-            close();
+            clearPackets();
             frame = next;
             this.source = source;
             this.pose = pose;
@@ -109,7 +110,7 @@ public final class MiaoVisonLiteOutline implements AutoCloseable {
         try {
             // The live drawer supplies these defaults before the exact same wide-line expansion.
             MiaoVisonLiteMaterialBatch.expandOutline(tess, frame.frame);
-            geometry = MiaoVisonLiteWideLinePacket.upload(frame, raw, vertices);
+            geometry = MiaoVisonLiteWideLinePacket.upload(frame, raw, vertices, staging);
         } catch (LinkageError unavailable) {
             recording = false;
             return false;
@@ -167,6 +168,14 @@ public final class MiaoVisonLiteOutline implements AutoCloseable {
 
     @Override
     public void close() {
+        try {
+            clearPackets();
+        } finally {
+            staging.close();
+        }
+    }
+
+    private void clearPackets() {
         for (Packet packet : packets) packet.geometry.close();
         packets.clear();
         source = pose = outlines = selection = null;

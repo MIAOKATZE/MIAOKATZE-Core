@@ -155,15 +155,22 @@ mapOf(
     "runAngelicaSliceContracts" to "com.miaokatze.miaokatzecore.client.camera.slice.AngelicaSliceContracts",
     "runTessellatorSliceContracts" to "com.miaokatze.miaokatzecore.client.render.TessellatorSliceContracts",
     "runScreenLineContracts" to "com.miaokatze.miaokatzecore.client.render.ScreenLineContracts",
+    "runMiaoVisonLiteWideLineContracts" to "com.miaokatze.miaokatzecore.client.miaovisonlite.MiaoVisonLiteWideLineContracts",
     "runCameraRenderBoundaryContracts" to "com.miaokatze.miaokatzecore.mixin.camera.CameraRenderBoundaryContracts"
 ).forEach { (taskName, entryPoint) ->
     tasks.register<JavaExec>(taskName) {
         group = "verification"
         mainClass = entryPoint
         classpath = sourceSets.getByName("test").runtimeClasspath
-        if (taskName == "runCameraFrameStoreContracts" || taskName == "runAngelicaSliceContracts" || taskName == "runTessellatorSliceContracts" || taskName == "runScreenLineContracts") {
+        if (taskName == "runCameraFrameStoreContracts" || taskName == "runAngelicaSliceContracts" || taskName == "runTessellatorSliceContracts" || taskName == "runScreenLineContracts" || taskName == "runMiaoVisonLiteWideLineContracts") {
             // Exercise the production slice click fence without launching Minecraft or an OpenGL context.
             classpath += sourceSets.getByName("main").compileClasspath
+        }
+        if (taskName == "runMiaoVisonLiteWideLineContracts") {
+            // GTNHLib's memory utilities load LWJGL to discover the native pointer width.
+            val natives = tasks.named<com.gtnewhorizons.retrofuturagradle.minecraft.ExtractNativesTask>("extractNatives2")
+            dependsOn(natives)
+            systemProperty("org.lwjgl.librarypath", natives.get().destinationFolder.get().asFile.absolutePath)
         }
     }
     tasks.named("check") { dependsOn(taskName) }

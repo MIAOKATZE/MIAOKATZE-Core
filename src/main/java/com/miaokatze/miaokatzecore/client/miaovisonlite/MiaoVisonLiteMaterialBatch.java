@@ -113,7 +113,7 @@ public final class MiaoVisonLiteMaterialBatch implements AutoCloseable {
     static OutlineFrame outlineFrame(Tessellator tess) {
         if (!Loader.isModLoaded("angelica") || AngelicaFfpBridge.isSDLGPU() || !Angelica.widensLines()) return null;
         Frame frame = currentFrame(tess);
-        if (frame == null || !frame.angelica) return null;
+        if (!MiaoVisonLiteMesh.supported(frame)) return null;
         return Angelica.outlineDefaults(frame, (TessellatorAccessor) tess);
     }
 
@@ -130,13 +130,17 @@ public final class MiaoVisonLiteMaterialBatch implements AutoCloseable {
     static final class OutlineFrame {
 
         final Frame frame;
+        final VertexFormat lineFormat, wideFormat;
         final int bytesPerVertex;
         private final int textureU, textureV, width;
         private final long x, y, z;
 
-        OutlineFrame(Frame frame, int bytesPerVertex, Vector4f tex, TessellatorAccessor tess) {
+        OutlineFrame(Frame frame, VertexFormat lineFormat, VertexFormat wideFormat, Vector4f tex,
+            TessellatorAccessor tess) {
             this.frame = frame;
-            this.bytesPerVertex = bytesPerVertex;
+            this.lineFormat = lineFormat;
+            this.wideFormat = wideFormat;
+            bytesPerVertex = 3 * wideFormat.getVertexSize();
             textureU = frame.defaults == null ? 0 : Float.floatToRawIntBits(tex.x);
             textureV = frame.defaults == null ? 0 : Float.floatToRawIntBits(tex.y);
             width = Float.floatToRawIntBits(GL11.glGetFloat(GL11.GL_LINE_WIDTH));
@@ -395,9 +399,8 @@ public final class MiaoVisonLiteMaterialBatch implements AutoCloseable {
                         | VertexFlags.NORMAL_BIT
                         | VertexFlags.BRIGHTNESS_BIT];
                 VertexFormat wide = (VertexFormat) QUAD_FORMAT.invoke(null, format);
-                int bytesPerVertex = format.getVertexSize() + 3 * wide.getVertexSize();
                 Vector4f tex = frame.defaults == null ? null : (Vector4f) TEXTURE.invoke(null);
-                return new OutlineFrame(frame, bytesPerVertex, tex, tess);
+                return new OutlineFrame(frame, format, wide, tex, tess);
             } catch (ReflectiveOperationException | LinkageError unavailable) {
                 return null;
             }

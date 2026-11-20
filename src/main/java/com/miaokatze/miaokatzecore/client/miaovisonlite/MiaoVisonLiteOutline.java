@@ -16,7 +16,7 @@ import com.miaokatze.miaokatzecore.mixin.render.TessellatorAccessor;
 /** Resident wide-line packets for the append-only prefix of one projected outline. */
 public final class MiaoVisonLiteOutline implements AutoCloseable {
 
-    private static final long MAX_RESIDENT_BYTES = 224L * 1024 * 1024;
+    private static final long MAX_RESIDENT_BYTES = 112L * 1024 * 1024;
     private static final long MAX_RECORD_BYTES_PER_FRAME = 16L * 1024 * 1024;
     private final List<Packet> packets = new ArrayList<>();
     private Object source, pose, outlines, selection;
@@ -34,7 +34,7 @@ public final class MiaoVisonLiteOutline implements AutoCloseable {
         recordedBytes = 0;
         OutlineFrame next = MiaoVisonLiteMaterialBatch.outlineFrame(tess);
         if (next == null) {
-            recording = false;
+            close();
             return 0;
         }
         int densityBits = Float.floatToRawIntBits(density);
@@ -70,6 +70,7 @@ public final class MiaoVisonLiteOutline implements AutoCloseable {
             access.miaokatze$setHasColor(true);
             tess.draw();
             packet.geometry.draw();
+            MiaoVisonLiteMaterialBatch.count("wide-line-packet-replay");
             replayedVertices += packet.vertices;
         }
         return coveredOutlines;
@@ -81,13 +82,17 @@ public final class MiaoVisonLiteOutline implements AutoCloseable {
      */
     public boolean record(Tessellator tess, int vertices, int nextOutline) {
         if (!recording) return false;
+        if (vertices <= 0 || (vertices & 1) != 0 || vertices > MiaoVisonLiteMesh.MAX_VERTICES) return false;
         long bytes = (long) vertices * frame.bytesPerVertex;
         if (retainedBytes + bytes > MAX_RESIDENT_BYTES || recordedBytes + bytes > MAX_RECORD_BYTES_PER_FRAME) {
             recording = false;
             return false;
         }
         TessellatorAccessor access = (TessellatorAccessor) tess;
-        if (!access.miaokatze$getIsDrawing() || access.miaokatze$getDrawMode() != GL11.GL_LINES
+        int[] raw = access.miaokatze$getRawBuffer();
+        if (raw == null || raw.length < vertices * 8
+            || !access.miaokatze$getIsDrawing()
+            || access.miaokatze$getDrawMode() != GL11.GL_LINES
             || access.miaokatze$getRawBufferIndex() != vertices * 8
             || access.miaokatze$getVertexCount() != vertices
             || access.miaokatze$getAddedVertices() != vertices
@@ -98,18 +103,27 @@ public final class MiaoVisonLiteOutline implements AutoCloseable {
             recording = false;
             return false;
         }
-        MiaoVisonLiteDisplayList geometry = MiaoVisonLiteDisplayList.allocate();
-        if (geometry == null) {
+        int color = access.miaokatze$getColor();
+        MiaoVisonLiteWideLinePacket geometry;
+        long started = MiaoVisonLiteMaterialBatch.beginStage();
+        try {
+            // The live drawer supplies these defaults before the exact same wide-line expansion.
+            MiaoVisonLiteMaterialBatch.expandOutline(tess, frame.frame);
+            geometry = MiaoVisonLiteWideLinePacket.upload(frame, raw, vertices);
+        } catch (LinkageError unavailable) {
             recording = false;
             return false;
+        } finally {
+            access.miaokatze$setHasTexture(false);
+            access.miaokatze$setHasBrightness(false);
+            access.miaokatze$setHasNormals(false);
         }
-        int color = access.miaokatze$getColor();
         try {
-            // The live drawer supplies the same default channels before expanding each line as triangles.
-            MiaoVisonLiteMaterialBatch.expandOutline(tess, frame.frame);
-            geometry.begin();
+            // Close the caller's batch without drawing it a second time.
+            access.miaokatze$setRawBufferIndex(0);
+            access.miaokatze$setVertexCount(0);
+            access.miaokatze$setAddedVertices(0);
             tess.draw();
-            geometry.finish();
             geometry.draw();
         } catch (RuntimeException | Error failure) {
             try {
@@ -121,15 +135,14 @@ public final class MiaoVisonLiteOutline implements AutoCloseable {
         } finally {
             access.miaokatze$setColor(color);
             access.miaokatze$setHasColor(true);
-            access.miaokatze$setHasTexture(false);
-            access.miaokatze$setHasBrightness(false);
-            access.miaokatze$setHasNormals(false);
+            MiaoVisonLiteMaterialBatch.endStage("wide-line-packet-upload-and-draw-ns", started);
         }
         packets.add(new Packet(geometry, color, vertices));
         coveredOutlines = nextOutline;
         retainedBytes += bytes;
         recordedBytes += bytes;
         recordings++;
+        MiaoVisonLiteMaterialBatch.count("wide-line-packet-upload");
         return true;
     }
 
@@ -154,7 +167,7 @@ public final class MiaoVisonLiteOutline implements AutoCloseable {
 
     @Override
     public void close() {
-        if (frame != null && frame.currentContext()) for (Packet packet : packets) packet.geometry.close();
+        for (Packet packet : packets) packet.geometry.close();
         packets.clear();
         source = pose = outlines = selection = null;
         frame = null;
@@ -165,10 +178,10 @@ public final class MiaoVisonLiteOutline implements AutoCloseable {
 
     private static final class Packet {
 
-        final MiaoVisonLiteDisplayList geometry;
+        final MiaoVisonLiteWideLinePacket geometry;
         final int color, vertices;
 
-        Packet(MiaoVisonLiteDisplayList geometry, int color, int vertices) {
+        Packet(MiaoVisonLiteWideLinePacket geometry, int color, int vertices) {
             this.geometry = geometry;
             this.color = color;
             this.vertices = vertices;

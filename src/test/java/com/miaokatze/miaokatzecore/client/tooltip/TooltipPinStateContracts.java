@@ -10,15 +10,29 @@ public final class TooltipPinStateContracts {
         state.beginFrame(inventory);
         check(!state.toggle(inventory, null), "Pin requires a rendered root");
         state.hover(inventory, "root");
+        check(state.pinnedRoot(inventory) == null, "Normal slot hover never replaces the ordinary render pass");
+        state.beginFrame(inventory);
+        check(
+            state.pinnedRoot(inventory) == null && state.hovered() == null,
+            "Moving from the slot into the previous tooltip or its gap must not keep the old frame");
+        state.beginFrame(inventory);
+        check(
+            state.pinnedRoot(inventory) == null,
+            "Remaining over the previous bounds cannot resurrect an unpinned tooltip");
+        state.hover(inventory, "root");
         check(state.toggle(inventory, null) && "root".equals(state.fixed()), "Pin the rendered root");
         state.beginFrame(inventory);
         state.hover(inventory, "other item");
-        check("root".equals(state.fixed()), "Another hovered item cannot replace the root");
+        check(
+            "root".equals(state.pinnedRoot(inventory)),
+            "Pointer movement must not replace an explicitly pinned root");
         check(state.toggle(inventory, "material") && "material".equals(state.child()), "Pin a rendered material");
         check("root".equals(state.fixed()) && state.active(inventory), "Both pins remain in the same GUI");
         check(state.toggle(inventory, "other child") && state.child() == null, "Unpin the child first");
         check("root".equals(state.fixed()), "Unpinning the child keeps the root");
-        check(state.toggle(inventory, null) && !state.active(inventory), "Unpin the root next");
+        check(
+            state.toggle(inventory, null) && state.pinnedRoot(inventory) == null,
+            "Unpin releases the fixed render pass");
         state.beginFrame(inventory);
         check(!state.toggle(inventory, null), "Old hover cannot start another pin");
         state.hover(inventory, "root");
@@ -37,7 +51,8 @@ public final class TooltipPinStateContracts {
         check(
             state.fixed() == null && state.child() == null && !state.active(inventory),
             "Returning to play clears both layers");
-        System.out.println("TooltipPinStateContracts: PASS (two pins, ordered unpin, GUI and play cleanup)");
+        System.out.println(
+            "TooltipPinStateContracts: PASS (transient hover, explicit pins, ordered unpin, GUI and play cleanup)");
     }
 
     private static void check(boolean ok, String message) {

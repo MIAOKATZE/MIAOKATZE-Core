@@ -1,5 +1,9 @@
 # MIAOKATZE Core
 
+<p align="center">
+  <img alt="MIAOKATZE Core latest release" src="https://img.shields.io/github/v/release/MIAOKATZE/MIAOKATZE-Core?label=Core&amp;color=green">
+</p>
+
 为 MIAOKATZE 系列模组提供共享渲染、相机、界面与任务管理能力的基础库。
 
 A shared library for rendering, cameras, UI and task management across MIAOKATZE mods.
@@ -8,7 +12,7 @@ A shared library for rendering, cameras, UI and task management across MIAOKATZE
 
 | Core | GTNH | Minecraft / Forge | Java | 下载 / Download |
 | --- | --- | --- | --- | --- |
-| 0.2.21（源码 / source） | 2.9.0 | 1.7.10 / 10.13.4.1614 | 8+ | [版本列表 / Releases](https://github.com/MIAOKATZE/MIAOKATZE-Core/releases) |
+| [见 Release / See releases](https://github.com/MIAOKATZE/MIAOKATZE-Core/releases) | 2.9.0 | 1.7.10 / 10.13.4.1614 | 8+ | [最新发布版 / Latest release](https://github.com/MIAOKATZE/MIAOKATZE-Core/releases/latest) |
 
 可在「选项 → 控制 → MIAOKATZE Core Tooltip 组件」更改切图、选图、固定键，默认分别为 **V／Tab／C**，提示显示实际绑定；换档使用 **Alt+当前切图键**。在 GTNH 2.9.0 的 Chromatic Tooltips 绘制层，所有物品和机器名称下方自动显示图钉、空白键帽与固定提示。按 **C** 固定当前悬浮窗，移开或悬停其他物品仍可继续阅读；再按一次解除。关闭背包返回游玩会清除固定，下次打开不保留。
 
@@ -24,9 +28,13 @@ Install the same Core version on client and server. Follow each mod's minimum-ve
 
 ## 开发依赖 / Development dependency
 
+将 `<Core version>` 替换为所需的 Core 版本，具体要求见所用模组对应的 Release。
+
+Replace `<Core version>` with the Core version required by the corresponding mod release.
+
 ```groovy
 repositories { maven { url = "https://raw.githubusercontent.com/MIAOKATZE/MIAOKATZE-Core/maven/" } }
-dependencies { api("com.miaokatze.miaokatzecore:miaokatzecore:0.2.14:dev") { transitive = false } }
+dependencies { api("com.miaokatze.miaokatzecore:miaokatzecore:<Core version>:dev") { transitive = false } }
 ```
 
 ## 模块

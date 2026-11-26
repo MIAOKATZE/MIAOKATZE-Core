@@ -193,6 +193,9 @@ public final class NativePageAdapterContracts {
                     public void pushContext() {}
 
                     @Override
+                    public void pushContext(TooltipContext context) {}
+
+                    @Override
                     public void popContext() {}
                 };
             }

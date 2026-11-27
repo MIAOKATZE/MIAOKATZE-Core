@@ -12,6 +12,14 @@ Core 将连续静态坐标按最多 2,048 个拆分。单个活动场景保留�
 
 `TessellatorSlice` 是 vanilla `Tessellator` 顶点数据的不可变 CPU 副本。它只向正在构建的现有批次追加顶点，不绘制、不清空或重启批次，也不持有 OpenGL 资源。源码合同见 `src/main/java/com/miaokatze/miaokatzecore/client/render/TessellatorSlice.java`；CPU 数据合同见 `TessellatorSliceContracts`。
 
+## StructureLib 手持投影仪
+
+GTNH 2.9.0 的 StructureLib 1.4.47 将手持投影仪的方块提示保存在 `ClientProxy`，在 `RenderWorldLastEvent` 中按距离绘制透明提示。GTSR 的 NEI 展示走 BlockRenderer6343 的静态几何缓存。
+
+Core 在匹配版本的客户端修正原生循环。列表完成排序后清除脏标记，新增提示、提示过期及玩家移动仍沿原有规则触发排序。容量提交后重置原有批次计数，视锥裁剪、透明顺序、深度模式和原生顶点生成继续由 StructureLib 负责。
+
+显式投影组最多分配 4,000 个附带装饰粒子，与 1.7.10 原生粒子层的保留容量一致。提示坐标、颜色、寿命和碰撞处理均在这个限制前登记。方块提示数量不受装饰粒子预算影响。未装 StructureLib、版本不同或运行在专服时沿用原入口。
+
 ## 捕获与 null 结果
 
 `capture(tessellator, commands)` 要求可识别的 vanilla `Tessellator`、正在绘制的 `GL_QUADS` 批次及一致的 8-int 顶点布局和缓冲区状态。子类、其他绘制模式或无效布局可能不受支持。

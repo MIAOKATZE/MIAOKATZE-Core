@@ -12,6 +12,8 @@ import java.util.Set;
 import com.gtnewhorizon.gtnhmixins.ILateMixinLoader;
 import com.gtnewhorizon.gtnhmixins.LateMixin;
 
+import cpw.mods.fml.common.Loader;
+import cpw.mods.fml.common.ModContainer;
 import cpw.mods.fml.relauncher.FMLLaunchHandler;
 
 /** Optional mod targets must be selected after FML discovers the installed mods. */
@@ -34,6 +36,17 @@ public final class CoreLateMixinLoader implements ILateMixinLoader {
             mixins.addAll(Arrays.asList("bq.MixinNetQuestSync", "bq.MixinNetChapterSync"));
         if (loadedMods.contains("chromatictooltips"))
             mixins.addAll(Arrays.asList("tooltip.MixinTooltipHandler", "tooltip.TooltipContextAccessor"));
+        if (loadedMods.contains("structurelib")) {
+            ModContainer structureLib = Loader.instance().getIndexedModList().get("structurelib");
+            // These hooks depend on the 1.4.47 renderer's exact loop and decorative particle tail.
+            if (structureLib != null && "1.4.47".equals(structureLib.getVersion())) {
+                mixins.addAll(Arrays.asList(
+                    "structurelib.StructureLibHintAccessor",
+                    "structurelib.MixinStructureLibHintTick",
+                    "structurelib.MixinStructureLibHintRender",
+                    "structurelib.MixinStructureLibHintEffects"));
+            }
+        }
         return mixins;
     }
 }

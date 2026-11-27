@@ -206,7 +206,9 @@ public final class TooltipController {
         boolean pinning = chromatic && matches(pin, code, false);
         boolean cycle = matches(details, code, true);
         if (!choose && !pinning && !cycle || typing(gui)) return false;
-        if (pinning) return TooltipPinning.toggle(gui);
+        if (pinning) return TooltipPinning.toggle(
+            gui,
+            stack -> nei && gui instanceof GuiContainer && NeiInput.sameStack((GuiContainer) gui, stack));
         if ((!fixed && gui != screen) || (fixed && !TooltipPinning.active(gui))
             || (!fixed && (item.isEmpty()
                 || com.miaokatze.miaokatzecore.api.tooltip.TooltipAnimationClock.nowNanos() - lastRender > 300000000L)))
@@ -338,6 +340,10 @@ public final class TooltipController {
 
         static boolean sameItem(GuiContainer gui, String key) {
             return key.equals(TooltipPages.identity(GuiContainerManager.getStackMouseOver(gui)));
+        }
+
+        static boolean sameStack(GuiContainer gui, ItemStack stack) {
+            return ItemStack.areItemStacksEqual(stack, GuiContainerManager.getStackMouseOver(gui));
         }
 
         static boolean focused() {

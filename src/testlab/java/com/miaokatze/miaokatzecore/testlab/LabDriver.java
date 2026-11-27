@@ -27,6 +27,9 @@ public final class LabDriver {
             FMLCommonHandler.instance()
                 .bus()
                 .register(POLICY);
+            if (Boolean.getBoolean("core.testlab.pinLatency") && FMLCommonHandler.instance().getSide().isClient()) {
+                TooltipPinLatencyProbe.install();
+            }
             installed = true;
         }
     }

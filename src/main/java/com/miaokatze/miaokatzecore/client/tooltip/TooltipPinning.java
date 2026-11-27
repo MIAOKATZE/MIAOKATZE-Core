@@ -6,6 +6,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
+import java.util.function.Supplier;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
@@ -64,7 +65,9 @@ public final class TooltipPinning {
             if (real.isFluidContainer())
                 target = target.withContainedFluid(real.getContainedFluid(), real.getContainedFluidAmount());
             Frame fixed = new Frame(new TooltipRequest(request, target), context, bounds, material);
-            fixed.dirty = true;
+            // Keep the already painted page for the first pinned frame. Future rebuilds use the copied target.
+            fixed.modifier = modifier;
+            fixed.dirty = dirty;
             return fixed;
         }
 
@@ -189,7 +192,7 @@ public final class TooltipPinning {
         GuiScreen gui = Minecraft.getMinecraft().currentScreen;
         screen(gui);
         if (drawing) return false;
-        if (active(gui) || holdRoot(gui)) return true;
+        if (active(gui) || holdRoot(gui, request)) return true;
         pending = request;
         return false;
     }
@@ -199,8 +202,7 @@ public final class TooltipPinning {
         TooltipTarget target = event.context.getTarget();
         if (!target.isFluid() && TooltipPages.identity(target.getItem())
             .isEmpty()) return;
-        if (!pending.target.equivalentTo(target)
-            && !target.equivalentTo(TooltipRegistry.sanitizeTarget(pending.target))) return;
+        if (!matchesTarget(target, pending.target)) return;
         Frame frame = new Frame(
             pending,
             event.context,
@@ -210,13 +212,30 @@ public final class TooltipPinning {
         state.hover(Minecraft.getMinecraft().currentScreen, frame);
     }
 
-    private static boolean holdRoot(GuiScreen gui) {
+    private static boolean matchesTarget(TooltipTarget rendered, TooltipTarget requested) {
+        return requested.equivalentTo(rendered) || rendered.equivalentTo(TooltipRegistry.sanitizeTarget(requested));
+    }
+
+    private static boolean holdRoot(GuiScreen gui, TooltipRequest next) {
         if (lastRoot == null) return false;
         Point mouse = TooltipUtils.getMousePosition();
         TooltipContext hit = NativeTooltipMouse.contextAt(gui, mouse, true);
-        return hasContext(lastRoot, hit) || hasContext(preview, hit)
-            || inGap(mouse)
-            || !lastRoot.cursor.equals(mouse) && nearWindow(lastRoot.cursor, lastRoot.bounds, mouse, 3);
+        return canHoldRoot(
+            lastRoot.cursor,
+            lastRoot.bounds,
+            mouse,
+            next == null ? null : next.target,
+            hasContext(lastRoot, hit) || hasContext(preview, hit) || inGap(mouse));
+    }
+
+    static boolean canHoldRoot(Point start, Rectangle bounds, Point mouse, TooltipTarget requested,
+        boolean overWindowOrPreviewGap) {
+        if (hasTarget(requested)) return false;
+        return overWindowOrPreviewGap || !start.equals(mouse) && nearWindow(start, bounds, mouse, 3);
+    }
+
+    private static boolean hasTarget(TooltipTarget target) {
+        return target != null && (target.isItem() || target.isFluid());
     }
 
     private static boolean inGap(Point mouse) {
@@ -231,12 +250,38 @@ public final class TooltipPinning {
         return Line2D.ptSegDist(startX, startY, endX, endY, mouse.x, mouse.y) <= radius;
     }
 
-    static boolean toggle(GuiScreen gui) {
+    static boolean canPinHover(Point cursor, Point mouse, long age, boolean overWindow, boolean occupied,
+        boolean sameStack) {
+        return (!occupied || sameStack)
+            && (overWindow || age <= 300_000_000L && (cursor.equals(mouse) || sameStack));
+    }
+
+    private static boolean pointedAtHover(GuiScreen gui, Frame hover, Supplier<ItemStack> stackAtPointer) {
+        Point mouse = TooltipUtils.getMousePosition();
+        TooltipContext hit = NativeTooltipMouse.contextAt(gui, mouse, false);
+        ItemStack pointed = hover.cursor.equals(mouse) ? null : stackAtPointer.get();
+        boolean sameStack = pointed != null && matchesTarget(hover.context.getTarget(), TooltipTarget.ofItem(pointed));
+        return canPinHover(
+            hover.cursor,
+            mouse,
+            TooltipAnimationClock.nowNanos() - hover.captured,
+            hasContext(hover, hit) || hover == lastRoot && hasContext(preview, hit),
+            pointed != null,
+            sameStack);
+    }
+
+    /** Null leaves non-Chromatic input paths available. An empty key rejects an out-of-date paint. */
+    static String hoveredKey(GuiScreen gui, Supplier<ItemStack> stackAtPointer) {
+        Frame hover = state.hovered();
+        if (hover == null) return pending != null && hasTarget(pending.target) ? "" : null;
+        return pointedAtHover(gui, hover, stackAtPointer) ? hover.key() : "";
+    }
+
+    static boolean toggle(GuiScreen gui, Supplier<ItemStack> stackAtPointer) {
         screen(gui);
         if (state.fixed() == null) {
             Frame hover = state.hovered();
-            if (hover == null || !coversMouse(gui) && (!hover.cursor.equals(TooltipUtils.getMousePosition())
-                || TooltipAnimationClock.nowNanos() - hover.captured > 300000000L)) return false;
+            if (hover == null || !pointedAtHover(gui, hover, stackAtPointer)) return false;
             state.hover(gui, hover.frozen());
         }
         if (state.child() != null) {
@@ -292,7 +337,7 @@ public final class TooltipPinning {
         GuiScreen gui = Minecraft.getMinecraft().currentScreen;
         screen(gui);
         Frame root = state.fixed();
-        if (root == null && holdRoot(gui)) root = lastRoot;
+        if (root == null && holdRoot(gui, pending)) root = lastRoot;
         if (root == null) {
             lastRoot = null;
             preview = null;

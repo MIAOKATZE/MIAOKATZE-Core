@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 package com.miaokatze.miaokatzecore.client.tooltip;
 
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,23 +64,53 @@ public final class NativePageAdapterContracts {
         if (!copy.equals(changed)) throw new AssertionError("Partial match converted");
         headerOrder(register, tierPage, draws);
         unregisteredTarget(register);
+        rootHoverTransition();
+        pinDuringMouseMotion();
     }
 
     private static void unregisteredTarget(NativeTooltipClient adapter) {
-        TooltipTarget target;
+        TooltipTarget target = testTarget(new Item());
+        List<Object> text = Arrays.asList("NEI usage tooltip", "https://example.com/");
+        TextLinesConverterEvent event = new TextLinesConverterEvent(target, new ArrayList<>(text));
+        adapter.convert(event);
+        if (!event.list.equals(text)) throw new AssertionError("Unregistered item tooltip was modified");
+    }
+
+    private static TooltipTarget testTarget(Item item) {
         try {
             // Build the real Chromatic target without loading the vanilla fluid-container registry in this JVM.
             Constructor<TooltipTarget> constructor = TooltipTarget.class
                 .getDeclaredConstructor(ItemStack.class, FluidStack.class, long.class, Fluid.class, long.class);
             constructor.setAccessible(true);
-            target = constructor.newInstance(new ItemStack(new Item()), null, 1L, null, 0L);
+            return constructor.newInstance(new ItemStack(item), null, 1L, null, 0L);
         } catch (ReflectiveOperationException exception) {
             throw new AssertionError("Could not create an unregistered item target", exception);
         }
-        List<Object> text = Arrays.asList("NEI usage tooltip", "https://example.com/");
-        TextLinesConverterEvent event = new TextLinesConverterEvent(target, new ArrayList<>(text));
-        adapter.convert(event);
-        if (!event.list.equals(text)) throw new AssertionError("Unregistered item tooltip was modified");
+    }
+
+    private static void rootHoverTransition() {
+        Point start = new Point(10, 20), gap = new Point(15, 20);
+        Rectangle tooltip = new Rectangle(25, 15, 40, 30);
+        TooltipTarget slot = testTarget(new Item());
+        Point overlap = new Point(30, 20);
+        if (!TooltipPinning.canHoldRoot(start, tooltip, gap, null, false)
+            || !TooltipPinning.canHoldRoot(start, tooltip, gap, TooltipTarget.EMPTY, false)
+            || TooltipPinning.canHoldRoot(start, tooltip, gap, slot, false)
+            || TooltipPinning.canHoldRoot(start, tooltip, overlap, slot, true)
+            || !TooltipPinning.canHoldRoot(start, tooltip, overlap, null, true)
+            || TooltipPinning.canHoldRoot(start, tooltip, new Point(15, 30), null, false))
+            throw new AssertionError("The hovered slot must win over the old tooltip's bounds and pointer gaps");
+    }
+
+    private static void pinDuringMouseMotion() {
+        Point cursor = new Point(10, 20), moved = new Point(12, 20);
+        if (!TooltipPinning.canPinHover(cursor, cursor, 100, false, false, false)
+            || !TooltipPinning.canPinHover(cursor, moved, 100, false, true, true)
+            || TooltipPinning.canPinHover(cursor, moved, 100, false, false, false)
+            || TooltipPinning.canPinHover(cursor, moved, 100, true, true, false)
+            || TooltipPinning.canPinHover(cursor, moved, 300_000_001L, false, true, true)
+            || !TooltipPinning.canPinHover(cursor, moved, 300_000_001L, true, false, false))
+            throw new AssertionError("Pointer movement can pin the same item or tooltip but never an overlapping new slot");
     }
 
     private static final TooltipStyle STYLE = new TooltipStyle(new JsonObject());

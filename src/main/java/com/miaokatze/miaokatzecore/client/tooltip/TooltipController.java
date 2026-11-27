@@ -3,6 +3,8 @@
 
 package com.miaokatze.miaokatzecore.client.tooltip;
 
+import java.util.function.Supplier;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
@@ -199,20 +201,18 @@ public final class TooltipController {
     private boolean pressed(GuiScreen gui, int code) {
         if (gui == null || gui != Minecraft.getMinecraft().currentScreen || code == Keyboard.KEY_NONE) return false;
         if (chromatic && nei && NeiInput.recognizes(code) && handleRecipe(gui, code)) return true;
-        boolean fixed = pinned();
-        String item = fixed ? TooltipPinning.key() : key;
-        boolean page = NativeTooltipPage.supports(item);
         boolean choose = matches(select, code, false);
         boolean pinning = chromatic && matches(pin, code, false);
         boolean cycle = matches(details, code, true);
         if (!choose && !pinning && !cycle || typing(gui)) return false;
-        if (pinning) return TooltipPinning.toggle(gui);
-        if ((!fixed && gui != screen) || (fixed && !TooltipPinning.active(gui))
-            || (!fixed && (item.isEmpty()
-                || com.miaokatze.miaokatzecore.api.tooltip.TooltipAnimationClock.nowNanos() - lastRender > 300000000L)))
-            return false;
-        if (!fixed && (mouseX != Mouse.getX() || mouseY != Mouse.getY())
-            && !(nei && gui instanceof GuiContainer && NeiInput.sameItem((GuiContainer) gui, item))) return false;
+        Supplier<ItemStack> stackAtPointer = () -> nei && gui instanceof GuiContainer
+            ? NeiInput.stackAt((GuiContainer) gui) : null;
+        if (pinning) return TooltipPinning.toggle(gui, stackAtPointer);
+        if (chromatic) TooltipPinning.screen(gui);
+        boolean fixed = pinned();
+        String item = fixed ? TooltipPinning.key() : hoveredKey(gui, stackAtPointer);
+        if (item.isEmpty()) return false;
+        boolean page = NativeTooltipPage.supports(item);
         if (page && Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) return false;
         if (choose) {
             boolean changed = page && NativeTooltipPage.act(item, NativeTooltipPage.Action.SELECT);
@@ -225,8 +225,19 @@ public final class TooltipController {
         boolean changed = page
             ? NativeTooltipPage.act(item, alt() ? NativeTooltipPage.Action.TIER : NativeTooltipPage.Action.VARIANT)
             : TooltipPages.toggle(item, alt());
-        if (changed && fixed) TooltipPinning.refresh();
+        if (changed && chromatic) TooltipPinning.refresh();
         return changed;
+    }
+
+    private String hoveredKey(GuiScreen gui, Supplier<ItemStack> stackAtPointer) {
+        String painted = chromatic ? TooltipPinning.hoveredKey(gui, stackAtPointer) : null;
+        if (painted != null) return painted;
+        if (gui != screen || key.isEmpty()
+            || com.miaokatze.miaokatzecore.api.tooltip.TooltipAnimationClock.nowNanos() - lastRender > 300000000L)
+            return "";
+        boolean stillPointed = mouseX == Mouse.getX() && mouseY == Mouse.getY()
+            || key.equals(TooltipPages.identity(stackAtPointer.get()));
+        return stillPointed ? key : "";
     }
 
     private boolean handleRecipe(GuiScreen gui, int code) {
@@ -336,8 +347,8 @@ public final class TooltipController {
             else GuiUsageRecipe.openRecipeGui("item", stack);
         }
 
-        static boolean sameItem(GuiContainer gui, String key) {
-            return key.equals(TooltipPages.identity(GuiContainerManager.getStackMouseOver(gui)));
+        static ItemStack stackAt(GuiContainer gui) {
+            return GuiContainerManager.getStackMouseOver(gui);
         }
 
         static boolean focused() {

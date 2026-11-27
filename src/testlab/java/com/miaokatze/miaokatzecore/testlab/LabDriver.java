@@ -27,6 +27,9 @@ public final class LabDriver {
             FMLCommonHandler.instance()
                 .bus()
                 .register(POLICY);
+            if (Boolean.getBoolean("core.testlab.tooltipTargetSwitch") && FMLCommonHandler.instance().getSide().isClient()) {
+                TooltipTargetSwitchProbe.install();
+            }
             installed = true;
         }
     }

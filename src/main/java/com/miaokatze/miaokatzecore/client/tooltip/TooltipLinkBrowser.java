@@ -14,12 +14,12 @@ import org.lwjgl.input.Keyboard;
 /** Explicit HTTP(S) clicks follow Minecraft's link and confirmation preferences. */
 final class TooltipLinkBrowser {
 
-    static void open(GuiScreen parent, String url) {
+    static boolean open(GuiScreen parent, String url) {
         Minecraft mc = Minecraft.getMinecraft();
-        if (mc.currentScreen != parent || !mc.gameSettings.chatLinks || !TooltipTextLinks.valid(url)) return;
+        if (mc.currentScreen != parent || !mc.gameSettings.chatLinks || !TooltipTextLinks.valid(url)) return false;
         if (!mc.gameSettings.chatLinksPrompt) {
             browse(url);
-            return;
+            return true;
         }
         GuiYesNoCallback callback = (confirmed, id) -> {
             if (confirmed) browse(url);
@@ -33,6 +33,7 @@ final class TooltipLinkBrowser {
                 else super.keyTyped(character, code);
             }
         });
+        return true;
     }
 
     private static void browse(String url) {

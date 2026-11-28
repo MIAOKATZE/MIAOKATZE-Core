@@ -8,13 +8,13 @@ import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 
 import com.miaokatze.miaokatzecore.api.tooltip.TooltipAnimationClock;
 import com.miaokatze.miaokatzecore.api.tooltip.TooltipPages;
-import com.miaokatze.miaokatzecore.api.tooltip.component.NativeTooltipPage;
 import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipInput;
 import com.slprime.chromatictooltips.api.TooltipContext;
 import com.slprime.chromatictooltips.event.RenderTooltipEvent;
@@ -35,20 +35,22 @@ final class NativeTooltipMouse {
         final TooltipContext context;
         final int originX, originY;
         final float scale;
+        final boolean collect;
 
-        Drawing(TooltipContext context, int originX, int originY, float scale) {
+        Drawing(TooltipContext context, int originX, int originY, float scale, boolean collect) {
             this.context = context;
             this.originX = originX;
             this.originY = originY;
             this.scale = scale;
+            this.collect = collect;
         }
 
-        Drawing(TooltipContext context) {
-            this(context, 0, 0, 1);
+        Drawing(TooltipContext context, boolean collect) {
+            this(context, 0, 0, 1, collect);
         }
 
         void material(MaterialSprite.Material material, int x, int y, int width, int height) {
-            if (material != null)
+            if (collect && material != null)
                 add(context, originX + x * scale, originY + y * scale, width * scale, height * scale, null, material);
         }
     }
@@ -67,10 +69,10 @@ final class NativeTooltipMouse {
     private static final class Hit {
 
         final Rectangle2D bounds;
-        final Runnable action;
+        final BooleanSupplier action;
         final MaterialSprite.Material material;
 
-        Hit(Rectangle2D bounds, Runnable action, MaterialSprite.Material material) {
+        Hit(Rectangle2D bounds, BooleanSupplier action, MaterialSprite.Material material) {
             this.bounds = bounds;
             this.action = action;
             this.material = material;
@@ -82,11 +84,16 @@ final class NativeTooltipMouse {
         final GuiScreen screen = Minecraft.getMinecraft().currentScreen;
         final long time = TooltipAnimationClock.nowNanos();
         final TooltipContext context;
+        final Object page;
+        final int width, height;
         final Rectangle bounds;
         final List<Hit> hits = new ArrayList<>();
 
         Painted(RenderTooltipEvent event) {
             context = event.context;
+            page = event.page;
+            width = Minecraft.getMinecraft().displayWidth;
+            height = Minecraft.getMinecraft().displayHeight;
             bounds = new Rectangle(event.x, event.y, event.width, event.height);
         }
 
@@ -94,6 +101,10 @@ final class NativeTooltipMouse {
             return gui != null && gui == screen
                 && gui == Minecraft.getMinecraft().currentScreen
                 && TooltipAnimationClock.nowNanos() - time <= FRESH_NANOS
+                && width == Minecraft.getMinecraft().displayWidth
+                && height == Minecraft.getMinecraft().displayHeight
+                && context.getScaleFactor() == TooltipUtils.getTooltipScale()
+                && page == context.getActivePageComponent()
                 && bounds.contains(x, y);
         }
     }
@@ -113,16 +124,9 @@ final class NativeTooltipMouse {
         previous.clear();
     }
 
-    static void chartLabel(TooltipContext context, String key, String chart, int index, String label, double x,
-        double y, float scale) {
-        Runnable action = () -> {
-            if (NativeTooltipPage.selectVariant(key, chart, index)) {
-                ChartPointer.follow(context, key);
-                TooltipPinning.refresh();
-            }
-        };
-        for (TooltipInput.Run run : TooltipInput.materials(label)
-            .runs()) {
+    static void chartLabel(TooltipContext context, String label, double x, double y, float scale,
+        BooleanSupplier action) {
+        for (TooltipInput.Run run : TooltipInput.materials(label).runs()) {
             if (run.itemId != null || run.fluidId != null) x += TooltipInput.MATERIAL_ADVANCE * scale;
             int width = TooltipFontContext.getStringWidth(run.text);
             add(context, x, y, width * scale, TooltipFontContext.getFontHeight() * scale, action, null);
@@ -130,20 +134,12 @@ final class NativeTooltipMouse {
         }
     }
 
-    static void link(TooltipContext context, String url, double x, double y, double width) {
-        GuiScreen gui = Minecraft.getMinecraft().currentScreen;
-        add(context, x, y, width, TooltipFontContext.getFontHeight(), () -> TooltipLinkBrowser.open(gui, url), null);
+    static void action(TooltipContext context, double x, double y, double width, double height,
+        BooleanSupplier action) {
+        add(context, x, y, width, height, action, null);
     }
 
-    static void textLinks(TooltipContext context, String text, int x, int y) {
-        for (TooltipTextLinks.Span span : TooltipTextLinks.spans(text)) {
-            int start = TooltipFontContext.getStringWidth(TooltipTextLinks.prefix(text, span.from));
-            int end = TooltipFontContext.getStringWidth(TooltipTextLinks.prefix(text, span.to));
-            link(context, span.url, x + start, y, end - start);
-        }
-    }
-
-    private static void add(TooltipContext context, double x, double y, double width, double height, Runnable action,
+    private static void add(TooltipContext context, double x, double y, double width, double height, BooleanSupplier action,
         MaterialSprite.Material material) {
         if (context == null || width <= 0 || height <= 0) return;
         pending.computeIfAbsent(context, ignored -> new ArrayList<>())
@@ -207,22 +203,30 @@ final class NativeTooltipMouse {
         return null;
     }
 
-    static boolean click(GuiScreen gui, int x, int y, int button) {
-        Painted window = windowAt(gui, x, y, painted);
-        if (window == null) return false;
-        if (button == 0) {
-            for (int i = window.hits.size() - 1; i >= 0; i--) {
-                Hit hit = window.hits.get(i);
-                if (hit.action != null && hit.bounds.contains(x, y)) {
-                    hit.action.run();
-                    break;
-                }
-            }
+    static final class Pointer {
+        final TooltipContext context;
+        final BooleanSupplier action;
+        final MaterialSprite.Material material;
+
+        Pointer(TooltipContext context, BooleanSupplier action, MaterialSprite.Material material) {
+            this.context = context;
+            this.action = action;
+            this.material = material;
         }
-        return true;
     }
 
-    static boolean consumeRelease(GuiScreen gui, int x, int y, int button) {
-        return windowAt(gui, x, y, painted) != null;
+    /** Geometry only: neither a painted rectangle nor a hit grants input ownership. */
+    static Pointer pointerAt(GuiScreen gui, Point mouse) {
+        Painted window = windowAt(gui, mouse.x, mouse.y, painted);
+        if (window == null) return null;
+        BooleanSupplier action = null;
+        MaterialSprite.Material material = null;
+        for (int i = window.hits.size() - 1; i >= 0; i--) {
+            Hit hit = window.hits.get(i);
+            if (!hit.bounds.contains(mouse)) continue;
+            if (action == null) action = hit.action;
+            if (material == null) material = hit.material;
+        }
+        return new Pointer(window.context, action, material);
     }
 }

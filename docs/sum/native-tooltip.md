@@ -1,8 +1,8 @@
-# 原生 Tooltip 组件（GTNH 2.9.0）
+# 原生 Tooltip 组件（当前主平台 GTNH 2.9.2）
 
 当前源码支持两种操作。使用 `TooltipPages` / `MachineTooltipPages.apply` 的物品保持原行为：V 收纳，Alt+V 切换动画，本机偏好不写入物品 NBT。选择 `NativeTooltipPage` 的机器用 Alt+V 循环阅读档位：初次为常规，接下来是详细、简略、常规。Tab 只在有两张以上可切换图表时选图；V 只切所选图的数据。切图、选图、固定默认 V／Tab／C，在「选项 → 控制 → MIAOKATZE Core Tooltip 组件」分别换绑；所有提示显示实际绑定，Alt 始终组合当前切图键。按住左 Shift 显示原版 GT 结构页，松开回原档位。档位、选图及各图数据按物品注册名和子类型保存在客户端会话，不写文件或网络。
 
-消费端先照常输出完整的可读字符串，再用 `NativeTooltips.replace(stack, lines, expected, snapshot)` 登记其自己拥有的一段。`TooltipTable` 保存同一时点的标题、表头、行和对齐方式。Core 在 Chromatic Tooltips 1.0.36-GTNH 的 `TextLinesConverterEvent` 里按目标物品身份与整段原文匹配，成功才把该组转换为组件。原 `ItemTooltipEvent` 列表不放组件令牌，NEI 搜索、纯文本 UI、未加载可选绘制层、译文已改到不能匹配时都保有原文字。不会为了替换失败而删除或改写其他 Mod 行。
+消费端先照常输出完整的可读字符串，再用 `NativeTooltips.replace(stack, lines, expected, snapshot)` 登记其自己拥有的一段。`TooltipTable` 保存同一时点的标题、表头、行和对齐方式。Core 在 Chromatic Tooltips 的 `TextLinesConverterEvent` 里按目标物品身份与整段原文匹配，成功才把该组转换为组件。原 `ItemTooltipEvent` 列表不放组件令牌，NEI 搜索、纯文本 UI、未加载可选绘制层、译文已改到不能匹配时都保有原文字。不会为了替换失败而删除或改写其他 Mod 行。
 
 物品身份先通过 Forge 注册表反查注册名。未注册的临时物品栈，例如配方界面传入的展示对象，保留原 Tooltip，跳过 Core 的组件转换和固定行。已注册目标继续使用原物品标识及子类型规则。
 
@@ -12,19 +12,19 @@
 
 `apply(stack, lines)` 只替换可唯一识别的 GT 普通说明。原生结构 finisher 仍归 GT/Chromatic 所有，其他模组的独立行、GT 覆盖物、标题和后缀保持原位。原文匹配失败则原样返回。到 Chromatic 的转换事件再核对整段文字，并只把标记过的片段转换成独立组件。无可选渲染层时仍显示文字换档提示、图名、当前数据和单位。曲线回退含轴名、各条曲线的代表点及标记点。键盘输入先确认实际悬停的 GUI/目标、修饰键和搜索框焦点。
 
-Core 将 Chromatic 页首的原生修饰键、`[图钉 C 悬浮]`、`[键帽 Alt+V (常规/详细/简略)]` 排在同一行。固定后该窗显示 `[图钉 C 固定]`，文字和图钉随同一窗口状态切换，预留两种状态中较宽的宽度，避免后面的键帽移动。普通物品没有原生修饰键时，共用提示可单独显示。换档提示列出该物品的全部可用档位。两档列常规／简略，单档和 GT 结构页省去换档提示。窄屏可将整组键提示分到下一行。
+Core 的图钉和档位提示通过公开 `TooltipContext.addSection` 与 `InlineComponent`，显示在原生页首之后的独立控制行。原生修饰键、标题和组件树仍由 Chromatic 管理，不修改其私有 sections，也不要求强行同行。固定后该窗显示固定状态；单档和 GT 结构页省去换档提示。窄屏交由官方 Inline 排版。
 
 ### 共用固定行与会话固定
 
-Core 在 Chromatic `TooltipEnricherEvent` 中自动给已注册物品和流体添加固定提示，消费端无需再声明。GTNH 2.9.0 的原版背包由 Chromatic 1.0.36-GTNH 接入。NEI 2.8.171-GTNH、MUI1 和 MUI2 物品槽由 Chromatic Compat 1.0.40-GTNH 将物品目标交给同一入口。纯文字按钮和缺少可选 Chromatic 层的界面保有原来的文本行为。
+Core 在 Chromatic `TooltipEnricherEvent` 中自动给已注册物品和流体添加固定提示，消费端无需再声明。原版背包由 Chromatic 接入，NEI、MUI1 和 MUI2 物品槽由 Chromatic Compat 将物品目标交给同一入口。当前 2.9.2 适配核对 Chromatic 1.0.38-GTNH、MUI2 2.3.97-1.7.10 与 NEI 2.8.176-GTNH 的接口。纯文字按钮和缺少可选 Chromatic 层的界面保有原来的文本行为。
 
 未固定时图钉斜向悬浮，键名使用灰色。固定后图钉保持实心红帽和银针，三个高光像素和键名使用同一帧索引，每档 0.5 秒，5 秒往返一次。图钉、键帽、鼠标、警告和结构图标取自 `assets/miaokatzecore/textures/tooltip/` 的纹理。关闭该物品动画时使用静帧，固定键名保持亮黄。
 
 固定需主动按下绑定的固定键（默认 C，也可由玩家换绑至鼠标键）。只有固定状态会保存实际物品或流体的副本、原生组件页和窗口位置，并进入固定绘制。固定首帧沿用刚绘制的原生页；档位、修饰键或缩放变化时重新构建。固定父窗后，将鼠标移到它的材料图标或名称可查看子 Tooltip，再按绑定的固定键可固定子窗，最多同时固定两个。按固定键解除时先解除子窗。关闭界面、打开新界面（包括链接确认与 NEI 配方界面）或切换世界都会清除两个窗口，返回原界面不会恢复。固定后仍支持换档、选图、切图、原生结构页、图表标签和链接。点击由鼠标所指的最上层窗口接收，搜索和其他输入框优先处理键盘输入。
 
-未固定时，绘制跟随 Chromatic 的正常悬停请求。仅移动指针到旧提示框或经过材料子窗间隙不会留住旧窗，也不会触发固定。已绘制的悬停目标仅用于判断主动固定、换档和切图，不可成为固定绘制的回退；当前槽位变化或旧缓存帧仍在时，等新目标实际绘出再接收快捷键。R/U 只在对应按键命中当前材料时打开 NEI，输入框仍优先。
+未固定时，绘制跟随 Chromatic 的正常悬停请求。仅移动指针到旧提示框或经过材料子窗间隙不会留住旧窗，也不会触发固定。已绘制的悬停目标仅用于判断主动固定、换档和切图，不可成为固定绘制的回退；当前槽位变化或旧缓存帧仍在时，等新目标实际绘出再接收快捷键。普通提示只读展示，不登记内容点击或材料 R/U 命中；V/Alt+V/Tab 仍可阅读。只有主动固定后，R/U 才查询对应材料，输入框仍优先。
 
-`TooltipPinVisualContracts` 核对随包纹理、节拍、键名颜色、固定轮廓、红帽和银针。`runNativePageContracts` 核对原生修饰键、固定和换档提示的同行绘制，以及悬停快捷键与新目标的对应关系。`runTooltipPinContracts` 检查普通悬停不留旧窗、两层主动固定与界面切换。字体、GUI scale、OpenGL 和实际输入需在客户端核对。
+`TooltipPinVisualContracts` 核对随包纹理、节拍、键名颜色、固定轮廓、红帽和银针。`runNativePageContracts` 核对公开控制 section、原生页首不变、文档能力隔离、按钮配对、批量列宽以及悬停快捷键与新目标的对应关系。`runTooltipPinContracts` 检查普通悬停不留旧窗、两层主动固定与界面切换。字体、GUI scale、OpenGL 和实际输入需在客户端核对。
 
 水平柱使用业务给出的共同最大值；多条曲线共享实数横轴并可标出读数；热图使用固定色阶，缺少流体纹理仍显示物料名；固定算例的各数值列独立定标。原生图随分页重复表头、按可用宽度适当缩放；文字无法清晰容纳时转分行读数。图表标签只改变文字颜色。侧边选图键帽及箭头基于当前真实绘制位置，空间不足时提示改排在上下方。页首空白键帽、警告灯和结构卷轴使用八帧图集，本地时钟只影响显示。
 
@@ -38,9 +38,9 @@ Core 在 Chromatic `TooltipEnricherEvent` 中自动给已注册物品和流体�
 
 ### 图内标签与可读地址点击
 
-既有 `page.chart(id, labels, chart)` 无需新增调用即可点击当前可见的标签。命中范围取真实绘制的文字，省略号、间隔和材料图标不触发切换；点击后同时选中所属图和标签原始索引，下次 V 继续作用于该图。需要程序设置时可调用 `NativeTooltipPage.selectVariant(itemIdentity, chartId, index)`，只接受已登记、当前可见的图与有效索引。标签仍只改变文字颜色，不增加背景。
+既有 `page.chart(id, labels, chart)` 无需新增调用；主动固定后即可点击当前可见的标签。命中范围取真实绘制的文字，省略号、间隔和材料图标不触发切换；点击后同时选中所属图和标签原始索引，下次 V 继续作用于该图。需要程序设置时可调用 `NativeTooltipPage.selectVariant(itemIdentity, chartId, index)`，只接受已登记、当前可见的图与有效索引。标签仍只改变文字颜色，不增加背景。
 
-Chromatic 物品文本中的有效 HTTP(S) 地址自动保留原文并获得点击能力，`page.input(...)` 的文字和 `page.qr(...)` 的标题地址共用此规则；下游无需替换旧 `page.line(...)` 或另外绘制链接。文字跨行或分页后，各片段仍打开同一完整地址，二维码点阵和周边空白不成为链接。游戏的 `chatLinks` 关闭时不打开；启用 `chatLinksPrompt` 时显示原生地址确认框，Esc 取消并返回原界面；关闭确认选项后才由实际点击打开浏览器。地址必须有合法的 HTTP(S) 主机。
+Chromatic 物品文本中的有效 HTTP(S) 地址自动保留原文；主动固定后获得点击能力，`page.input(...)` 的文字和 `page.qr(...)` 的标题地址共用此规则；下游无需替换旧 `page.line(...)` 或另外绘制链接。文字跨行或分页后，各片段仍打开同一完整地址，二维码点阵和周边空白不成为链接。游戏的 `chatLinks` 关闭时不打开；启用 `chatLinksPrompt` 时显示原生地址确认框，Esc 取消并返回原界面；关闭确认选项后才由实际点击打开浏览器。地址必须有合法的 HTTP(S) 主机。
 
 `runNativePageContracts` 同时执行 `TooltipMouseContracts`，覆盖标签索引选择与无效选择、保留格式码的地址提取、合法协议/主机和文本回退。实际字体、缩放后命中位置、确认框返回以及固定后交互需用客户端验证。
 
@@ -52,8 +52,55 @@ Chromatic 物品文本中的有效 HTTP(S) 地址自动保留原文并获得点�
 
 业务在译文中明确写出注册身份，例如 `投入[item:minecraft:dye@4|青金石]，加入[fluid:water|水]。`。普通行、操作行、警告、表格标题/表头/数据、图例/图轴/标签均可使用；普通词如“水位”不会触发绑定。Forge 注册名按原样查找，包括 `ammonium chloride` 等名称内部的空格。物品按对应子类型走游戏的库存绘制器，流体用注册纹理和着色。图标占 10×10 像素，右留 1 像素接半角 `[显示名]`；图标前和名称后各留一个半角空格，已有空白不叠加，紧接标点或符号时不补。没有可选组件、找不到注册项或纹理仍显示带方括号的名称。物品名称与图标、键名与键帽在通常的窄屏换行中保持一组。
 
-鼠标位于材料图标、名称或对应子窗时，按 NEI 的配方或用途键（默认 R／U）查询该材料。物品使用标记中的注册名和 meta，流体使用 NEI 的流体展示栈。找不到配方或用途时继续留在当前界面。
+主动固定后，鼠标位于材料图标、名称或对应子窗时，按 NEI 的配方或用途键（默认 R／U）查询该材料。物品使用标记中的注册名和 meta，流体使用 NEI 的流体展示栈。找不到配方或用途时继续留在当前界面。
 
 表格与图表使用同一正文宽度和边距；各列按内容定宽后均分多余空间。表头线止于表格边缘；窄屏时先缩列并换行，跨页重复表头，连一组完整名称都放不下时使用完整文字回退。只需常规正文时调用 `page.singleTier()`，省略档位提示，也不占用 Alt+V。通用静态条目可交给 `NativeTooltipBlocks.append(page, json)`：支持 line、warning、divider、table、heat、bars 和已解析实际地址的 link；未识别类型返回 false。消费端负责语言、状态、动态配方和真实物品绑定。
 
 用 `TooltipChart.bars(...).barColumn(c)` 把同尺度柱放在从零起的数值列旁；旧累计改装图仍可保留分段柱。函数图可在 `lines(...).range(...)` 后调用 `plot(xTicks, yTicks, probe, readouts, colors)`。刻度严格递增并覆盖给定轴范围；共享的实际横轴样本应包含每个拐点和探针，数据缺失用 NaN。Core 在精确探针上标出每条曲线的位置，图例给出业务传入的同条件读数和颜色。纯文字可见图名、轴、样本和探针读数；固定图不登记可切换状态。
+
+## 2026-11-28 职责重构后的实际方法树
+
+```text
+Tooltip（现有模块内重构，无新输入框架）
+├─ 内容与偏好
+│  ├─ NativeTooltipPage.forItem / apply / appendTo（保留公共入口）
+│  │  ├─ State：tier / selected / variants（仅阅读偏好）
+│  │  ├─ finish → TooltipPageBody（不可变正文、档位与图表能力）
+│  │  └─ act(document) / selectVariant(document)（按实际文档校验动作）
+│  ├─ NativeTooltips.replace → Backend.prepare（完整文字回退）
+│  └─ TooltipPages.rendered / controlRendered → 内存标记；flush → 原有原子文件发布
+├─ Chromatic 后端
+│  ├─ NativeTooltipClient.prepare（按物品索引、有界片段、写时快照）
+│  ├─ convert → convertDocument → 原生 ITooltipComponent
+│  ├─ positionHeader → addControls → TooltipContext.addSection / InlineComponent
+│  ├─ document(context)（实际 target 关联不可变文档，弱引用）
+│  └─ 标准资源重载 → 清除绑定、派生文档和窗口
+├─ 显示与会话
+│  ├─ 普通 Tooltip → 上游请求/绘制（保留，不接管全局最后 context）
+│  ├─ ChromaticHover.rendered → TooltipPinning.rendered（公开 context 源文本）
+│  ├─ TooltipPinning.toggle → Frame.frozen（复制 target，父/子最多两个）
+│  ├─ drawPinned → Frame.update / drawAtSavedPosition → context.drawAt
+│  ├─ screen / clear（GUI、世界、MUI 顶层面板边界）
+│  └─ NativeTooltipMouse.newFrame / chartLabel / action / pointerAt（仅几何与动作引用，不执行）
+├─ 输入（一个地方决定是否取消事件）
+│  ├─ TooltipController.keyboard / mouse → pressed（绑定、修饰键、焦点、目标）
+│  ├─ V / Alt+V / Tab → 对应文档阅读动作（普通提示保留）
+│  ├─ C 或鼠标重绑 → TooltipPinning.toggle（无独立 C 监听）
+│  ├─ 固定内容动作 → 图表组件回调 / TooltipLinkBrowser.open
+│  ├─ 固定材料 R/U → NeiInput.open → NEI 公开配方/用途入口
+│  ├─ TooltipButtonState.claim / release（同 GUI 按下与松开配对）
+│  └─ MixinTooltipHandler.next/previous → navigatePinned（仅剩翻页薄适配）
+└─ 布局与绘制
+   ├─ TooltipTableLayout（列级批量收缩，保留旧分配结果）
+   ├─ NativeInput/Table/Chart/Link（官方字体、分页；仅固定会话登记命中）
+   └─ ArtPlate → TooltipArtRenderer → 原版 Tessellator（保留 11 种轮廓与连续动效）
+```
+
+1. 合并：`mouseKey` 并入唯一 `mouse`；R/U 仅在 `pressed → NeiInput`；链接跨度命中归 `NativeLinkComponent`；资源失效归后端标准重载点。
+2. 删除：整框 `click/consumeRelease`、窗口 `recipeMaterial/coversMouse`、固定层 pending-request 旁路、三处全局请求/绘制/last-context Mixin、`TierHeaderSlot`、`TooltipContextAccessor`、`SealShader`、`seal.vert/frag`。
+3. 窗口范围与输入所有权分开：固定窗空白、普通文字、修饰键点击不因覆盖而被吃掉；只有实际受理动作才认领按键，重绘不会清除同 GUI 的 release 配对。最上层窗遮住父窗时不会透过它执行父窗动作。
+4. 相同物品的阅读偏好仍可共享，窗口文档和能力不共享。构建或 NEI 索引只登记内容，不启动交互或写偏好文件。旧 key API 为消费者保留；Core 内部动作使用实际窗口文档。
+5. 固定源从公开 `getContextTooltip()` 保留已解析 GUI 附加内容，重建时 itemInfo 仍走上游富化链。resolver 有短路语义，不能作为可靠全局观察器，因此没有新增 resolver 旁路。
+6. Chromatic 没有组件鼠标事件或翻页事件。保留固定会话的小范围命中适配和两个翻页注入；不接管普通请求、draw-last 或全局 last-context。MUI 的 OverlayStack 属 Internal 且改变重复键/覆盖语义，本次复用通用输入事件与公开焦点接口。
+7. 普通提示不创建内容命中闭包。缓存转换只访问当前物品最多 16 个自有片段；表格按列级收缩；渲染不写偏好文件；标题不创建 program/VAO、不读 GUI 矩阵、不接 Angelica 桥。仍保留已批准的可见窗口/命中、表格数据遍历及现有生命周期身份检查。
+8. 验证入口为 `runNativePageContracts`、`runTooltipPinContracts` 与 2.9.2 原生客户端独立探针。客户端探针在 `src/testlab/client`，不会进入普通包或完整 testlab 替换包；编译与实机结论见本次 workflow。

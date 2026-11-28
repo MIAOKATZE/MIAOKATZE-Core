@@ -23,6 +23,7 @@ enum ArtPlate {
     final int ink, light, period, path;
     final long mask;
     final int[] rows = new int[8];
+    private final double[] travel = new double[64];
 
     ArtPlate(int ink, int light, int period, int path, long mask) {
         this.ink = ink;
@@ -30,7 +31,10 @@ enum ArtPlate {
         this.period = period;
         this.path = path;
         this.mask = mask;
-        for (int y = 0; y < 8; y++) rows[y] = (int) (mask >>> (56 - 8 * y)) & 255;
+        for (int y = 0; y < 8; y++) {
+            rows[y] = (int) (mask >>> (56 - 8 * y)) & 255;
+            for (int x = 0; x < 8; x++) travel[y * 8 + x] = travel(path, x, y);
+        }
     }
 
     static ArtPlate of(TooltipArt art) {
@@ -44,6 +48,35 @@ enum ArtPlate {
         int g = mix(ink >> 8 & 255, light >> 8 & 255, breath);
         int b = mix(ink & 255, light & 255, breath);
         return 0xff000000 | r << 16 | g << 8 | b;
+    }
+
+    /** The original seal shader's spatial phase, precomputed once for the author's 8x8 mask. */
+    private static double travel(int motif, int px, int py) {
+        double x = (px + .5) / 8, y = (py + .5) / 8;
+        switch (motif) {
+            case 0: return x + y;
+            case 1: return y < .49 ? y * .55 : x * .55 + .35;
+            case 2: return x + Math.floor(y * 4) * .19;
+            case 3: return px + py < 8 ? .25 : .75;
+            case 4: return 1 - y + x * .18;
+            case 5: return y + (px < 4 ? .20 : -.20);
+            case 6: return Math.floor((x * .62 + y) * 3) / 3;
+            case 7: return py < 3 ? x * .3 : .65;
+            case 8: return (x - y) * .65;
+            case 9: return Math.hypot(x - .5, y - .65);
+            case 10: return (py < 4 ? x : 1 - y) * .65;
+            default: throw new IllegalArgumentException("Unknown seal motif");
+        }
+    }
+
+    int pixelColor(int x, int y, float phase) {
+        double t = travel[y * 8 + x] - phase + .5;
+        double distance = Math.abs(t - Math.floor(t) - .5);
+        double fade = Math.max(0, Math.min(1, (distance - .03) / .22));
+        double amount = .15 + .80 * (1 - fade * fade * (3 - 2 * fade));
+        return mix(ink >> 16 & 255, light >> 16 & 255, amount) << 16
+            | mix(ink >> 8 & 255, light >> 8 & 255, amount) << 8
+            | mix(ink & 255, light & 255, amount);
     }
 
     private static int mix(int a, int b, double t) {

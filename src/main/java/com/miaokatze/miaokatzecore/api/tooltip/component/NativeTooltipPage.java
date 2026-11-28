@@ -31,14 +31,18 @@ public final class NativeTooltipPage {
     }
 
     private static final Map<String, State> states = new HashMap<>();
+    // Compatibility lookup for key-based public APIs. Window actions use their own immutable document.
+    private static final Map<String, TooltipPageBody> documents = new LinkedHashMap<String, TooltipPageBody>(128, .75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, TooltipPageBody> entry) {
+            return size() > 128;
+        }
+    };
 
     private static final class State {
 
         Tier tier = Tier.COMMON;
-        boolean compact;
-        boolean single;
         String selected = "";
-        Map<String, Integer> visible = Collections.emptyMap();
         final Map<String, Integer> variants = new HashMap<>();
     }
 
@@ -139,7 +143,7 @@ public final class NativeTooltipPage {
         List<Object> parts = new ArrayList<>();
         if (!single) parts.add(hint());
         parts.addAll(blocks);
-        return new TooltipPageBody(parts);
+        return new TooltipPageBody(parts, key, visible, compact, single, tier());
     }
 
     /** Append only this item's own lines; never replace the existing vanilla or third-party prefix. */
@@ -158,92 +162,107 @@ public final class NativeTooltipPage {
         if (replaceMachineDescription) {
             if (!MachineTooltipPages.replaceDescription(stack, lines, strings)) return false;
         } else lines.addAll(strings);
-        bind(key, visible, compact, single);
+        remember(body);
         NativeTooltips.replace(stack, lines, strings, body);
         return true;
     }
 
-    static void bind(String key, Map<String, Integer> visible) {
-        bind(key, visible, false);
-    }
-
-    private static void bind(String key, Map<String, Integer> visible, boolean compact) {
-        bind(key, visible, compact, false);
-    }
-
-    static void bind(String key, Map<String, Integer> visible, boolean compact, boolean single) {
+    static void remember(TooltipPageBody document) {
         synchronized (states) {
-            State s = states.computeIfAbsent(key, k -> new State());
-            s.compact = compact;
-            s.single = single;
-            if (single) s.tier = Tier.COMMON;
-            if (compact && s.tier == Tier.DETAIL) s.tier = Tier.COMMON;
-            s.visible = new LinkedHashMap<>(visible);
-            if (!s.visible.isEmpty() && !s.visible.containsKey(s.selected)) s.selected = s.visible.keySet()
-                .iterator()
-                .next();
+            documents.put(document.key, document);
+        }
+    }
+
+    public static TooltipPageBody document(String key) {
+        synchronized (states) {
+            return documents.get(key);
         }
     }
 
     public static boolean supports(String key) {
-        synchronized (states) {
-            return states.containsKey(key);
-        }
+        return document(key) != null;
     }
 
     public static boolean selected(String key, String chartId) {
-        synchronized (states) {
-            State s = states.get(key);
-            return s != null && s.visible.containsKey(chartId) && chartId.equals(s.selected);
-        }
+        return selected(document(key), chartId);
+    }
+
+    public static boolean selected(TooltipPageBody document, String chartId) {
+        return document != null && document.charts.containsKey(chartId) && chartId.equals(selected(document));
     }
 
     public static String selected(String key) {
+        return selected(document(key));
+    }
+
+    public static String selected(TooltipPageBody document) {
+        if (document == null || document.charts.isEmpty()) return "";
         synchronized (states) {
-            State s = states.get(key);
-            return s != null && s.visible.containsKey(s.selected) ? s.selected : "";
+            State state = states.get(document.key);
+            String selected = state == null ? "" : state.selected;
+            return document.charts.containsKey(selected) ? selected : document.charts.keySet().iterator().next();
         }
     }
 
     public static boolean multiple(String key) {
-        synchronized (states) {
-            State s = states.get(key);
-            return s != null && s.visible.size() > 1;
-        }
+        return multiple(document(key));
     }
 
-    /** Select a drawn variant and make its chart the target of the next variant shortcut. */
+    public static boolean multiple(TooltipPageBody document) {
+        return document != null && document.charts.size() > 1;
+    }
+
     public static boolean selectVariant(String key, String chartId, int index) {
+        return selectVariant(document(key), chartId, index);
+    }
+
+    public static boolean selectVariant(TooltipPageBody document, String chartId, int index) {
+        if (document == null) return false;
         synchronized (states) {
-            State s = states.get(key);
-            Integer count = s == null ? null : s.visible.get(chartId);
-            if (count == null || index < 0 || index >= count) return false;
-            s.selected = chartId;
-            s.variants.put(chartId, index);
+            Integer count = document.charts.get(chartId);
+            if (count == null || index < 0 || index >= count || !currentTier(document)) return false;
+            State state = states.computeIfAbsent(document.key, k -> new State());
+            state.selected = chartId;
+            state.variants.put(chartId, index);
             return true;
         }
     }
 
-    /** Dispatch only after the local client has verified hover, modifiers and search-field focus. */
     public static boolean act(String key, Action action) {
+        return act(document(key), action);
+    }
+
+    /** The caller supplies the rendered document, not the latest page authored for the same item. */
+    public static boolean act(TooltipPageBody document, Action action) {
+        if (document == null) return false;
         synchronized (states) {
-            State s = states.get(key);
-            if (s == null) return false;
+            State state = states.computeIfAbsent(document.key, k -> new State());
             if (action == Action.TIER) {
-                if (s.single) return false;
-                s.tier = s.compact ? (s.tier == Tier.COMMON ? Tier.QUICK : Tier.COMMON)
-                    : Tier.values()[(s.tier.ordinal() + 1) % Tier.values().length];
-                s.visible = Collections.emptyMap(); // Don't switch a stale chart before its new page is built.
-            } else if (action == Action.SELECT) {
-                if (s.visible.size() < 2) return false;
-                List<String> ids = new ArrayList<>(s.visible.keySet());
-                s.selected = ids.get((ids.indexOf(s.selected) + 1) % ids.size());
+                if (document.single) return false;
+                state.tier = document.compact ? (document.tier == Tier.COMMON ? Tier.QUICK : Tier.COMMON)
+                    : Tier.values()[(document.tier.ordinal() + 1) % Tier.values().length];
             } else {
-                Integer count = s.visible.get(s.selected);
-                if (count == null) return false;
-                s.variants.put(s.selected, (s.variants.getOrDefault(s.selected, 0) + 1) % count);
+                if (!currentTier(document)) return false;
+                String selected = selected(document);
+                if (action == Action.SELECT) {
+                    if (document.charts.size() < 2) return false;
+                    List<String> ids = new ArrayList<>(document.charts.keySet());
+                    state.selected = ids.get((ids.indexOf(selected) + 1) % ids.size());
+                } else {
+                    Integer count = document.charts.get(selected);
+                    if (count == null) return false;
+                    state.selected = selected;
+                    state.variants.put(selected, (state.variants.getOrDefault(selected, 0) + 1) % count);
+                }
             }
             return true;
         }
+    }
+
+    private static boolean currentTier(TooltipPageBody document) {
+        State state = states.get(document.key);
+        Tier tier = state == null ? Tier.COMMON : state.tier;
+        if (document.single || document.compact && tier == Tier.DETAIL) tier = Tier.COMMON;
+        return tier == document.tier;
     }
 }

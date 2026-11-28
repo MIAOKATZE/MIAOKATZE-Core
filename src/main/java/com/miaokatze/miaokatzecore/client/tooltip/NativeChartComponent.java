@@ -16,6 +16,7 @@ import net.minecraftforge.fluids.FluidRegistry;
 import org.lwjgl.opengl.GL11;
 
 import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipChart;
+import com.miaokatze.miaokatzecore.api.tooltip.component.NativeTooltipPage;
 import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipInput;
 import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipTable;
 import com.slprime.chromatictooltips.api.ITooltipComponent;
@@ -312,15 +313,13 @@ public final class NativeChartComponent implements ITooltipComponent {
         for (TooltipTabLayout.Label label : layout.labels) {
             NativeInputComponent
                 .text(item, label.text, x + label.x, y + 1, label.index == a ? 0xffffe093 : 0xffa9a1b1, drawing);
-            if (n > 1) NativeTooltipMouse.chartLabel(
-                context,
-                item,
-                chart.chartId,
-                label.index,
-                label.text,
-                originX + (x + label.x) * scale,
-                originY + (y + 1) * scale,
-                scale);
+            if (n > 1 && drawing.collect) NativeTooltipMouse.chartLabel(context, label.text,
+                originX + (x + label.x) * scale, originY + (y + 1) * scale, scale, () -> {
+                    if (!NativeTooltipPage.selectVariant(NativeTooltipClient.document(context), chart.chartId, label.index)) return false;
+                    ChartPointer.follow(context, item);
+                    TooltipPinning.refresh();
+                    return true;
+                });
         }
         if (layout.after) text("§8…", x + layout.end, y + 1);
     }
@@ -329,8 +328,8 @@ public final class NativeChartComponent implements ITooltipComponent {
     public void draw(int x, int y, int available, TooltipContext context) {
         if (!chart.variants.isEmpty()) ChartPointer.anchor(context, item, chart.chartId, y);
         float scale = fit();
-        drawing = scale < 1 ? new NativeTooltipMouse.Drawing(context, x, y, scale)
-            : new NativeTooltipMouse.Drawing(context);
+        drawing = scale < 1 ? new NativeTooltipMouse.Drawing(context, x, y, scale, TooltipPinning.interactive(context))
+            : new NativeTooltipMouse.Drawing(context, TooltipPinning.interactive(context));
         try {
             if (scale < 1) {
                 GL11.glPushMatrix();

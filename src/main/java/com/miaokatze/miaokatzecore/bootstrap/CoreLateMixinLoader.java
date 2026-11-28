@@ -33,7 +33,7 @@ public final class CoreLateMixinLoader implements ILateMixinLoader {
         if (loadedMods.contains("betterquesting"))
             mixins.addAll(Arrays.asList("bq.MixinNetQuestSync", "bq.MixinNetChapterSync"));
         if (loadedMods.contains("chromatictooltips"))
-            mixins.addAll(Arrays.asList("tooltip.MixinTooltipHandler", "tooltip.TooltipContextAccessor"));
+            mixins.addAll(Arrays.asList("tooltip.MixinTooltipHandler"));
         return mixins;
     }
 }

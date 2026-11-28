@@ -34,7 +34,7 @@ final class ChartPointer {
             firstY = y;
             target = false;
         }
-        if (NativeTooltipPage.selected(key, id)) {
+        if (NativeTooltipPage.selected(NativeTooltipClient.document(c), id)) {
             targetY = y;
             target = true;
         }
@@ -59,7 +59,7 @@ final class ChartPointer {
                 .translateToLocalFormatted("miaokatzecore.page.variant", TooltipPages.detailKeyLabel());
             String select = StatCollector
                 .translateToLocalFormatted("miaokatzecore.page.select", TooltipController.selectKeyLabel());
-            boolean multi = NativeTooltipPage.multiple(item);
+            boolean multi = NativeTooltipPage.multiple(NativeTooltipClient.document(owner));
             int vw = TooltipFontContext.getStringWidth(variant) + 18,
                 sw = TooltipFontContext.getStringWidth(select) + 17;
             int want = Math.max(vw, multi ? sw : 0);
@@ -112,15 +112,15 @@ final class ChartPointer {
         SectionComponent first = c.getActivePageComponent();
         if (first == null) return;
         do {
-            if (contains(c.getActivePageComponent(), key)) return;
+            if (contains(c.getActivePageComponent(), key, NativeTooltipClient.document(c))) return;
         } while (c.nextTooltipPage() && first != c.getActivePageComponent());
     }
 
-    private static boolean contains(SectionComponent page, String key) {
+    private static boolean contains(SectionComponent page, String key, com.miaokatze.miaokatzecore.api.tooltip.component.TooltipPageBody document) {
         for (ITooltipComponent block : page.getComponents()) {
             if (block instanceof NativeChartComponent
-                && NativeTooltipPage.selected(key, ((NativeChartComponent) block).chart().chartId)) return true;
-            if (block instanceof SectionComponent && contains((SectionComponent) block, key)) return true;
+                && NativeTooltipPage.selected(document, ((NativeChartComponent) block).chart().chartId)) return true;
+            if (block instanceof SectionComponent && contains((SectionComponent) block, key, document)) return true;
         }
         return false;
     }

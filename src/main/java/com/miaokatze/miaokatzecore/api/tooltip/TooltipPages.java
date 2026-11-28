@@ -33,6 +33,7 @@ public final class TooltipPages {
     private static final java.util.Map<String, Long> firstShown = new ConcurrentHashMap<>();
     private static final String LEARNED_FOLD = "learned.tooltipFold";
     private static Path file;
+    private static boolean dirty;
 
     private static Supplier<String> detailLabel = () -> "V";
     private static Supplier<String> effectLabel = () -> "Alt+V";
@@ -54,6 +55,7 @@ public final class TooltipPages {
 
     public static void load(Path path) {
         file = path;
+        dirty = false;
         firstShown.clear();
         prefs.clear();
         if (Files.isRegularFile(path)) try (java.io.InputStream in = Files.newInputStream(path)) {
@@ -143,7 +145,7 @@ public final class TooltipPages {
         if (prefs.getProperty("seen." + key) != null) return;
         prefs.setProperty("seen." + key, "true");
         firstShown.put(key, TooltipAnimationClock.nowNanos());
-        save();
+        dirty = true;
     }
 
     private static String introductoryColor(String key) {
@@ -185,11 +187,18 @@ public final class TooltipPages {
         return true;
     }
 
+    /** Coalesce observation-only marks at the existing GUI lifecycle; rendering never writes files. */
+    public static void flush() {
+        if (dirty && file != null) save();
+    }
+
     private static void save() {
+        dirty = true;
         try (java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
             prefs.store(out, "Local tooltip preferences; missing entries are enabled");
             Files.createDirectories(file.getParent());
             AtomicFilePublisher.publishAtomic(file, out.toByteArray());
+            dirty = false;
         } catch (IOException e) {
             LogManager.getLogger("MIAOKATZE-Core")
                 .warn("Cannot save local tooltip preferences", e);

@@ -19,6 +19,8 @@ import com.miaokatze.miaokatzecore.api.tooltip.TooltipAnimationClock;
 import com.miaokatze.miaokatzecore.api.tooltip.TooltipPages;
 import com.slprime.chromatictooltips.TooltipHandler;
 import com.slprime.chromatictooltips.TooltipRegistry;
+import com.slprime.chromatictooltips.api.TooltipLines;
+import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipPageBody;
 import com.slprime.chromatictooltips.api.TooltipContext;
 import com.slprime.chromatictooltips.api.TooltipModifier;
 import com.slprime.chromatictooltips.api.TooltipRequest;
@@ -32,7 +34,6 @@ public final class TooltipPinning {
 
     private static final int GAP = 4;
     private static final TooltipPinState<Frame> state = new TooltipPinState<>();
-    private static TooltipRequest pending;
     private static Frame preview;
     private static Rectangle2D source;
     private static boolean drawing;
@@ -46,6 +47,8 @@ public final class TooltipPinning {
         final Point cursor = TooltipUtils.getMousePosition();
         final long captured = TooltipAnimationClock.nowNanos();
         TooltipContext context;
+        TooltipContext template;
+        TooltipPageBody document;
         Rectangle bounds;
         TooltipModifier modifier = TooltipUtils.getActiveModifier();
         boolean dirty;
@@ -55,6 +58,7 @@ public final class TooltipPinning {
             this.context = context;
             this.bounds = bounds;
             this.material = material;
+            this.document = NativeTooltipClient.document(context);
         }
 
         Frame frozen() {
@@ -63,7 +67,9 @@ public final class TooltipPinning {
                 : TooltipTarget.ofItem(real.getItem(), real.getStackAmount());
             if (real.isFluidContainer())
                 target = target.withContainedFluid(real.getContainedFluid(), real.getContainedFluidAmount());
-            Frame fixed = new Frame(new TooltipRequest(request, target), context, bounds, material);
+            Frame fixed = new Frame(new TooltipRequest(request, target), null, bounds, material);
+            fixed.template = context;
+            fixed.document = document;
             // Keep the already painted page for the first pinned frame. Future rebuilds use the copied target.
             fixed.modifier = modifier;
             fixed.dirty = dirty;
@@ -75,14 +81,16 @@ public final class TooltipPinning {
             if (context == null || dirty
                 || modifier != active
                 || context.getScaleFactor() != TooltipUtils.getTooltipScale()) {
-                context = TooltipHandler.createTooltipContext(request, context);
+                context = TooltipHandler.createTooltipContext(request, context == null ? template : context);
+                template = null;
+                document = NativeTooltipClient.document(context);
                 modifier = active;
                 dirty = false;
             }
         }
 
         String key() {
-            return TooltipPages.identity(context == null ? null : context.getItem());
+            return TooltipPages.identity(request.target.getItem());
         }
 
         void draw(int x, int y) {
@@ -149,10 +157,13 @@ public final class TooltipPinning {
     }
 
     private static Frame selected() {
+        return selected(TooltipUtils.getMousePosition());
+    }
+
+    private static Frame selected(Point mouse) {
         Frame root = state.fixed();
         Frame child = state.child();
         if (child == null) return root;
-        Point mouse = TooltipUtils.getMousePosition();
         TooltipContext context = NativeTooltipMouse.contextAt(Minecraft.getMinecraft().currentScreen, mouse, false);
         return hasContext(root, context) ? root : child;
     }
@@ -176,37 +187,46 @@ public final class TooltipPinning {
     private static void clearPaint() {
         preview = null;
         source = null;
-        pending = null;
         NativeTooltipMouse.clear();
     }
 
     static void beginFrame(GuiScreen gui) {
         screen(gui);
         state.beginFrame(gui);
-        pending = null;
     }
 
-    public static boolean request(TooltipRequest request) {
-        GuiScreen gui = Minecraft.getMinecraft().currentScreen;
-        screen(gui);
-        if (drawing) return false;
-        if (active(gui)) return true;
-        pending = request;
-        return false;
-    }
-
+    /** Capture only what was actually drawn; public context components preserve GUI-specific extra lines. */
     static void rendered(RenderTooltipEvent event) {
-        if (drawing || pending == null || pending.target == null) return;
+        if (drawing) return;
         TooltipTarget target = event.context.getTarget();
-        if (!target.isFluid() && TooltipPages.identity(target.getItem())
-            .isEmpty()) return;
-        if (!matchesTarget(target, pending.target)) return;
-        Frame frame = new Frame(
-            pending,
-            event.context,
-            new Rectangle(event.x, event.y, event.width, event.height),
-            null);
-        state.hover(Minecraft.getMinecraft().currentScreen, frame);
+        if (!target.isFluid() && TooltipPages.identity(target.getItem()).isEmpty()) return;
+        TooltipRequest request = new TooltipRequest(event.context.getContextName(), target,
+            new TooltipLines(event.context.getContextTooltip()), null);
+        state.hover(Minecraft.getMinecraft().currentScreen, new Frame(request, event.context,
+            new Rectangle(event.x, event.y, event.width, event.height), null));
+    }
+
+    static boolean interactive(TooltipContext context) {
+        return state.fixed() != null && (hasContext(state.fixed(), context) || hasContext(state.child(), context)
+            || hasContext(preview, context));
+    }
+
+    static TooltipPageBody inputDocument(GuiScreen gui, Point mouse, Supplier<ItemStack> stackAtPointer) {
+        screen(gui);
+        Frame frame = active(gui) ? selected(mouse) : state.hovered();
+        if (frame == null || !active(gui) && !pointedAtHover(gui, frame, mouse, stackAtPointer)) return null;
+        return frame.document;
+    }
+
+    static String inputKey(GuiScreen gui, Point mouse, Supplier<ItemStack> stackAtPointer) {
+        Frame frame = active(gui) ? selected(mouse) : state.hovered();
+        if (frame == null || !active(gui) && !pointedAtHover(gui, frame, mouse, stackAtPointer)) return "";
+        return frame.key();
+    }
+
+    static MaterialSprite.Material windowMaterial(TooltipContext context) {
+        if (hasContext(state.child(), context)) return state.child().material;
+        return hasContext(preview, context) ? preview.material : null;
     }
 
     private static boolean matchesTarget(TooltipTarget rendered, TooltipTarget requested) {
@@ -234,8 +254,7 @@ public final class TooltipPinning {
         return (!occupied || sameStack) && (overWindow || age <= 300_000_000L && (cursor.equals(mouse) || sameStack));
     }
 
-    private static boolean pointedAtHover(GuiScreen gui, Frame hover, Supplier<ItemStack> stackAtPointer) {
-        Point mouse = TooltipUtils.getMousePosition();
+    private static boolean pointedAtHover(GuiScreen gui, Frame hover, Point mouse, Supplier<ItemStack> stackAtPointer) {
         TooltipContext hit = NativeTooltipMouse.contextAt(gui, mouse, false);
         ItemStack pointed = hover.cursor.equals(mouse) ? null : stackAtPointer.get();
         boolean sameStack = pointed != null && matchesTarget(hover.context.getTarget(), TooltipTarget.ofItem(pointed));
@@ -248,18 +267,11 @@ public final class TooltipPinning {
             sameStack);
     }
 
-    /** Null leaves non-Chromatic input paths available. An empty key rejects an out-of-date paint. */
-    static String hoveredKey(GuiScreen gui, Supplier<ItemStack> stackAtPointer) {
-        Frame hover = state.hovered();
-        if (hover == null) return pending != null && hasTarget(pending.target) ? "" : null;
-        return pointedAtHover(gui, hover, stackAtPointer) ? hover.key() : "";
-    }
-
-    static boolean toggle(GuiScreen gui, Supplier<ItemStack> stackAtPointer) {
+    static boolean toggle(GuiScreen gui, Point mouse, Supplier<ItemStack> stackAtPointer) {
         screen(gui);
         if (state.fixed() == null) {
             Frame hover = state.hovered();
-            if (hover == null || !pointedAtHover(gui, hover, stackAtPointer)) return false;
+            if (hover == null || !pointedAtHover(gui, hover, mouse, stackAtPointer)) return false;
             state.hover(gui, hover.frozen());
         }
         if (state.child() != null) {
@@ -267,7 +279,7 @@ public final class TooltipPinning {
             source = null;
             return state.toggle(gui, null);
         }
-        Frame childHover = state.fixed() != null && preview != null && childPointed(gui) ? preview.frozen() : null;
+        Frame childHover = state.fixed() != null && preview != null && childPointed(gui, mouse) ? preview.frozen() : null;
         boolean changed = state.toggle(gui, childHover);
         if (changed && state.fixed() == null) clearPaint();
         if (changed && childHover != null) {
@@ -277,28 +289,13 @@ public final class TooltipPinning {
         return changed;
     }
 
-    private static boolean childPointed(GuiScreen gui) {
-        Point mouse = TooltipUtils.getMousePosition();
+    private static boolean childPointed(GuiScreen gui, Point mouse) {
         TooltipContext hit = NativeTooltipMouse.contextAt(gui, mouse, false);
         return hasContext(preview, hit) || hasContext(state.fixed(), hit) && source != null && source.contains(mouse);
     }
 
-    static MaterialSprite.Material recipeMaterial(GuiScreen gui) {
-        screen(gui);
-        Point mouse = TooltipUtils.getMousePosition();
-        NativeTooltipMouse.MaterialHit hit = NativeTooltipMouse.materialAt(gui, mouse, false);
-        if (hit != null) return hit.material;
-        TooltipContext context = NativeTooltipMouse.contextAt(gui, mouse, false);
-        if (hasContext(state.child(), context)) return state.child().material;
-        if (hasContext(preview, context)) return preview.material;
-        return null;
-    }
-
-    static boolean coversMouse(GuiScreen gui) {
-        return NativeTooltipMouse.contextAt(gui, TooltipUtils.getMousePosition(), false) != null;
-    }
-
     public static void refresh() {
+        NativeTooltipMouse.clear();
         if (state.fixed() != null) state.fixed().dirty = true;
         if (state.child() != null) state.child().dirty = true;
         if (preview != null) preview.dirty = true;

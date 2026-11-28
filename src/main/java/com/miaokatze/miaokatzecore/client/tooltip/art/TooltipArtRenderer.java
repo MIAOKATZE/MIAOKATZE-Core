@@ -27,32 +27,26 @@ public final class TooltipArtRenderer {
         }
         ArtPlate plate = ArtPlate.of(art);
         float phase = animated ? TooltipAnimationClock.phase(TooltipAnimationClock.nowNanos(), plate.period) : 0.25f;
-        if (!animated || !SealShader.draw(plate, x, y, phase)) drawStatic(plate, x, y);
+        drawSeal(plate, x, y, phase, animated);
         drawText.accept(plate.labelColor(phase));
     }
 
-    /** Draw exactly the same silhouette on backends without the seal program. Does not change any texture binding. */
-    private static void drawStatic(ArtPlate plate, int x, int y) {
+    /** Draw the authored mask and continuous glint in one vanilla batch. No GPU program or matrix readback. */
+    private static void drawSeal(ArtPlate plate, int x, int y, float phase, boolean animated) {
         GL11.glPushAttrib(GL11.GL_ENABLE_BIT | GL11.GL_CURRENT_BIT);
         try {
             GL11.glDisable(GL11.GL_TEXTURE_2D);
             GL11.glDisable(GL11.GL_CULL_FACE);
             Tessellator tess = Tessellator.instance;
             tess.startDrawingQuads();
-            tess.setColorOpaque_I(plate.ink);
             for (int r = 0; r < 8; r++) {
-                int row = plate.rows[r], c = 0;
-                while (c < 8) {
-                    if ((row & 128 >> c) == 0) {
-                        c++;
-                        continue;
-                    }
-                    int start = c++;
-                    while (c < 8 && (row & 128 >> c) != 0) c++;
-                    tess.addVertex(x + start, y + r, 0);
-                    tess.addVertex(x + start, y + r + 1, 0);
-                    tess.addVertex(x + c, y + r + 1, 0);
+                for (int c = 0; c < 8; c++) {
+                    if ((plate.rows[r] & 128 >> c) == 0) continue;
+                    tess.setColorOpaque_I(animated ? plate.pixelColor(c, r, phase) : plate.ink);
                     tess.addVertex(x + c, y + r, 0);
+                    tess.addVertex(x + c, y + r + 1, 0);
+                    tess.addVertex(x + c + 1, y + r + 1, 0);
+                    tess.addVertex(x + c + 1, y + r, 0);
                 }
             }
             tess.draw();

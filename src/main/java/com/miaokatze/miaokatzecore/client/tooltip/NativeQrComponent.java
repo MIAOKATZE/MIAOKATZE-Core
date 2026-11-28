@@ -48,7 +48,7 @@ final class NativeQrComponent implements ITooltipComponent {
     @Override
     public void draw(int x, int y, int width, TooltipContext context) {
         TooltipFontContext.drawString(qr.text, x, y);
-        NativeTooltipMouse.textLinks(context, qr.text, x, y);
+        NativeLinkComponent.textLinks(context, qr.text, x, y);
         y += TooltipFontContext.getFontHeight() + 3;
         int side = qr.side(), scale = qr.scale(), inset = TooltipQr.BORDER + TooltipQr.QUIET * scale;
         GL11.glPushAttrib(GL11.GL_ENABLE_BIT | GL11.GL_CURRENT_BIT);

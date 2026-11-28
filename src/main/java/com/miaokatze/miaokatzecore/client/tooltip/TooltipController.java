@@ -4,6 +4,7 @@
 package com.miaokatze.miaokatzecore.client.tooltip;
 
 import java.util.function.Supplier;
+import java.awt.Point;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
@@ -28,6 +29,7 @@ import com.cleanroommc.modularui.screen.RichTooltipEvent;
 import com.gtnewhorizon.gtnhlib.client.event.RenderTooltipEvent;
 import com.miaokatze.miaokatzecore.api.tooltip.TooltipPages;
 import com.miaokatze.miaokatzecore.api.tooltip.component.NativeTooltipPage;
+import com.miaokatze.miaokatzecore.api.tooltip.component.TooltipPageBody;
 
 import codechicken.nei.KeyManager;
 import codechicken.nei.LayoutManager;
@@ -53,9 +55,11 @@ public final class TooltipController {
     private final boolean chromatic = Loader.isModLoaded("chromatictooltips");
 
     private GuiScreen screen;
+    private GuiScreen currentGui;
     private String key = "";
     private int mouseX, mouseY;
     private long lastRender;
+    private final TooltipButtonState buttons = new TooltipButtonState();
     private final boolean nei = Loader.isModLoaded("NotEnoughItems");
     private static java.util.function.BooleanSupplier tierHeld = () -> false;
 
@@ -76,13 +80,13 @@ public final class TooltipController {
             .bus()
             .register(input);
         if (input.chromatic) {
-            MinecraftForge.EVENT_BUS.register(new ChromaticHover(input));
+            MinecraftForge.EVENT_BUS.register(new ChromaticHover());
             com.miaokatze.miaokatzecore.client.tooltip.NativeTooltipClient.install();
         }
     }
 
     private void hovered(GuiScreen gui, ItemStack stack) {
-        if (pinned()) return;
+        if (chromatic) return;
         screen = gui;
         key = TooltipPages.identity(stack);
         TooltipPages.rendered(key);
@@ -102,6 +106,7 @@ public final class TooltipController {
 
     @SubscribeEvent
     public void enterGui(InitGuiEvent.Post event) {
+        TooltipPages.flush();
         if (chromatic) TooltipPinning.screen(Minecraft.getMinecraft().currentScreen);
     }
 
@@ -110,6 +115,11 @@ public final class TooltipController {
         if (event.phase != TickEvent.Phase.START) return;
         GuiScreen current = Minecraft.getMinecraft().currentScreen;
         if (chromatic) TooltipPinning.screen(current);
+        buttons.screen(current);
+        if (current != currentGui) {
+            TooltipPages.flush();
+            currentGui = current;
+        }
         if (current == null || current != screen) {
             screen = null;
             key = "";
@@ -129,37 +139,66 @@ public final class TooltipController {
     @SubscribeEvent
     public void keyboard(KeyboardInputEvent.Pre event) {
         if (!Keyboard.getEventKeyState() || Keyboard.isRepeatEvent()) return;
-        if (pressed(event.gui, Keyboard.getEventKey())) event.setCanceled(true);
+        if (pressed(event.gui, Keyboard.getEventKey(), pointer())) event.setCanceled(true);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void mouse(MouseInputEvent.Pre event) {
         int button = Mouse.getEventButton();
         if (button < 0) return;
-        if (chromatic) {
-            if (Mouse.getEventButtonState() && nei
-                && NeiInput.recognizes(button - 100)
-                && handleRecipe(event.gui, button - 100)) {
-                event.setCanceled(true);
-                return;
-            }
-            Minecraft mc = Minecraft.getMinecraft();
-            ScaledResolution size = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
-            int x = Mouse.getEventX() * size.getScaledWidth() / mc.displayWidth;
-            int y = size.getScaledHeight() - Mouse.getEventY() * size.getScaledHeight() / mc.displayHeight - 1;
-            boolean consumed = Mouse.getEventButtonState() ? NativeTooltipMouse.click(event.gui, x, y, button)
-                : NativeTooltipMouse.consumeRelease(event.gui, x, y, button);
-            if (consumed) {
-                event.setCanceled(true);
-            }
+        buttons.screen(event.gui);
+        if (!Mouse.getEventButtonState()) {
+            if (buttons.release(button)) event.setCanceled(true);
+            return;
+        }
+        buttons.release(button);
+        Minecraft mc = Minecraft.getMinecraft();
+        ScaledResolution size = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
+        Point mouse = new Point(Mouse.getEventX() * size.getScaledWidth() / mc.displayWidth,
+            size.getScaledHeight() - Mouse.getEventY() * size.getScaledHeight() / mc.displayHeight - 1);
+        int code = button - 100;
+        boolean accepted = pressed(event.gui, code, mouse);
+        if (!accepted && chromatic && !configured(code) && button == 0
+            && !GuiScreen.isShiftKeyDown() && !GuiScreen.isCtrlKeyDown() && !alt()) {
+            TooltipPinning.screen(event.gui);
+            NativeTooltipMouse.Pointer hit = NativeTooltipMouse.pointerAt(event.gui, mouse);
+            if (hit != null && TooltipPinning.interactive(hit.context) && hit.action != null)
+                accepted = hit.action.getAsBoolean();
+        }
+        if (accepted) {
+            buttons.claim(button);
+            event.setCanceled(true);
         }
     }
 
-    @SubscribeEvent
-    public void mouseKey(MouseInputEvent.Pre event) {
-        if (!Mouse.getEventButtonState()) return;
-        int button = Mouse.getEventButton();
-        if (button >= 0 && pressed(event.gui, button - 100)) event.setCanceled(true);
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public void drawPinned(net.minecraftforge.client.event.GuiScreenEvent.DrawScreenEvent.Post event) {
+        if (chromatic) TooltipPinning.drawPinned();
+    }
+
+    private static Point pointer() {
+        Minecraft mc = Minecraft.getMinecraft();
+        ScaledResolution size = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
+        return new Point(Mouse.getX() * size.getScaledWidth() / mc.displayWidth,
+            size.getScaledHeight() - Mouse.getY() * size.getScaledHeight() / mc.displayHeight - 1);
+    }
+
+    private boolean configured(int code) {
+        return matches(select, code, false) || matches(pin, code, false) || matches(details, code, true)
+            || nei && NeiInput.recognizes(code);
+    }
+
+    /** Only the upstream page-navigation call needs an adapter; ordinary context lookup is untouched. */
+    public static Boolean navigatePinned(boolean forward) {
+        if (installed == null || !installed.chromatic) return null;
+        GuiScreen gui = Minecraft.getMinecraft().currentScreen;
+        TooltipPinning.screen(gui);
+        NativeTooltipMouse.Pointer hit = NativeTooltipMouse.pointerAt(gui, pointer());
+        if (hit == null || !TooltipPinning.interactive(hit.context)) return null;
+        if (installed.typing(gui)) return false;
+        boolean changed = forward ? hit.context.nextTooltipPage() : hit.context.previousTooltipPage();
+        if (changed) NativeTooltipMouse.clear();
+        return changed;
     }
 
     private static String label(KeyBinding binding) {
@@ -198,25 +237,39 @@ public final class TooltipController {
         return code > 0 ? Keyboard.isKeyDown(code) : code < 0 && Mouse.isButtonDown(code + 100);
     }
 
-    private boolean pressed(GuiScreen gui, int code) {
+    private boolean pressed(GuiScreen gui, int code, Point mouse) {
         if (gui == null || gui != Minecraft.getMinecraft().currentScreen || code == Keyboard.KEY_NONE) return false;
-        if (chromatic && nei && NeiInput.recognizes(code) && handleRecipe(gui, code)) return true;
+        if (chromatic) TooltipPinning.screen(gui);
+        if (chromatic && nei && NeiInput.recognizes(code) && TooltipPinning.active(gui)) {
+            if (typing(gui)) return false;
+            NativeTooltipMouse.Pointer hit = NativeTooltipMouse.pointerAt(gui, mouse);
+            if (hit != null && TooltipPinning.interactive(hit.context)) {
+                MaterialSprite.Material material = hit.material == null ? TooltipPinning.windowMaterial(hit.context) : hit.material;
+                if (material != null) {
+                    // The material owns this query even if NEI finds no recipe. Never query a different item behind it.
+                    NeiInput.open(code, material);
+                    return true;
+                }
+            }
+        }
         boolean choose = matches(select, code, false);
         boolean pinning = chromatic && matches(pin, code, false);
         boolean cycle = matches(details, code, true);
         if (!choose && !pinning && !cycle || typing(gui)) return false;
-        Supplier<ItemStack> stackAtPointer = () -> nei && gui instanceof GuiContainer
+        Supplier<ItemStack> stackAtPointer = () -> mouse.equals(pointer()) && nei && gui instanceof GuiContainer
             ? NeiInput.stackAt((GuiContainer) gui)
             : null;
-        if (pinning) return TooltipPinning.toggle(gui, stackAtPointer);
+        if (pinning) return mouse.equals(pointer()) && TooltipPinning.toggle(gui, mouse, stackAtPointer);
         if (chromatic) TooltipPinning.screen(gui);
         boolean fixed = pinned();
-        String item = fixed ? TooltipPinning.key() : hoveredKey(gui, stackAtPointer);
+        String item = chromatic ? TooltipPinning.inputKey(gui, mouse, stackAtPointer) : hoveredKey(gui, stackAtPointer);
         if (item.isEmpty()) return false;
-        boolean page = NativeTooltipPage.supports(item);
+        TooltipPageBody document = chromatic ? TooltipPinning.inputDocument(gui, mouse, stackAtPointer)
+            : NativeTooltipPage.document(item);
+        boolean page = document != null;
         if (page && Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) return false;
         if (choose) {
-            boolean changed = page && NativeTooltipPage.act(item, NativeTooltipPage.Action.SELECT);
+            boolean changed = page && NativeTooltipPage.act(document, NativeTooltipPage.Action.SELECT);
             if (changed && chromatic) {
                 if (fixed) TooltipPinning.followSelected();
                 else ChromaticHover.follow(item);
@@ -224,29 +277,19 @@ public final class TooltipController {
             return changed;
         }
         boolean changed = page
-            ? NativeTooltipPage.act(item, alt() ? NativeTooltipPage.Action.TIER : NativeTooltipPage.Action.VARIANT)
+            ? NativeTooltipPage.act(document, alt() ? NativeTooltipPage.Action.TIER : NativeTooltipPage.Action.VARIANT)
             : TooltipPages.toggle(item, alt());
         if (changed && chromatic) TooltipPinning.refresh();
         return changed;
     }
 
     private String hoveredKey(GuiScreen gui, Supplier<ItemStack> stackAtPointer) {
-        String painted = chromatic ? TooltipPinning.hoveredKey(gui, stackAtPointer) : null;
-        if (painted != null) return painted;
         if (gui != screen || key.isEmpty()
             || com.miaokatze.miaokatzecore.api.tooltip.TooltipAnimationClock.nowNanos() - lastRender > 300000000L)
             return "";
         boolean stillPointed = mouseX == Mouse.getX() && mouseY == Mouse.getY()
             || key.equals(TooltipPages.identity(stackAtPointer.get()));
         return stillPointed ? key : "";
-    }
-
-    private boolean handleRecipe(GuiScreen gui, int code) {
-        if (typing(gui)) return false;
-        MaterialSprite.Material material = TooltipPinning.recipeMaterial(gui);
-        if (material == null) return TooltipPinning.active(gui) && TooltipPinning.coversMouse(gui);
-        NeiInput.open(code, material);
-        return true;
     }
 
     private boolean typing(GuiScreen gui) {
@@ -312,16 +355,10 @@ public final class TooltipController {
     // Kept in a separately loaded class: Core also runs without Chromatic Tooltips.
     public static final class ChromaticHover {
 
-        private final TooltipController input;
-
-        private ChromaticHover(TooltipController input) {
-            this.input = input;
-        }
 
         @SubscribeEvent
         public void rendered(com.slprime.chromatictooltips.event.RenderTooltipEvent event) {
             TooltipPinning.rendered(event);
-            input.hovered(Minecraft.getMinecraft().currentScreen, event.context.getItem());
             ChartPointer.rendered(event);
         }
 

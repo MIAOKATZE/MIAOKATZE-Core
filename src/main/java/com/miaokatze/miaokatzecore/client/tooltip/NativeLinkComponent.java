@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiScreen;
 
 import com.slprime.chromatictooltips.api.ITooltipComponent;
 import com.slprime.chromatictooltips.api.TooltipContext;
@@ -40,6 +42,21 @@ final class NativeLinkComponent implements ITooltipComponent {
             if (line instanceof String && !TooltipTextLinks.spans((String) line)
                 .isEmpty()) lines.set(i, new NativeLinkComponent(Collections.singletonList(new Row((String) line))));
         }
+    }
+
+    static void textLinks(TooltipContext context, String text, int x, int y) {
+        if (!TooltipPinning.interactive(context)) return;
+        for (TooltipTextLinks.Span span : TooltipTextLinks.spans(text)) {
+            int start = TooltipFontContext.getStringWidth(TooltipTextLinks.prefix(text, span.from));
+            int end = TooltipFontContext.getStringWidth(TooltipTextLinks.prefix(text, span.to));
+            link(context, span.url, x + start, y, end - start);
+        }
+    }
+
+    private static void link(TooltipContext context, String url, double x, double y, double width) {
+        if (!TooltipPinning.interactive(context)) return;
+        GuiScreen gui = Minecraft.getMinecraft().currentScreen;
+        NativeTooltipMouse.action(context, x, y, width, TooltipFontContext.getFontHeight(), () -> TooltipLinkBrowser.open(gui, url));
     }
 
     @Override
@@ -92,7 +109,7 @@ final class NativeLinkComponent implements ITooltipComponent {
             for (TooltipTextLinks.Span span : row.links) {
                 int start = TooltipFontContext.getStringWidth(TooltipTextLinks.prefix(row.text, span.from));
                 int end = TooltipFontContext.getStringWidth(TooltipTextLinks.prefix(row.text, span.to));
-                NativeTooltipMouse.link(context, span.url, x + start, y, end - start);
+                link(context, span.url, x + start, y, end - start);
             }
             y += TooltipFontContext.getFontHeight();
         }

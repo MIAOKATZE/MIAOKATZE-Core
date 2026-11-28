@@ -29,6 +29,9 @@ public final class TooltipPreferenceContracts {
             require(
                 TooltipPages.controlLabel("refund", "scope")
                     .startsWith("§e"));
+            require(!Files.exists(file)); // A draw observation may not synchronously create the preference file.
+            TooltipPages.flush();
+            require(Files.isRegularFile(file));
             TooltipPages.load(file);
             TooltipPages.controlRendered("refund");
             require(

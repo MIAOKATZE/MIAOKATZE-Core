@@ -157,7 +157,7 @@ public final class NativeTableComponent implements ITooltipComponent {
 
     @Override
     public void draw(int x, int y, int availableWidth, TooltipContext context) {
-        NativeTooltipMouse.Drawing drawing = new NativeTooltipMouse.Drawing(context);
+        NativeTooltipMouse.Drawing drawing = new NativeTooltipMouse.Drawing(context, TooltipPinning.interactive(context));
         TooltipTableLayout layout = layout();
         // Chromatic supplies one content width for every drawn component in this page.
         int width = Math.max(getWidth(), Math.min(availableWidth, limit));

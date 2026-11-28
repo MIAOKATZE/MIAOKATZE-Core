@@ -41,14 +41,35 @@ public final class TooltipTableLayout {
                 for (java.util.List<String> row : table.measurementRows())
                     floor[c] = Math.max(floor[c], minimum(row.get(c), false));
             }
-            while (total > maxWidth) {
-                int widest = -1;
-                for (int c = 0; c < widths.length; c++)
-                    if (widths[c] > floor[c] && (widest < 0 || widths[c] > widths[widest])) widest = c;
-                if (widest < 0) break;
-                widths[widest]--;
-                total--;
+            // Find the final water level in column space, rather than shaving one GUI pixel per iteration.
+            int minimum = 0, highest = 0;
+            for (int c = 0; c < floor.length; c++) {
+                floor[c] = Math.min(floor[c], widths[c]);
+                minimum += floor[c];
+                highest = Math.max(highest, widths[c]);
             }
+            int target = Math.max(minimum, maxWidth - GAP * (widths.length - 1));
+            int low = 0, high = highest;
+            while (low < high) {
+                int level = low + (high - low) / 2;
+                long sum = 0;
+                for (int c = 0; c < widths.length; c++) sum += Math.max(floor[c], Math.min(widths[c], level));
+                if (sum >= target) high = level;
+                else low = level + 1;
+            }
+            int sum = 0;
+            for (int c = 0; c < widths.length; c++) {
+                widths[c] = Math.max(floor[c], Math.min(widths[c], low));
+                sum += widths[c];
+            }
+            // Preserve the previous left-to-right tie rule at the last partial level.
+            for (int c = 0; c < widths.length && sum > target; c++) {
+                if (widths[c] == low && widths[c] > floor[c]) {
+                    widths[c]--;
+                    sum--;
+                }
+            }
+            total = sum + GAP * (widths.length - 1);
         }
         width = total;
     }

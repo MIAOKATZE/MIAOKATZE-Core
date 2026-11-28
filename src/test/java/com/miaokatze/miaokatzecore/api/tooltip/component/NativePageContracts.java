@@ -15,6 +15,14 @@ public final class NativePageContracts {
 
     public static void main(String[] args) {
         InputHintContracts.main(args);
+        try {
+            com.miaokatze.miaokatzecore.api.tooltip.TooltipPreferenceContracts.run();
+        } catch (Exception failure) {
+            throw new AssertionError("Preference lifecycle", failure);
+        }
+        com.miaokatze.miaokatzecore.client.tooltip.TooltipInputContracts.run();
+        com.miaokatze.miaokatzecore.client.tooltip.art.TooltipArtContracts.run();
+        documentIsolation();
         com.miaokatze.miaokatzecore.client.tooltip.TooltipMouseContracts.run();
         MachinePageSpanContracts.run();
         String item = "test:item@6";
@@ -22,7 +30,7 @@ public final class NativePageContracts {
         Map<String, Integer> charts = new LinkedHashMap<>();
         charts.put("route", 3);
         charts.put("dimension", 47);
-        NativeTooltipPage.bind(item, charts);
+        bind(item, charts);
         check(p.tier() == NativeTooltipPage.Tier.COMMON && NativeTooltipPage.selected(item, "route"));
         check(NativeTooltipPage.act(item, NativeTooltipPage.Action.VARIANT) && p.variant("route", 3) == 1);
         check(
@@ -40,18 +48,18 @@ public final class NativePageContracts {
         check(NativeTooltipPage.selectVariant(item, "dimension", 46));
         check(NativeTooltipPage.act(item, NativeTooltipPage.Action.VARIANT) && p.variant("dimension", 47) == 0);
         NativeTooltipPage.act(item, NativeTooltipPage.Action.TIER);
-        NativeTooltipPage.bind(item, charts);
+        bind(item, charts);
         check(p.tier() == NativeTooltipPage.Tier.DETAIL && NativeTooltipPage.selected(item, "dimension"));
         NativeTooltipPage.act(item, NativeTooltipPage.Action.TIER);
-        NativeTooltipPage.bind(item, Collections.emptyMap());
+        bind(item, Collections.emptyMap());
         check(
             p.tier() == NativeTooltipPage.Tier.QUICK && !NativeTooltipPage.act(item, NativeTooltipPage.Action.VARIANT));
         check(!NativeTooltipPage.act(item, NativeTooltipPage.Action.SELECT));
         NativeTooltipPage.act(item, NativeTooltipPage.Action.TIER);
-        NativeTooltipPage.bind(item, charts);
+        bind(item, charts);
         check(p.tier() == NativeTooltipPage.Tier.COMMON && NativeTooltipPage.selected(item, "dimension"));
         check(!NativeTooltipPage.act("test:item@7", NativeTooltipPage.Action.TIER));
-        NativeTooltipPage.bind("single", Collections.singletonMap("only", 6));
+        bind("single", Collections.singletonMap("only", 6));
         check(!NativeTooltipPage.act("single", NativeTooltipPage.Action.SELECT));
 
         TooltipTable table = TooltipTable.of(
@@ -128,7 +136,7 @@ public final class NativePageContracts {
                 && fixedHeat.fallbackLines()
                     .get(0)
                     .contains("EU/t"));
-        NativeTooltipPage.bind("fixed", Collections.emptyMap(), false, true);
+        bind("fixed", Collections.emptyMap(), false, true);
         check(
             fixed.tier() == NativeTooltipPage.Tier.COMMON
                 && !NativeTooltipPage.act("fixed", NativeTooltipPage.Action.TIER));
@@ -147,6 +155,32 @@ public final class NativePageContracts {
             .run(body, new TooltipPageBody(Arrays.asList(new TooltipGuide(TooltipGuide.Kind.TIER, "tier"), "purpose")));
         System.out.println(
             "NativePageContracts: PASS (tier/selection, immutable chart data, GT finisher, Chromatic page conversion)");
+    }
+
+    private static void documentIsolation() {
+        String key = "isolated";
+        TooltipPageBody first = new TooltipPageBody(Collections.emptyList(), key,
+            Collections.singletonMap("first", 3), false, false, NativeTooltipPage.Tier.COMMON);
+        TooltipPageBody second = new TooltipPageBody(Collections.emptyList(), key,
+            Collections.singletonMap("second", 2), true, false, NativeTooltipPage.Tier.COMMON);
+        NativeTooltipPage.remember(first);
+        NativeTooltipPage.remember(second);
+        check(NativeTooltipPage.selected(first, "first") && NativeTooltipPage.selected(second, "second"));
+        check(NativeTooltipPage.selectVariant(first, "first", 2));
+        check(!NativeTooltipPage.selectVariant(first, "second", 0));
+        check(new NativeTooltipPage(key).variant("first", 3) == 2);
+        check(NativeTooltipPage.selected(first, "first"));
+        check(NativeTooltipPage.act(first, NativeTooltipPage.Action.TIER));
+        check(!NativeTooltipPage.act(first, NativeTooltipPage.Action.VARIANT));
+    }
+
+    private static void bind(String key, Map<String, Integer> charts) { bind(key, charts, false, false); }
+
+    private static void bind(String key, Map<String, Integer> charts, boolean compact, boolean single) {
+        NativeTooltipPage author = new NativeTooltipPage(key);
+        if (compact) author.twoTiers();
+        if (single) author.singleTier();
+        NativeTooltipPage.remember(new TooltipPageBody(Collections.emptyList(), key, charts, compact, single, author.tier()));
     }
 
     private static void check(boolean ok) {

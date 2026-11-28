@@ -101,61 +101,40 @@ public final class NativePageAdapterContracts {
     private static final TooltipStyle STYLE = new TooltipStyle(new JsonObject());
 
     private static void headerOrder(NativeTooltipClient register, TooltipPageBody body, List<String> draws) {
-        register.prepare("solar", body.fallbackLines(), body);
-        List<Object> rows = new ArrayList<>(body.fallbackLines());
-        register.convert("solar", rows);
-        ITooltipComponent converted = (ITooltipComponent) rows.get(0);
-        ITooltipComponent name = fixedLine((x, y) -> {}), third = fixedLine((x, y) -> {}),
-            warning = fixedLine((x, y) -> {}), pin = fixedLine((x, y) -> draws.add("pin " + x + "," + y));
-        KeyboardModifierComponent keys = new KeyboardModifierComponent(
-            EnumSet.noneOf(TooltipModifier.class),
-            TooltipModifier.NONE) {
-
-            @Override
-            public int getWidth() {
-                return 30;
-            }
-
-            @Override
-            public int getHeight() {
-                return 9;
-            }
-
-            @Override
-            public void draw(int x, int y, int w, TooltipContext context) {
-                draws.add("native " + x + "," + y);
-            }
-        };
-        SectionComponent header = section(
-            "header",
-            section("title", name),
-            section("keyboard-modifier", keys),
-            section("third-party", third));
-        SectionComponent info = section("itemInfo", converted, warning), content = section("body", info);
-        SectionComponent composed = TierHeaderSlot.compose(header, content, pin);
-        List<ITooltipComponent> leaves = pagedLeaves(section("page", composed, content));
-        if (leaves.size() != 4 || leaves.get(0) != name || leaves.get(2) != third || leaves.get(3) != warning)
-            throw new AssertionError("Unrelated header and body order changed: " + leaves);
-        assertInline(leaves.get(1), draws, "native 10,20", "pin 44,20", "tier 88,20");
-
-        SectionComponent structure = section("body", section("itemInfo", warning));
-        leaves = pagedLeaves(section("page", TierHeaderSlot.compose(header, null, pin), structure));
-        assertInline(leaves.get(1), draws, "native 10,20", "pin 44,20");
-        if (leaves.get(3) != warning) throw new AssertionError("Structure content was moved");
-
-        SectionComponent withoutKeys = section("header", section("title", name), section("third-party", third));
-        leaves = pagedLeaves(section("page", TierHeaderSlot.compose(withoutKeys, null, pin), structure));
-        assertInline(leaves.get(1), draws, "pin 10,20");
-        if (leaves.get(2) != third || TierHeaderSlot.compose(null, null, pin) != null)
-            throw new AssertionError("Missing keyboard section fallback changed neighboring content");
+        try {
+            // Skip Minecraft/font initialization, but execute the real public addSection/revision implementation.
+            java.lang.reflect.Field field = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
+            field.setAccessible(true);
+            sun.misc.Unsafe unsafe = (sun.misc.Unsafe) field.get(null);
+            TooltipContext context = (TooltipContext) unsafe.allocateInstance(TooltipContext.class);
+            java.lang.reflect.Field sections = TooltipContext.class.getDeclaredField("sections");
+            sections.setAccessible(true);
+            SectionComponent header = section("header", fixedLine((x, y) -> {}));
+            SectionComponent content = section("body", fixedLine((x, y) -> {}));
+            sections.set(context, new ArrayList<>(Arrays.asList(header, content)));
+            java.lang.reflect.Field renderer = TooltipContext.class.getDeclaredField("renderer");
+            renderer.setAccessible(true);
+            renderer.set(context, java.lang.reflect.Proxy.newProxyInstance(getClassLoader(),
+                new Class<?>[] { com.slprime.chromatictooltips.api.ITooltipRenderer.class },
+                (proxy, method, args) -> method.getName().equals("getSectionBox")
+                    ? new com.slprime.chromatictooltips.util.SectionBox(STYLE) : null));
+            int revision = context.getRevision();
+            ITooltipComponent pin = fixedLine((x, y) -> draws.add("pin"));
+            NativeTooltipClient.addControls(context, Arrays.asList(pin));
+            if (context.getRevision() != revision + 1 || context.getSections().size() != 3
+                || context.getSections().get(0) != header || context.getSections().get(2) != content
+                || !(context.getSections().get(1).getComponents().get(0) instanceof InlineComponent))
+                throw new AssertionError("Public section insertion changed upstream trees or missed revision tracking");
+            register.prepare("solar", body.fallbackLines(), body);
+            List<Object> rows = new ArrayList<>(body.fallbackLines());
+            register.convert("solar", rows);
+            if (!rows.equals(Arrays.asList("purpose"))) throw new AssertionError("Tier controls duplicated in body");
+        } catch (ReflectiveOperationException failure) {
+            throw new AssertionError("Cannot construct bounded Chromatic fixture", failure);
+        }
     }
 
-    private static void assertInline(ITooltipComponent row, List<String> draws, String... expected) {
-        if (!(row instanceof InlineComponent)) throw new AssertionError("Controls do not share an inline row");
-        draws.clear();
-        row.draw(10, 20, 400, null);
-        if (!draws.equals(Arrays.asList(expected))) throw new AssertionError("Wrong key order or baseline: " + draws);
-    }
+    private static ClassLoader getClassLoader() { return NativePageAdapterContracts.class.getClassLoader(); }
 
     private static ITooltipComponent fixedLine(BiConsumer<Integer, Integer> drawAt) {
         return new ITooltipComponent() {
